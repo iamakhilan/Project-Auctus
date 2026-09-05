@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #fbbf24;
+    --color-surface: #081326;
+    --color-emerald: #00e59b;
+    --color-cyan: #00d2ff;
+  }
+
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #081326;
+    color: #f0f5ff;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Material Symbols variable font settings */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+  }
+
+  .material-symbols-outlined.fill-1 {
+    font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Hide default scrollbars for gaming HUD feel */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #060e1d;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1a3361;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #38bdf8;
+  }
+}
+
+/* 3D Game Button Effects */
+.btn-3d-gold {
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 50%, #d97706 100%);
+  border-top: 1px solid #fef08a;
+  border-bottom: 4px solid #78350f;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+  color: #451a03;
+  transition: all 0.1s ease-in-out;
+}
+
+.btn-3d-gold:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.btn-3d-emerald {
+  background: linear-gradient(180deg, #34d399 0%, #10b981 50%, #059669 100%);
+  border-top: 1px solid #a7f3d0;
+  border-bottom: 4px solid #064e3b;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+
+.btn-3d-emerald:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-3d-navy {
+  background: linear-gradient(180deg, #24457e 0%, #19335f 50%, #102242 100%);
+  border-top: 1px solid #38bdf8;
+  border-bottom: 4px solid #071224;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  color: #f0f5ff;
+  transition: all 0.1s ease-in-out;
+}
+
+.btn-3d-navy:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.btn-3d-ruby {
+  background: linear-gradient(180deg, #f43f5e 0%, #e11d48 50%, #be123c 100%);
+  border-top: 1px solid #fecdd3;
+  border-bottom: 4px solid #4c0519;
+  box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+  color: #ffffff;
+  transition: all 0.1s ease-in-out;
+}
+
+.btn-3d-ruby:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+}
+
+/* Floating Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+@keyframes stampPop {
+  0% {
+    transform: translate(0, -50%) scale(2) rotate(-15deg);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(0, -50%) scale(0.9) rotate(-10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, -50%) scale(1) rotate(-12deg);
+    opacity: 1;
+  }
+}
+
+.animate-stamp {
+  animation: stampPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.9));
+  }
+}
+
+.glow-pulse-gold {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Custom background patterns */
+.bg-grid-dots {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.15) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
