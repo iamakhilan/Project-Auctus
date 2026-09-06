@@ -6,6 +6,7 @@ import {
   FocusSessionState,
   Habit,
   EconomyTransaction,
+  Achievement,
 } from '../../types';
 
 export interface AuctusV2SaveData {
@@ -18,7 +19,7 @@ export interface AuctusV2SaveData {
   focusSession?: FocusSessionState;
   habits?: Habit[];
   transactions?: EconomyTransaction[];
-  achievements?: any[];
+  achievements?: Achievement[];
 }
 
 export interface MigrationResult {

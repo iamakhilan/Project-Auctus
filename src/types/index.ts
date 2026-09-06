@@ -142,3 +142,24 @@ export interface EconomyTransaction {
   balanceAfter: number;
 }
 
+export type AchievementCategory = 'focus' | 'quests' | 'habits' | 'economy' | 'citadel';
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  category: AchievementCategory;
+  icon: string;
+  targetValue: number;
+  currentValue: number;
+  isUnlocked: boolean;
+  unlockedAt?: string;
+  rewards: {
+    xp: number;
+    coins?: number;
+    shards?: number;
+    titleReward?: string;
+  };
+}
+
+

@@ -6,6 +6,7 @@ import {
   FocusSessionState,
   Habit,
   EconomyTransaction,
+  Achievement,
 } from '../../types';
 import {
   initialProfile,
@@ -17,6 +18,7 @@ import {
 import { initialHabits } from '../../domain/habits';
 import { getInitialTransactions } from '../../domain/economy';
 import { syncChestStatusWithTimestamp } from '../../domain/chests';
+import { getInitialAchievements } from '../../domain/achievements';
 import { AuctusV2SaveData } from './types';
 import { V2_KEYS, safeParseJson, migrateV1ToV2 } from './migration';
 
@@ -167,6 +169,29 @@ export function saveTransactionsV2(transactions: EconomyTransaction[]): void {
 }
 
 /**
+ * Loads achievements from V2 storage with automated fallback to initial achievements.
+ */
+export function loadAchievementsV2(): Achievement[] {
+  try {
+    const raw = localStorage.getItem(V2_KEYS.ACHIEVEMENTS);
+    const initial = getInitialAchievements();
+    if (raw) return safeParseJson(raw, initial);
+    saveAchievementsV2(initial);
+    return initial;
+  } catch {
+    return getInitialAchievements();
+  }
+}
+
+export function saveAchievementsV2(achievements: Achievement[]): void {
+  try {
+    localStorage.setItem(V2_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
+  } catch (e) {
+    console.error('Failed to save V2 achievements', e);
+  }
+}
+
+/**
  * Loads focus session from V2 storage with automated fallback.
  */
 export function loadFocusSessionV2(): FocusSessionState {
@@ -209,6 +234,7 @@ export function exportAuctusBackup(): string {
     rewards: loadRewardsV2(),
     habits: loadHabitsV2(),
     transactions: loadTransactionsV2(),
+    achievements: loadAchievementsV2(),
     focusSession: loadFocusSessionV2(),
   };
 
@@ -259,6 +285,7 @@ export function importAuctusBackup(jsonString: string): ImportResult {
     if (Array.isArray(parsed.rewards)) saveRewardsV2(parsed.rewards);
     if (Array.isArray(parsed.habits)) saveHabitsV2(parsed.habits);
     if (Array.isArray(parsed.transactions)) saveTransactionsV2(parsed.transactions);
+    if (Array.isArray(parsed.achievements)) saveAchievementsV2(parsed.achievements);
     if (parsed.focusSession) saveFocusSessionV2(parsed.focusSession);
 
     return {

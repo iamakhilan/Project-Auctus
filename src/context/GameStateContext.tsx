@@ -12,6 +12,7 @@ import {
   EconomyTransaction,
   CurrencyType,
   EconomyTransactionType,
+  Achievement,
 } from '../types';
 import {
   loadProfileV2,
@@ -26,6 +27,8 @@ import {
   saveHabitsV2,
   loadTransactionsV2,
   saveTransactionsV2,
+  loadAchievementsV2,
+  saveAchievementsV2,
   loadFocusSessionV2,
   saveFocusSessionV2,
   exportAuctusBackup,
@@ -70,6 +73,8 @@ import {
   createHabitEntity,
   completeHabitEntity,
 } from '../domain/habits';
+import { evaluateAchievements } from '../domain/achievements';
+import { upgradeCitadelEntity } from '../domain/citadel';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -80,6 +85,7 @@ interface GameStateContextType {
   rewards: RewardItem[];
   habits: Habit[];
   transactions: EconomyTransaction[];
+  achievements: Achievement[];
   claimModal: ClaimModalData;
   focusSession: FocusSessionState;
   
@@ -109,6 +115,7 @@ interface GameStateContextType {
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
   createCustomReward: (title: string, cost: number, category: string, icon: string) => void;
+  upgradeCitadel: () => boolean;
   toggleSound: () => void;
   closeClaimModal: () => void;
   openCustomClaimModal: (data: Partial<ClaimModalData>) => void;
@@ -135,6 +142,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [rewards, setRewards] = useState<RewardItem[]>(loadRewardsV2);
   const [habits, setHabits] = useState<Habit[]>(loadHabitsV2);
   const [transactions, setTransactions] = useState<EconomyTransaction[]>(loadTransactionsV2);
+  const [achievements, setAchievements] = useState<Achievement[]>(loadAchievementsV2);
 
   const [claimModal, setClaimModal] = useState<ClaimModalData>({
     isOpen: false,
@@ -169,6 +177,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     saveTransactionsV2(transactions);
   }, [transactions]);
+
+  useEffect(() => {
+    saveAchievementsV2(achievements);
+  }, [achievements]);
 
   useEffect(() => {
     saveFocusSessionV2(focusSession);
@@ -579,6 +591,88 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setRewards(prev => [...prev, newReward]);
   }, [profile.soundEnabled]);
 
+  // Upgrade Citadel Tier
+  const upgradeCitadel = useCallback((): boolean => {
+    const result = upgradeCitadelEntity(profile);
+    if (!result) {
+      soundEngine.playClick(profile.soundEnabled);
+      return false;
+    }
+
+    setProfile(result.profile);
+
+    const tx = createTransactionEntity({
+      amount: result.upgradedTier.rewardGrant.coins,
+      currency: 'coins',
+      type: 'earn',
+      reason: `Citadel Upgrade: Tier ${result.upgradedTier.tier} (${result.upgradedTier.name})`,
+      balanceAfter: result.profile.coins,
+    });
+    setTransactions(t => recordTransaction(t, tx));
+
+    if (result.upgradedTier.rewardGrant.shards > 0) {
+      const txShards = createTransactionEntity({
+        amount: result.upgradedTier.rewardGrant.shards,
+        currency: 'shards',
+        type: 'earn',
+        reason: `Citadel Upgrade: Tier ${result.upgradedTier.tier} Shards`,
+        balanceAfter: result.profile.shards,
+      });
+      setTransactions(t => recordTransaction(t, txShards));
+    }
+
+    soundEngine.playLevelUp(profile.soundEnabled);
+    confetti({
+      particleCount: 100,
+      spread: 90,
+      origin: { y: 0.4 },
+      colors: ['#00e5ff', '#38bdf8', '#f59e0b', '#10b981', '#ffffff'],
+    });
+
+    setClaimModal({
+      isOpen: true,
+      title: `Tier ${result.upgradedTier.tier}: ${result.upgradedTier.name}!`,
+      subtitle: 'CITADEL ASCENDANCY',
+      description: result.upgradedTier.description,
+      coins: result.upgradedTier.rewardGrant.coins,
+      shards: result.upgradedTier.rewardGrant.shards,
+      icon: 'account_balance',
+    });
+
+    return true;
+  }, [profile, profile.soundEnabled]);
+
+  // Auto-evaluate achievements on activity
+  useEffect(() => {
+    const evalRes = evaluateAchievements(achievements, profile, habits, quests);
+    if (evalRes.newlyUnlocked.length > 0) {
+      setAchievements(evalRes.updated);
+      for (const unlocked of evalRes.newlyUnlocked) {
+        soundEngine.playLevelUp(profile.soundEnabled);
+        addXp(unlocked.rewards.xp);
+        if (unlocked.rewards.coins) {
+          addCoins(unlocked.rewards.coins, `Achievement: ${unlocked.title}`);
+        }
+        if (unlocked.rewards.shards) {
+          addShards(unlocked.rewards.shards, `Achievement: ${unlocked.title}`);
+        }
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          origin: { y: 0.5 },
+          colors: ['#f59e0b', '#38bdf8', '#ffffff'],
+        });
+      }
+    } else {
+      const hasProgressDiff = evalRes.updated.some(
+        (u, idx) => u.currentValue !== achievements[idx]?.currentValue
+      );
+      if (hasProgressDiff) {
+        setAchievements(evalRes.updated);
+      }
+    }
+  }, [profile, habits, quests, addXp, addCoins, addShards]);
+
   const closeClaimModal = () => {
     setClaimModal(prev => ({ ...prev, isOpen: false }));
   };
@@ -607,6 +701,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setQuests(loadQuestsV2());
       setChests(loadChestsV2());
       setRewards(loadRewardsV2());
+      setHabits(loadHabitsV2());
+      setTransactions(loadTransactionsV2());
+      setAchievements(loadAchievementsV2());
       setFocusSession(loadFocusSessionV2());
       soundEngine.playLevelUp(profile.soundEnabled);
       return true;
@@ -808,6 +905,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         rewards,
         habits,
         transactions,
+        achievements,
         claimModal,
         focusSession,
         addXp,
@@ -826,6 +924,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         claimChestLoot,
         redeemReward,
         createCustomReward,
+        upgradeCitadel,
         toggleSound,
         closeClaimModal,
         openCustomClaimModal,
