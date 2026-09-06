@@ -28,6 +28,24 @@ export interface Quest {
   estimatedMinutes?: number;
 }
 
+export type HabitCategory = 'morning' | 'focus' | 'vitality' | 'evening' | 'custom';
+
+export interface Habit {
+  id: string;
+  title: string;
+  description: string;
+  category: HabitCategory;
+  streakCount: number;
+  bestStreak: number;
+  lastCompletedDate?: string; // YYYY-MM-DD
+  completedDates: string[]; // List of YYYY-MM-DD
+  xpYield: number;
+  coinYield: number;
+  milestonesAchieved: number[];
+  createdAt: string;
+  icon?: string;
+}
+
 export type ChestStatus = 'unlocking' | 'queued' | 'ready' | 'empty' | 'locked';
 
 export interface ChestSlot {

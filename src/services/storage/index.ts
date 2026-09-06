@@ -4,6 +4,7 @@ import {
   ChestSlot,
   RewardItem,
   FocusSessionState,
+  Habit,
 } from '../../types';
 import {
   initialProfile,
@@ -12,6 +13,7 @@ import {
   initialRewards,
   initialFocusSession,
 } from '../../utils/storage';
+import { initialHabits } from '../../domain/habits';
 import { AuctusV2SaveData } from './types';
 import { V2_KEYS, safeParseJson, migrateV1ToV2 } from './migration';
 
@@ -116,6 +118,28 @@ export function saveRewardsV2(rewards: RewardItem[]): void {
 }
 
 /**
+ * Loads habits from V2 storage with automated fallback to initial habits.
+ */
+export function loadHabitsV2(): Habit[] {
+  try {
+    const raw = localStorage.getItem(V2_KEYS.HABITS);
+    if (raw) return safeParseJson(raw, initialHabits);
+    saveHabitsV2(initialHabits);
+    return initialHabits;
+  } catch {
+    return initialHabits;
+  }
+}
+
+export function saveHabitsV2(habits: Habit[]): void {
+  try {
+    localStorage.setItem(V2_KEYS.HABITS, JSON.stringify(habits));
+  } catch (e) {
+    console.error('Failed to save V2 habits', e);
+  }
+}
+
+/**
  * Loads focus session from V2 storage with automated fallback.
  */
 export function loadFocusSessionV2(): FocusSessionState {
@@ -156,6 +180,7 @@ export function exportAuctusBackup(): string {
     quests: loadQuestsV2(),
     chests: loadChestsV2(),
     rewards: loadRewardsV2(),
+    habits: loadHabitsV2(),
     focusSession: loadFocusSessionV2(),
   };
 
@@ -204,6 +229,7 @@ export function importAuctusBackup(jsonString: string): ImportResult {
     saveQuestsV2(parsed.quests);
     if (Array.isArray(parsed.chests)) saveChestsV2(parsed.chests);
     if (Array.isArray(parsed.rewards)) saveRewardsV2(parsed.rewards);
+    if (Array.isArray(parsed.habits)) saveHabitsV2(parsed.habits);
     if (parsed.focusSession) saveFocusSessionV2(parsed.focusSession);
 
     return {

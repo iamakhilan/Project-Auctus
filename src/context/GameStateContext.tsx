@@ -7,6 +7,8 @@ import {
   TabType,
   ClaimModalData,
   FocusSessionState,
+  Habit,
+  HabitCategory,
 } from '../types';
 import {
   loadProfileV2,
@@ -17,6 +19,8 @@ import {
   saveChestsV2,
   loadRewardsV2,
   saveRewardsV2,
+  loadHabitsV2,
+  saveHabitsV2,
   loadFocusSessionV2,
   saveFocusSessionV2,
   exportAuctusBackup,
@@ -41,6 +45,10 @@ import {
   resumeFocusSessionEntity,
   calculateFocusYield,
 } from '../domain/focus';
+import {
+  createHabitEntity,
+  completeHabitEntity,
+} from '../domain/habits';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -49,6 +57,7 @@ interface GameStateContextType {
   quests: Quest[];
   chests: ChestSlot[];
   rewards: RewardItem[];
+  habits: Habit[];
   claimModal: ClaimModalData;
   focusSession: FocusSessionState;
   
@@ -64,6 +73,9 @@ interface GameStateContextType {
   ) => void;
   updateQuest: (questId: string, updates: Partial<QuestCreationParams>) => void;
   deleteQuest: (questId: string) => void;
+  completeHabit: (habitId: string) => void;
+  createHabit: (title: string, category?: HabitCategory, description?: string, xpYield?: number, coinYield?: number) => void;
+  deleteHabit: (habitId: string) => void;
   unlockChest: (slotIndex: number) => void;
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
@@ -92,6 +104,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [quests, setQuests] = useState<Quest[]>(loadQuestsV2);
   const [chests, setChests] = useState<ChestSlot[]>(loadChestsV2);
   const [rewards, setRewards] = useState<RewardItem[]>(loadRewardsV2);
+  const [habits, setHabits] = useState<Habit[]>(loadHabitsV2);
 
   const [claimModal, setClaimModal] = useState<ClaimModalData>({
     isOpen: false,
@@ -118,6 +131,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     saveRewardsV2(rewards);
   }, [rewards]);
+
+  useEffect(() => {
+    saveHabitsV2(habits);
+  }, [habits]);
 
   useEffect(() => {
     saveFocusSessionV2(focusSession);
@@ -272,6 +289,66 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteQuest = useCallback((questId: string) => {
     soundEngine.playClick(profile.soundEnabled);
     setQuests(prev => deleteQuestEntity(prev, questId));
+  }, [profile.soundEnabled]);
+
+  // Habit Engine Actions
+  const completeHabit = useCallback((habitId: string) => {
+    const target = habits.find(h => h.id === habitId);
+    if (!target) return;
+
+    const res = completeHabitEntity(target);
+    setHabits(prev => prev.map(h => (h.id === habitId ? res.habit : h)));
+
+    if (res.xpEarned > 0) {
+      soundEngine.playQuestComplete(profile.soundEnabled);
+      addXp(res.xpEarned);
+      if (res.coinsEarned > 0) {
+        addCoins(res.coinsEarned);
+      }
+
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#00e5ff', '#10b981', '#fbbf24'],
+      });
+
+      if (res.newMilestoneDay) {
+        soundEngine.playLevelUp(profile.soundEnabled);
+        setClaimModal({
+          isOpen: true,
+          title: `Day ${res.newMilestoneDay} Streak Milestone!`,
+          subtitle: 'HABIT DISCIPLINE PROTOCOL',
+          description: `You maintained unflinching daily discipline. Milestone bonus awarded!`,
+          coins: res.milestoneBonus?.coins,
+          xp: res.milestoneBonus?.xp,
+          icon: 'local_fire_department',
+        });
+      }
+    }
+  }, [habits, addXp, addCoins, profile.soundEnabled]);
+
+  const createHabit = useCallback((
+    title: string,
+    category: HabitCategory = 'vitality',
+    description?: string,
+    xpYield = 75,
+    coinYield = 10
+  ) => {
+    const newHabit = createHabitEntity({
+      title,
+      category,
+      description,
+      xpYield,
+      coinYield,
+    });
+    soundEngine.playClick(profile.soundEnabled);
+    setHabits(prev => [newHabit, ...prev]);
+  }, [profile.soundEnabled]);
+
+  const deleteHabit = useCallback((habitId: string) => {
+    soundEngine.playClick(profile.soundEnabled);
+    setHabits(prev => prev.filter(h => h.id !== habitId));
   }, [profile.soundEnabled]);
 
   // Unlock / Start Timer on a Chest
@@ -603,6 +680,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         quests,
         chests,
         rewards,
+        habits,
         claimModal,
         focusSession,
         addXp,
@@ -612,6 +690,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         createQuest,
         updateQuest,
         deleteQuest,
+        completeHabit,
+        createHabit,
+        deleteHabit,
         unlockChest,
         claimChestLoot,
         redeemReward,
