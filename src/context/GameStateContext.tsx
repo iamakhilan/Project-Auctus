@@ -75,6 +75,7 @@ import {
 } from '../domain/habits';
 import { evaluateAchievements } from '../domain/achievements';
 import { upgradeCitadelEntity } from '../domain/citadel';
+import { NotifyTriggers } from '../services/notifications';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -656,6 +657,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (unlocked.rewards.shards) {
           addShards(unlocked.rewards.shards, `Achievement: ${unlocked.title}`);
         }
+        NotifyTriggers.achievementUnlocked(unlocked.title, unlocked.rewards.titleReward);
         confetti({
           particleCount: 60,
           spread: 70,
@@ -792,6 +794,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...p,
       totalFocusMinutes: p.totalFocusMinutes + Math.round(focusSession.targetDurationSeconds / 60),
     }));
+
+    NotifyTriggers.focusCompleted(
+      Math.round(focusSession.targetDurationSeconds / 60),
+      yields.xp
+    );
 
     confetti({
       particleCount: 80,

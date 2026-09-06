@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameStateProvider, useGameState } from './context/GameStateContext';
 import { HeaderHUD } from './components/layout/HeaderHUD';
 import { BottomDockNav } from './components/layout/BottomDockNav';
@@ -8,9 +8,20 @@ import { FocusArenaView } from './components/focus/FocusArenaView';
 import { VaultView } from './components/vault/VaultView';
 import { CitadelView } from './components/citadel/CitadelView';
 import { RewardModal } from './components/common/RewardModal';
+import { OnboardingModal } from './components/onboarding/OnboardingModal';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 const AppContent: React.FC = () => {
-  const { activeTab } = useGameState();
+  const { activeTab, setActiveTab, toggleSound } = useGameState();
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Register global shortcuts: 1-5 for screens, M for sound, ? for tutorial
+  useKeyboardShortcuts({
+    onTabChange: setActiveTab,
+    onOpenHelp: () => setShowTutorial(true),
+    onToggleSound: toggleSound,
+    onEscape: () => setShowTutorial(false),
+  });
 
   const renderCurrentView = () => {
     switch (activeTab) {
@@ -32,7 +43,10 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col antialiased selection:bg-amber-400 selection:text-amber-950">
       {/* Top Fixed Header HUD */}
-      <HeaderHUD />
+      <HeaderHUD
+        onOpenProfile={() => setActiveTab('citadel')}
+        onOpenSettings={() => setShowTutorial(true)}
+      />
 
       {/* Main Screen Container with Top & Bottom Safe Space */}
       <main className="flex-1 w-full pt-20">
@@ -44,6 +58,12 @@ const AppContent: React.FC = () => {
 
       {/* Victory / Loot Claim Celebration Modal */}
       <RewardModal />
+
+      {/* First-Run Onboarding Tutorial Modal */}
+      <OnboardingModal
+        forceOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
     </div>
   );
 };
