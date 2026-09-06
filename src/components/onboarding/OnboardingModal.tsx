@@ -100,17 +100,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
   const step = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-2xl bg-surface-container-high border border-outline-variant/80 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant/80 shadow-crown flex flex-col custom-scrollbar animate-slideUp">
         {/* Top Header Glow Bar */}
         <div className={`h-2 w-full bg-gradient-to-r ${step.accentColor}`} />
 
         {/* Content Container */}
-        <div className="p-6 sm:p-8 flex flex-col gap-6">
+        <div className="p-5 sm:p-7 flex flex-col gap-4 sm:gap-6">
           {/* Top Bar with Step Indicators */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-amber-400/15 border border-amber-400/40 text-amber-300 font-label-sm text-label-sm font-extrabold tracking-wider uppercase">
+              <span className="px-2.5 py-1 rounded-md bg-amber-400/15 border border-amber-400/40 text-amber-300 font-label-sm text-xs font-extrabold tracking-wider uppercase">
                 {step.badge}
               </span>
               <span className="text-on-surface-variant font-label-sm text-label-sm">

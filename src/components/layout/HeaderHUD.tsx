@@ -9,147 +9,116 @@ interface HeaderHUDProps {
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSettings }) => {
   const { profile, activeTab, toggleSound, setActiveTab } = useGameState();
 
-  const xpPercent = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
-
   const getScreenTitle = () => {
     switch (activeTab) {
-      case 'realm': return 'Realm';
-      case 'quests': return 'Quests';
+      case 'realm': return 'Citadel Realm';
+      case 'quests': return 'Mission Forge';
       case 'focus-arena': return 'Focus Arena';
-      case 'vault': return 'Vault';
-      case 'citadel': return 'Citadel';
+      case 'vault': return 'Treasury Vault';
+      case 'citadel': return 'Commander Citadel';
       default: return 'Auctus';
     }
   };
 
   return (
-    <header className="pt-safe fixed top-0 w-full z-40 bg-surface-dim/95 border-b border-outline-variant/60 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.6)]">
-      <div className="max-w-screen mx-auto h-20 px-4 sm:px-6 flex items-center justify-between gap-2">
-        {/* Left Side: Crest, Avatar & Level */}
-        <div className="flex items-center gap-3">
+    <header className="pt-safe fixed top-0 left-0 right-0 z-40 bg-surface/90 border-b border-outline-variant/50 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+      <div className="max-w-screen mx-auto h-16 px-3 sm:px-4 flex items-center justify-between gap-2">
+        {/* Left: Avatar with Level Badge + Screen / Player Title */}
+        <div className="flex items-center gap-2.5 min-w-0">
           <button
-            onClick={() => setActiveTab('realm')}
-            className="flex items-center gap-2.5 focus:outline-none group"
-            title="Return to Realm"
+            onClick={onOpenProfile || (() => setActiveTab('citadel'))}
+            className="relative flex-shrink-0 flex items-center justify-center group focus:outline-none"
+            title="View Commander Profile"
           >
-            <img
-              src="/assets/crest.png"
-              alt="Auctus Crest"
-              className="h-8 w-auto object-contain drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] group-hover:scale-105 transition-transform"
-            />
+            <div className="w-10 h-10 rounded-xl bg-surface-container-high border border-amber-400/80 overflow-hidden shadow-card flex items-center justify-center group-hover:border-amber-300 transition-colors">
+              <img
+                src="/assets/avatar.png"
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-label-sm text-[10px] font-black border border-yellow-200 shadow-sm leading-tight">
+              {profile.level}
+            </span>
           </button>
 
-          {/* Player Avatar with Level Badge */}
-          <div className="flex items-center gap-2.5">
-            <div
-              onClick={onOpenProfile || (() => setActiveTab('citadel'))}
-              className="relative flex items-center justify-center cursor-pointer group"
-              title="View Player Profile"
-            >
-              <div className="w-10 h-10 rounded-xl bg-surface-container-high border-2 border-amber-400/80 overflow-hidden shadow-gold-aura flex items-center justify-center group-hover:border-amber-300 transition-colors">
-                <img
-                  src="/assets/avatar.png"
-                  alt="Player Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-label-sm text-label-sm font-black border border-yellow-200/80 shadow-md">
-                LV.{profile.level}
-              </span>
-            </div>
-
-            {/* XP Progress Bar */}
-            <div className="hidden sm:flex flex-col gap-0.5">
-              <div className="flex items-center justify-between font-label-sm text-label-sm">
-                <span className="text-amber-400 font-bold">XP</span>
-                <span className="text-on-surface-variant font-medium">
-                  {profile.xp >= 1000 ? `${(profile.xp / 1000).toFixed(1)}k` : profile.xp} / {profile.xpToNextLevel >= 1000 ? `${(profile.xpToNextLevel / 1000).toFixed(1)}k` : profile.xpToNextLevel}
-                </span>
-              </div>
-              <div className="w-24 h-1.5 bg-surface-dim rounded-full overflow-hidden border border-outline-variant/60 p-px">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-emerald-aura transition-all duration-500"
-                  style={{ width: `${xpPercent}%` }}
-                />
-              </div>
-            </div>
+          <div className="flex flex-col min-w-0">
+            <h1 className="font-headline-sm text-sm sm:text-base text-on-surface font-extrabold truncate leading-tight tracking-tight">
+              {getScreenTitle()}
+            </h1>
+            <span className="font-label-sm text-[11px] text-on-surface-variant font-medium truncate leading-none mt-0.5">
+              {profile.name} • {profile.leagueRank}
+            </span>
           </div>
-
-          <span className="font-headline-sm text-headline-sm text-on-surface tracking-wide hidden md:inline-block font-extrabold ml-1">
-            {getScreenTitle()}
-          </span>
         </div>
 
-        {/* Center/Right: Resource Counters (Diamonds, Coins, Streak) */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto py-1">
-          {/* Diamonds / Mana Gems */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-outline-variant shadow-card">
-            <span className="material-symbols-outlined text-cyan-400 text-[16px] fill-1">
-              diamond
-            </span>
-            <span className="font-label-md text-body-sm text-cyan-300 font-bold">
-              {profile.diamonds}
-            </span>
-          </div>
-
+        {/* Right: Curated Resource Counters & Quick Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           {/* Auctus Coins */}
-          <div
+          <button
             onClick={() => setActiveTab('vault')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-amber-400/50 shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer hover:border-amber-400 active:scale-95 transition-all"
-            title="Open Treasury Vault"
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-amber-400/40 hover:border-amber-400 active:scale-95 transition-all shadow-sm"
+            title="Treasury Coins"
           >
             <span className="material-symbols-outlined text-amber-400 text-[16px] fill-1">
               monetization_on
             </span>
-            <span className="font-label-md text-body-sm text-amber-300 font-extrabold">
-              {profile.coins}
+            <span className="font-label-md text-xs sm:text-sm text-amber-300 font-extrabold tabular-nums">
+              {profile.coins >= 1000 ? `${(profile.coins / 1000).toFixed(1)}k` : profile.coins}
+            </span>
+          </button>
+
+          {/* Diamonds / Shards */}
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-sky-400/40 shadow-sm"
+            title="Spire Shards"
+          >
+            <span className="material-symbols-outlined text-cyan-400 text-[16px] fill-1">
+              diamond
+            </span>
+            <span className="font-label-md text-xs sm:text-sm text-cyan-300 font-bold tabular-nums">
+              {profile.diamonds}
             </span>
           </div>
 
           {/* Streak Flame */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-rose-500/50 shadow-card">
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-rose-500/40 shadow-sm"
+            title="Consistency Streak"
+          >
             <span className="material-symbols-outlined text-rose-500 text-[16px] fill-1 animate-pulse">
               local_fire_department
             </span>
-            <span className="font-label-md text-body-sm text-rose-200 font-bold">
+            <span className="font-label-md text-xs sm:text-sm text-rose-200 font-bold tabular-nums">
               {profile.streakDays}d
             </span>
           </div>
-        </div>
 
-        {/* Action Utility Buttons (Sound SFX, Settings, Profile) */}
-        <div className="flex items-center gap-1">
+          {/* Audio SFX Toggle */}
           <button
             onClick={toggleSound}
-            className={`w-9 h-9 rounded-control flex items-center justify-center transition-all ${
+            className={`w-8 h-8 rounded-control flex items-center justify-center transition-all ${
               profile.soundEnabled
                 ? 'text-amber-400 bg-surface-container border border-amber-400/40'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container border border-transparent'
             }`}
-            title={profile.soundEnabled ? 'Sound Effects Enabled' : 'Sound Effects Muted'}
+            title={profile.soundEnabled ? 'SFX Audio Enabled' : 'SFX Audio Muted'}
+            aria-label="Toggle Sound"
           >
-            <span className="material-symbols-outlined text-[19px]">
+            <span className="material-symbols-outlined text-[17px]">
               {profile.soundEnabled ? 'volume_up' : 'volume_off'}
             </span>
           </button>
 
+          {/* Settings / Tutorial */}
           <button
             onClick={onOpenSettings || (() => setActiveTab('citadel'))}
-            className="w-9 h-9 rounded-control flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all"
-            title="Citadel Settings"
+            className="w-8 h-8 rounded-control flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container border border-transparent active:scale-95 transition-all"
+            title="Citadel Settings & Guide"
+            aria-label="Settings and Tutorial"
           >
-            <span className="material-symbols-outlined text-[19px]">
+            <span className="material-symbols-outlined text-[18px]">
               settings
-            </span>
-          </button>
-
-          <button
-            onClick={onOpenProfile || (() => setActiveTab('citadel'))}
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 border border-yellow-200 flex items-center justify-center shadow-md active:scale-95 hover:brightness-110 transition-all"
-            title="Commander Profile"
-          >
-            <span className="material-symbols-outlined text-amber-950 text-[17px] font-bold">
-              person
             </span>
           </button>
         </div>

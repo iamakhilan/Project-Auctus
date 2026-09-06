@@ -150,10 +150,15 @@ export default {
           "0%": { opacity: "0", transform: "scale(0.92) translateY(10px)" },
           "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
+        slideUp: {
+          "0%": { opacity: "0", transform: "translateY(100%)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         fadeIn: "fadeIn 0.18s ease-out both",
         scaleUp: "scaleUp 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
+        slideUp: "slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
     },
   },

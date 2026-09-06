@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
-import {
-  calculateNetFlow,
-  filterTransactions,
-} from '../../domain/economy';
+import { calculateNetFlow, filterTransactions } from '../../domain/economy';
 import { CurrencyType, EconomyTransactionType } from '../../types';
 
 export const VaultView: React.FC = () => {
@@ -31,7 +28,6 @@ export const VaultView: React.FC = () => {
   const [ledgerSearch, setLedgerSearch] = useState('');
 
   const filteredRewards = rewards.filter(r => r.type === activeShopTab);
-
   const netFlowCoins = calculateNetFlow(transactions, 'coins', 24 * 3600 * 1000);
   const filteredLedger = filterTransactions(transactions, {
     currency: ledgerCurrencyFilter,
@@ -61,279 +57,159 @@ export const VaultView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full max-w-screen mx-auto px-4 pb-32 pt-3 space-y-5">
-      {/* 1. ROYAL TREASURY CHAMBER HUD */}
-      <section className="relative overflow-hidden rounded-card bg-gradient-to-b from-surface-container-high to-surface-container-low border border-outline-variant shadow-card-raised p-4 flex flex-col gap-3">
-        {/* Ambient Royal Flare */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
-
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-control bg-gradient-to-b from-amber-400 to-amber-600 border border-amber-300 shadow-[0_4px_10px_rgba(245,158,11,0.4)] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[#3d1a00] text-[24px] fill-1">
-                account_balance
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-headline-sm text-headline-sm font-extrabold text-white tracking-wide drop-shadow-sm">
-                Treasury Chamber
-              </span>
-              <span className="font-label-sm text-label-sm text-amber-300/90 uppercase font-black tracking-wider">
-                Season 4 Active
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLedgerModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-surface-dim hover:bg-surface-container border border-amber-400/40 text-amber-300 font-label-sm text-label-sm font-bold shadow-card transition-all active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-              <span>Ledger</span>
-            </button>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-dim/90 border border-emerald-500/40 shadow-inset-well">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
-              <span className="font-label-sm text-label-sm text-emerald-400 font-extrabold tracking-wider uppercase">
-                Secure
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Currency Triad HUD Tiles */}
-        <div className="grid grid-cols-3 gap-2 relative z-10">
-          {/* Coins Counter */}
-          <div className="flex flex-col items-center justify-center p-2 rounded-control bg-surface-container border border-amber-400/30 shadow-card transition-transform active:scale-95">
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-amber-400 text-[18px] drop-shadow-[0_2px_4px_rgba(245,158,11,0.5)] fill-1">
-                monetization_on
-              </span>
-              <span className="font-headline-sm text-headline-sm text-amber-300 font-black tracking-tight">
-                {profile.coins.toLocaleString()}
-              </span>
-            </div>
-            <span className="font-label-sm text-label-sm text-amber-200/80 uppercase font-bold tracking-wider mt-0.5">
-              Auctus Coins
-            </span>
-          </div>
-
-          {/* Spire Shards */}
-          <div className="flex flex-col items-center justify-center p-2 rounded-control bg-surface-container border border-sky-400/30 shadow-card transition-transform active:scale-95">
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sky-400 text-[18px] drop-shadow-[0_2px_4px_rgba(56,189,248,0.5)] fill-1">
-                diamond
-              </span>
-              <span className="font-headline-sm text-headline-sm text-sky-300 font-black tracking-tight">
-                {profile.shards}
-              </span>
-            </div>
-            <span className="font-label-sm text-label-sm text-sky-200/80 uppercase font-bold tracking-wider mt-0.5">
-              Spire Shards
-            </span>
-          </div>
-
-          {/* Ready Chests */}
-          <div className="flex flex-col items-center justify-center p-2 rounded-control bg-surface-container border-2 border-emerald-400/60 shadow-card transition-transform active:scale-95">
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-emerald-400 text-[18px] drop-shadow-[0_2px_6px_rgba(0,200,83,0.6)] fill-1">
-                redeem
-              </span>
-              <span className="font-headline-sm text-headline-sm text-emerald-300 font-black tracking-tight">
-                {dailyStreakClaimed ? 0 : 1}
-              </span>
-            </div>
-            <span className="font-label-sm text-label-sm text-emerald-200 uppercase font-black tracking-wider mt-0.5">
-              Unclaimed
-            </span>
-          </div>
-        </div>
-
-        {/* 24h Flow Pill Banner */}
-        <div className="flex items-center justify-between px-3 py-1.5 rounded-control bg-surface-dim/70 border border-outline-variant text-label-sm text-on-surface-variant relative z-10">
-          <div className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-amber-400">trending_up</span>
-            <span>24h Inflow: <strong className="text-emerald-400">+{netFlowCoins.earned}</strong></span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] text-rose-400">shopping_bag</span>
-            <span>Spent: <strong className="text-rose-400">-{netFlowCoins.spent}</strong></span>
-          </div>
-          <div className="font-bold text-amber-300">
-            Net: {netFlowCoins.net >= 0 ? `+${netFlowCoins.net}` : netFlowCoins.net}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. LOOT CHEST GALLERY */}
-      <section className="flex flex-col gap-3">
+    <div className="flex flex-col w-full max-w-screen mx-auto px-3.5 sm:px-4 pt-3 pb-8 space-y-4">
+      {/* 1. ROYAL TREASURY BALANCE CHAMBER */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-surface-container via-surface-container to-surface-container-low border border-outline-variant/60 shadow-card p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-amber-400 text-[22px] fill-1">
-              military_tech
-            </span>
-            <h2 className="font-headline-md text-headline-md font-extrabold text-white tracking-wide drop-shadow-sm">
-              Loot Chest Gallery
-            </h2>
-          </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/50 font-label-sm text-label-sm text-emerald-300 uppercase font-black tracking-wider">
-            {dailyStreakClaimed ? '0 Unlocked' : '1 Unlocked'}
-          </span>
-        </div>
-
-        {/* CHEST 1: Daily Streak Chest (Ready to open!) */}
-        <div className="relative overflow-hidden rounded-card bg-gradient-to-b from-surface-container-high to-surface-container-low p-4 border border-amber-400/60 shadow-[0_12px_28px_rgba(245,158,11,0.25)] flex flex-col gap-3">
-          <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-amber-400/25 blur-3xl pointer-events-none" />
-          <div className="flex items-start gap-3 relative z-10">
-            {/* Chest Artwork Image Pedestal */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-control overflow-hidden bg-surface-dim border-2 border-amber-400 shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
-              <img
-                src="/assets/chest_streak.png"
-                alt="Daily Streak Chest"
-                className="w-full h-full object-cover"
-              />
-              {!dailyStreakClaimed && (
-                <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-yellow-300 text-[#3f1900] font-label-sm text-label-sm uppercase font-black shadow-md border border-yellow-100">
-                  READY
-                </span>
-              )}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+              <span className="material-symbols-outlined text-[20px] fill-1">account_balance</span>
             </div>
-
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center gap-1 text-rose-400">
-                <span className="material-symbols-outlined text-[15px] text-ruby drop-shadow fill-1">
-                  local_fire_department
-                </span>
-                <span className="font-label-sm text-label-sm text-rose-300 uppercase tracking-wide font-black">
-                  {profile.streakDays}-Day Streak Perk
-                </span>
-              </div>
-              <h3 className="font-headline-sm text-headline-sm font-extrabold text-white truncate mt-0.5 drop-shadow">
-                Daily Streak Chest
-              </h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-0.5 leading-snug">
-                Guaranteed 120-180 Auctus Coins, bonus XP spark, and rare focus elixir.
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="px-2 py-0.5 rounded-md bg-purple-900/60 border border-purple-400/40 text-purple-200 font-label-sm text-label-sm uppercase font-bold">
-                  Tier I Epic
-                </span>
-                <span className="font-label-sm text-label-sm text-amber-300 font-semibold flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-[12px]">timer</span> Expires in 7h 42m
-                </span>
-              </div>
+            <div>
+              <span className="font-label-sm text-[10px] text-amber-400 uppercase tracking-wider font-extrabold block">
+                Citadel Treasury
+              </span>
+              <h2 className="font-headline-sm text-sm sm:text-base text-white font-black">
+                Resource Vault
+              </h2>
             </div>
           </div>
 
-          {/* Tactile Luminous Gold 3D Action Button */}
           <button
-            onClick={handleClaimDailyStreak}
-            disabled={dailyStreakClaimed}
-            className={`btn w-full h-12 font-headline-sm text-headline-sm uppercase tracking-wider ${
-              dailyStreakClaimed
-                ? 'bg-surface-dim border border-outline-variant/60 text-on-surface-variant cursor-not-allowed shadow-none'
-                : 'btn-gold'
-            }`}
+            onClick={() => setLedgerModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-dim hover:bg-surface-container-high border border-outline-variant/60 text-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-all"
           >
-            <span className="material-symbols-outlined text-[20px] fill-1">redeem</span>
-            <span>{dailyStreakClaimed ? 'CLAIMED!' : 'CLAIM LOOT'}</span>
+            <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+            <span>Ledger</span>
           </button>
         </div>
 
-        {/* CHEST 2: Weekly Focus Grand Chest */}
-        <div className="relative overflow-hidden rounded-card bg-surface-container-low p-4 border border-outline-variant shadow-card flex flex-col gap-2">
-          <div className="flex items-start gap-3">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-control overflow-hidden bg-surface-dim border border-secondary/30 shadow-inset-well">
-              <img
-                src="/assets/chest_cyber.png"
-                alt="Cyber Grand Chest"
-                className="w-full h-full object-cover grayscale opacity-60"
-              />
-              <div className="absolute inset-0 bg-surface-dim/60 backdrop-blur-[1px] flex items-center justify-center">
-                <span className="material-symbols-outlined text-secondary text-[24px]">lock_clock</span>
-              </div>
+        {/* Currency Triad */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-amber-400/30 text-center flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-amber-400 text-[18px] fill-1">monetization_on</span>
+              <span className="font-headline-sm text-sm sm:text-base text-amber-300 font-black tabular-nums">
+                {profile.coins.toLocaleString()}
+              </span>
             </div>
+            <span className="text-[10px] text-on-surface-variant font-bold uppercase mt-0.5">Auctus Coins</span>
+          </div>
 
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="font-label-sm text-label-sm text-sky-400 uppercase font-extrabold">
-                  Unlocks in 2 Days
-                </span>
-                <span className="font-label-sm text-label-sm text-sky-200 font-black">14 / 20 hrs</span>
-              </div>
-              <h3 className="font-headline-sm text-headline-sm font-bold text-white truncate mt-0.5">
-                Weekly Focus Grand Chest
-              </h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-                Log 6 more deep work hours to break the cyber seal.
-              </p>
-              {/* Progress Track */}
-              <div className="w-full h-2.5 bg-surface-dim rounded-full overflow-hidden mt-2 p-0.5 border border-secondary/20 shadow-inset-well">
-                <div
-                  className="h-full bg-gradient-to-r from-sky-500 to-sky-300 rounded-full shadow-cyan-aura"
-                  style={{ width: '70%' }}
-                />
-              </div>
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-sky-400/30 text-center flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-cyan-400 text-[18px] fill-1">diamond</span>
+              <span className="font-headline-sm text-sm sm:text-base text-cyan-300 font-black tabular-nums">
+                {profile.shards}
+              </span>
             </div>
+            <span className="text-[10px] text-on-surface-variant font-bold uppercase mt-0.5">Spire Shards</span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-emerald-500/30 text-center flex flex-col items-center">
+            <div className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-emerald-400 text-[18px] fill-1">redeem</span>
+              <span className="font-headline-sm text-sm sm:text-base text-emerald-300 font-black tabular-nums">
+                {dailyStreakClaimed ? 0 : 1}
+              </span>
+            </div>
+            <span className="text-[10px] text-on-surface-variant font-bold uppercase mt-0.5">Unclaimed</span>
           </div>
         </div>
 
-        {/* CHEST 3: Mastery Relic Case */}
-        <div className="relative overflow-hidden rounded-card bg-surface-container-low p-4 border border-outline-variant shadow-card flex flex-col gap-2">
-          <div className="flex items-start gap-3">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-control overflow-hidden bg-surface-dim border border-emerald-400/30 shadow-inset-well">
-              <img
-                src="/assets/chest_relic.png"
-                alt="Relic Case"
-                className="w-full h-full object-cover grayscale opacity-60"
-              />
-              <div className="absolute inset-0 bg-surface-dim/60 backdrop-blur-[1px] flex items-center justify-center">
-                <span className="material-symbols-outlined text-emerald-400 text-[24px]">lock</span>
-              </div>
-            </div>
+        {/* 24h Flow Summary */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-surface-dim/70 border border-outline-variant/40 text-xs text-on-surface-variant">
+          <span>24h Earned: <strong className="text-emerald-400">+{netFlowCoins.earned}</strong></span>
+          <span>Spent: <strong className="text-rose-400">-{netFlowCoins.spent}</strong></span>
+          <span className="text-amber-300 font-bold">
+            Net: {netFlowCoins.net >= 0 ? `+${netFlowCoins.net}` : netFlowCoins.net}
+          </span>
+        </div>
+      </section>
 
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="font-label-sm text-label-sm text-emerald-400 uppercase font-extrabold">
-                  Milestone: Deep Sessions
-                </span>
-                <span className="font-label-sm text-label-sm text-emerald-200 font-black">42 / 50</span>
+      {/* 2. LOOT CHESTS */}
+      <section className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between px-0.5">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-amber-400 text-[18px] fill-1">military_tech</span>
+            <h3 className="font-headline-sm text-sm text-white font-extrabold">
+              Milestone Loot Chests
+            </h3>
+          </div>
+        </div>
+
+        {/* Daily Streak Chest Card */}
+        <div className="rounded-2xl bg-surface-container border border-amber-400/50 p-3.5 shadow-card flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-dim border border-amber-400/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
+              <img src="/assets/chest_streak.png" alt="Streak Chest" className="w-full h-full object-contain" />
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-1 text-rose-400">
+                <span className="material-symbols-outlined text-[13px] fill-1">local_fire_department</span>
+                <span className="text-[10px] font-extrabold uppercase">{profile.streakDays}-Day Streak Reward</span>
               </div>
-              <h3 className="font-headline-sm text-headline-sm font-bold text-white truncate mt-0.5">
-                Mastery Relic Case
-              </h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-                Complete 8 more 45m+ Pomodoro sessions to unlock.
+              <h4 className="font-headline-sm text-sm text-white font-extrabold mt-0.5">
+                Daily Streak Chest
+              </h4>
+              <p className="text-xs text-on-surface-variant line-clamp-2 mt-0.5">
+                Guaranteed 140 Coins, 2 Spire Shards, and bonus XP elixir.
               </p>
-              <div className="w-full h-2.5 bg-surface-dim rounded-full overflow-hidden mt-2 p-0.5 border border-emerald-500/20 shadow-inset-well">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full shadow-emerald-aura"
-                  style={{ width: '84%' }}
-                />
+            </div>
+          </div>
+
+          <button
+            onClick={handleClaimDailyStreak}
+            disabled={dailyStreakClaimed}
+            className={`h-11 btn font-headline-sm text-xs uppercase tracking-wider font-black w-full ${
+              dailyStreakClaimed
+                ? 'bg-surface-dim border border-outline-variant/50 text-on-surface-variant cursor-not-allowed'
+                : 'btn-gold shadow-md'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">redeem</span>
+            <span>{dailyStreakClaimed ? 'CLAIMED TODAY' : 'CLAIM CHEST LOOT'}</span>
+          </button>
+        </div>
+
+        {/* Weekly Focus Chest */}
+        <div className="rounded-2xl bg-surface-container border border-outline-variant/60 p-3.5 shadow-card flex flex-col gap-2.5">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-surface-dim border border-outline-variant/60 flex-shrink-0 overflow-hidden flex items-center justify-center opacity-70">
+              <img src="/assets/chest_cyber.png" alt="Cyber Chest" className="w-full h-full object-contain grayscale" />
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-cyan-400 font-bold uppercase text-[10px]">Unlocks in 2 Days</span>
+                <span className="text-on-surface-variant font-medium">14 / 20 hrs</span>
+              </div>
+              <h4 className="font-headline-sm text-sm text-white font-bold mt-0.5">
+                Weekly Focus Grand Chest
+              </h4>
+              <div className="w-full bg-surface-dim h-1.5 rounded-full overflow-hidden mt-2">
+                <div className="bg-cyan-400 h-full rounded-full" style={{ width: '70%' }} />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. REAL-WORLD & IN-GAME REWARD SHOP (REWARD BAZAAR) */}
-      <section className="flex flex-col gap-3">
-        {/* Header & Filter Tabs */}
+      {/* 3. REWARD BAZAAR */}
+      <section className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-amber-400 text-[22px]">storefront</span>
-            <h2 className="font-headline-md text-headline-md font-extrabold text-white tracking-wide drop-shadow-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-amber-400 text-[18px]">storefront</span>
+            <h3 className="font-headline-sm text-sm text-white font-extrabold">
               Reward Bazaar
-            </h2>
+            </h3>
           </div>
 
-          <div className="flex items-center gap-1 bg-surface-dim p-1 rounded-control border border-outline-variant/60 shadow-inset-well">
+          <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-xl border border-outline-variant/50">
             <button
               onClick={() => setActiveShopTab('irl')}
-              className={`px-3 py-1 rounded-control font-label-sm text-label-sm font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 activeShopTab === 'irl'
-                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-card'
+                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-sm'
                   : 'text-on-surface-variant hover:text-white'
               }`}
             >
@@ -341,19 +217,19 @@ export const VaultView: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveShopTab('game')}
-              className={`px-3 py-1 rounded-control font-label-sm text-label-sm font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 activeShopTab === 'game'
-                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-card'
+                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-sm'
                   : 'text-on-surface-variant hover:text-white'
               }`}
             >
-              Citadel Perks
+              Perks
             </button>
           </div>
         </div>
 
-        {/* Reward Items Stream */}
-        <div className="flex flex-col gap-2.5">
+        {/* Rewards List */}
+        <div className="flex flex-col gap-2">
           {filteredRewards.map(item => {
             const canAfford = profile.coins >= item.cost;
             const isLevelLocked = item.requiredLevel !== undefined && profile.level < item.requiredLevel;
@@ -362,36 +238,24 @@ export const VaultView: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className="rounded-card bg-surface-container-low p-3 flex items-center justify-between gap-3 border border-outline-variant shadow-inset-well opacity-80"
+                  className="rounded-xl bg-surface-container/60 p-3 flex items-center justify-between gap-3 border border-outline-variant/40 opacity-70"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-control bg-surface-dim flex items-center justify-center flex-shrink-0 text-on-surface-variant/70 border border-outline-variant/50">
-                      <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-surface-dim flex items-center justify-center text-on-surface-variant flex-shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1">
-                        <h4 className="font-headline-sm text-headline-sm font-bold text-white/80 truncate">
-                          {item.title}
-                        </h4>
-                        <span className="material-symbols-outlined text-sky-400 text-[15px]">lock</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="font-label-sm text-label-sm text-sky-300 font-black">
-                          Unlocks at Citadel LV.{item.requiredLevel}
-                        </span>
-                        <span className="text-on-surface-variant font-label-sm text-label-sm">
-                          (Current: LV.{profile.level})
-                        </span>
-                      </div>
+                      <h4 className="font-headline-sm text-xs sm:text-sm text-white/80 truncate font-bold">
+                        {item.title}
+                      </h4>
+                      <span className="text-[11px] text-cyan-300 font-semibold">
+                        Unlocks at Citadel LV.{item.requiredLevel}
+                      </span>
                     </div>
                   </div>
-
-                  <button
-                    disabled
-                    className="px-3.5 py-2 rounded-control bg-surface-dim border border-outline-variant/50 text-on-surface-variant font-headline-sm text-headline-sm font-bold flex-shrink-0 cursor-not-allowed"
-                  >
+                  <span className="px-2.5 py-1 rounded-lg bg-surface-dim text-on-surface-variant text-xs font-bold flex-shrink-0">
                     LV.{item.requiredLevel}
-                  </button>
+                  </span>
                 </div>
               );
             }
@@ -401,37 +265,28 @@ export const VaultView: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className="rounded-card bg-surface-container-low p-3 flex items-center justify-between gap-3 border border-outline-variant shadow-inset-well opacity-85"
+                  className="rounded-xl bg-surface-container/80 p-3 flex items-center justify-between gap-3 border border-outline-variant/60"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-control bg-surface-dim flex items-center justify-center flex-shrink-0 text-on-surface-variant/70 border border-outline-variant/50">
-                      <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-surface-dim flex items-center justify-center text-on-surface-variant flex-shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1">
-                        <h4 className="font-headline-sm text-headline-sm font-bold text-white/80 truncate">
-                          {item.title}
-                        </h4>
-                        <span className="material-symbols-outlined text-on-surface-variant text-[15px]">lock</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="flex items-center gap-0.5 font-label-md text-label-lg text-on-surface-variant font-bold">
-                          <span className="material-symbols-outlined text-[14px]">monetization_on</span>
+                      <h4 className="font-headline-sm text-xs sm:text-sm text-white truncate font-bold">
+                        {item.title}
+                      </h4>
+                      <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <span className="text-amber-300/80 font-bold flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[13px]">monetization_on</span>
                           {item.cost}
                         </span>
-                        <span className="text-rose-400 font-label-sm text-label-sm font-bold">
-                          • Need {diff} more coins
-                        </span>
+                        <span>• Need {diff} more</span>
                       </div>
                     </div>
                   </div>
-
-                  <button
-                    disabled
-                    className="px-4 py-2.5 rounded-control bg-surface-dim border border-outline-variant/50 text-on-surface-variant/60 font-headline-sm text-headline-sm font-bold tracking-wide cursor-not-allowed flex-shrink-0"
-                  >
+                  <span className="px-3 py-1.5 rounded-xl bg-surface-dim border border-outline-variant/40 text-on-surface-variant text-xs font-bold flex-shrink-0">
                     Locked
-                  </button>
+                  </span>
                 </div>
               );
             }
@@ -439,73 +294,61 @@ export const VaultView: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="rounded-card bg-gradient-to-b from-surface-container to-surface-container-low p-3 flex items-center justify-between gap-3 border border-outline-variant shadow-card card-hover hover:border-amber-400/40"
+                className="rounded-xl bg-surface-container p-3 flex items-center justify-between gap-3 border border-outline-variant hover:border-amber-400/40 shadow-card transition-all"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-control bg-navy-hi border border-amber-400/30 flex items-center justify-center flex-shrink-0 text-amber-400 shadow-inset-well">
-                    <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-navy-hi border border-amber-400/30 flex items-center justify-center text-amber-300 flex-shrink-0">
+                    <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h4 className="font-headline-sm text-headline-sm font-bold text-white truncate">
+                    <h4 className="font-headline-sm text-xs sm:text-sm text-white truncate font-bold">
                       {item.title}
                     </h4>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="flex items-center gap-0.5 font-label-md text-label-lg text-amber-300 font-extrabold">
-                        <span className="material-symbols-outlined text-amber-400 text-[14px] fill-1">
-                          monetization_on
-                        </span>
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-amber-300 font-extrabold flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[13px] fill-1">monetization_on</span>
                         {item.cost}
                       </span>
-                      <span className="text-on-surface-variant font-label-sm text-label-sm">
-                        • {item.category}
-                      </span>
+                      <span className="text-on-surface-variant text-[11px]">• {item.category}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Emerald Gem Green Beveled 3D Button */}
                 <button
                   onClick={() => redeemReward(item.id)}
-                  className="btn btn-emerald h-10 px-4 font-headline-sm text-headline-sm uppercase tracking-wide flex-shrink-0"
+                  className="btn btn-emerald h-9 px-3.5 font-headline-sm text-xs uppercase tracking-wider font-black flex-shrink-0"
                 >
-                  <span>Redeem</span>
+                  Redeem
                 </button>
               </div>
             );
           })}
 
-          {/* User Custom Reward Builder Trigger */}
-          <div
+          <button
             onClick={() => setCustomModalOpen(true)}
-            className="mt-1 rounded-card bg-gradient-to-r from-surface-container-low to-surface-container border border-dashed border-secondary/40 p-3 flex items-center justify-between shadow-inset-well cursor-pointer hover:border-amber-400/50 hover:bg-surface-container transition-all"
+            className="rounded-xl bg-surface-container/60 hover:bg-surface-container border border-dashed border-cyan-400/40 p-3 flex items-center justify-between text-left transition-all mt-1"
           >
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-amber-400 text-[20px]">add_circle</span>
-              <span className="font-label-md text-label-lg text-on-surface-variant font-semibold">
-                Set custom real-world reward
-              </span>
+              <span className="material-symbols-outlined text-amber-400 text-[18px]">add_circle</span>
+              <span className="text-xs font-bold text-sky-200">Create Custom Real-World Reward</span>
             </div>
-            <span className="font-label-sm text-label-sm text-amber-300 uppercase font-black">
-              Configure
-            </span>
-          </div>
+            <span className="text-[10px] text-amber-300 uppercase font-black">Configure</span>
+          </button>
         </div>
       </section>
 
-      {/* CUSTOM REWARD CREATOR MODAL */}
+      {/* 4. CUSTOM REWARD MODAL */}
       {customModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-sm rounded-3xl bg-gradient-to-b from-surface-container-high to-surface-container-low border border-amber-400/70 p-5 shadow-crown flex flex-col relative animate-scaleUp">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-400 text-[22px]">stars</span>
-                <h3 className="font-headline-sm text-headline-sm text-white font-bold">
-                  New Custom Reward
-                </h3>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setCustomModalOpen(false)} />
+          <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-surface-container border border-amber-400/60 p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/40">
+              <h3 className="font-headline-sm text-base text-white font-extrabold">
+                New Custom Reward
+              </h3>
               <button
                 onClick={() => setCustomModalOpen(false)}
-                className="w-8 h-8 rounded-control flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-surface-container transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-white"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -513,8 +356,8 @@ export const VaultView: React.FC = () => {
 
             <form onSubmit={handleAddCustomReward} className="flex flex-col gap-3">
               <div>
-                <label className="font-label-sm text-label-sm text-amber-300 uppercase font-bold block mb-1">
-                  Reward Name
+                <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold block mb-1">
+                  Reward Title
                 </label>
                 <input
                   type="text"
@@ -522,13 +365,13 @@ export const VaultView: React.FC = () => {
                   placeholder="e.g., Saturday Movie Night, Boba Tea..."
                   value={customTitle}
                   onChange={e => setCustomTitle(e.target.value)}
-                  className="w-full h-10 px-3 rounded-control bg-surface-dim border border-outline-variant text-on-surface text-body-sm placeholder:text-outline focus:outline-none focus:border-amber-400 transition-all shadow-inset-well"
+                  className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="font-label-sm text-label-sm text-amber-300 uppercase font-bold block mb-1">
+                  <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold block mb-1">
                     Cost (Coins)
                   </label>
                   <input
@@ -537,41 +380,40 @@ export const VaultView: React.FC = () => {
                     step="10"
                     value={customCost}
                     onChange={e => setCustomCost(Number(e.target.value))}
-                    className="w-full h-10 px-3 rounded-control bg-surface-dim border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-amber-400 transition-all shadow-inset-well"
+                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
                   />
                 </div>
 
                 <div>
-                  <label className="font-label-sm text-label-sm text-amber-300 uppercase font-bold block mb-1">
+                  <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold block mb-1">
                     Category Tag
                   </label>
                   <input
                     type="text"
                     value={customCategory}
                     onChange={e => setCustomCategory(e.target.value)}
-                    className="w-full h-10 px-3 rounded-control bg-surface-dim border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-amber-400 transition-all shadow-inset-well"
+                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
 
-              {/* Icon Selector */}
               <div>
-                <label className="font-label-sm text-label-sm text-amber-300 uppercase font-bold block mb-1">
-                  Choose Icon Glyph
+                <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold block mb-1">
+                  Icon Glyph
                 </label>
-                <div className="flex items-center justify-between gap-1 bg-surface-dim p-1.5 rounded-control border border-outline-variant shadow-inset-well">
+                <div className="grid grid-cols-6 gap-1 bg-surface-dim p-1.5 rounded-xl border border-outline-variant/60">
                   {['sports_esports', 'coffee', 'local_pizza', 'flight', 'shopping_bag', 'movie'].map(ic => (
                     <button
                       key={ic}
                       type="button"
                       onClick={() => setCustomIcon(ic)}
-                      className={`w-9 h-9 rounded-control flex items-center justify-center transition-all ${
+                      className={`h-9 rounded-lg flex items-center justify-center transition-all ${
                         customIcon === ic
-                          ? 'bg-amber-400 text-amber-950 font-bold shadow-card'
-                          : 'text-on-surface-variant hover:text-white hover:bg-surface-container'
+                          ? 'bg-amber-400 text-amber-950 font-bold shadow-sm'
+                          : 'text-on-surface-variant hover:text-white'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">{ic}</span>
+                      <span className="material-symbols-outlined text-[18px]">{ic}</span>
                     </button>
                   ))}
                 </div>
@@ -579,72 +421,57 @@ export const VaultView: React.FC = () => {
 
               <button
                 type="submit"
-                className="btn btn-gold w-full h-12 mt-2 font-headline-sm text-headline-sm uppercase tracking-wide"
+                className="btn btn-gold w-full h-12 mt-2 font-headline-sm text-xs uppercase tracking-wider font-black shadow-md"
               >
-                Create Reward
+                Create Custom Reward
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* 4. TREASURY TRANSACTION HISTORY LEDGER MODAL */}
+      {/* 5. TREASURY LEDGER MODAL */}
       {ledgerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/75 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg max-h-[85vh] rounded-3xl bg-gradient-to-b from-surface-container-high to-surface-container-low border border-amber-400/60 p-5 shadow-crown flex flex-col relative animate-scaleUp">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/60">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-control bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
-                  <span className="material-symbols-outlined text-[22px]">receipt_long</span>
-                </div>
-                <div>
-                  <h3 className="font-headline-sm text-headline-sm text-white font-extrabold flex items-center gap-2">
-                    Treasury Ledger
-                    <span className="text-label-sm font-semibold px-2 py-0.5 rounded-full bg-surface-dim border border-outline-variant text-amber-300">
-                      {transactions.length} records
-                    </span>
-                  </h3>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">
-                    Auditable on-device record of all currency flows.
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setLedgerModalOpen(false)} />
+          <div className="relative w-full max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant/70 p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-3 custom-scrollbar">
+            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/40">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-400 text-[20px]">receipt_long</span>
+                <h3 className="font-headline-sm text-base text-white font-extrabold">
+                  Treasury Ledger
+                </h3>
+                <span className="text-[10px] text-amber-300 font-bold bg-surface-dim px-2 py-0.5 rounded-full border border-amber-400/20">
+                  {transactions.length} records
+                </span>
               </div>
               <button
                 onClick={() => setLedgerModalOpen(false)}
-                className="w-8 h-8 rounded-control flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-surface-container transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-white"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            {/* Filters Bar */}
-            <div className="py-3 flex flex-col gap-2 border-b border-outline-variant/40">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search ledger entries..."
-                    value={ledgerSearch}
-                    onChange={e => setLedgerSearch(e.target.value)}
-                    className="w-full h-8 pl-8 pr-3 rounded-control bg-surface-dim border border-outline-variant text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
+            {/* Filter Bar */}
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                placeholder="Search ledger entries..."
+                value={ledgerSearch}
+                onChange={e => setLedgerSearch(e.target.value)}
+                className="w-full h-9 px-3 rounded-xl bg-surface-dim border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-amber-400"
+              />
 
-              {/* Currency & Type Filter Pills */}
               <div className="flex items-center justify-between gap-1 flex-wrap">
-                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-control border border-outline-variant/60">
+                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-lg border border-outline-variant/50">
                   {(['all', 'coins', 'shards'] as const).map(curr => (
                     <button
                       key={curr}
                       onClick={() => setLedgerCurrencyFilter(curr)}
-                      className={`px-2 py-0.5 rounded-control font-label-sm text-label-sm capitalize transition-all ${
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize ${
                         ledgerCurrencyFilter === curr
-                          ? 'bg-navy-hi border border-amber-400/50 text-amber-300 font-bold'
+                          ? 'bg-navy-hi text-amber-300 border border-amber-400/40'
                           : 'text-on-surface-variant hover:text-white'
                       }`}
                     >
@@ -653,30 +480,29 @@ export const VaultView: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-control border border-outline-variant/60">
+                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-lg border border-outline-variant/50">
                   {(['all', 'earn', 'spend'] as const).map(type => (
                     <button
                       key={type}
                       onClick={() => setLedgerTypeFilter(type)}
-                      className={`px-2 py-0.5 rounded-control font-label-sm text-label-sm capitalize transition-all ${
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize ${
                         ledgerTypeFilter === type
-                          ? 'bg-navy-hi border border-sky-400/50 text-sky-300 font-bold'
+                          ? 'bg-navy-hi text-cyan-300 border border-cyan-400/40'
                           : 'text-on-surface-variant hover:text-white'
                       }`}
                     >
-                      {type === 'all' ? 'All Flow' : type === 'earn' ? '+ Inflow' : '- Outflow'}
+                      {type === 'all' ? 'All' : type === 'earn' ? '+ Inflow' : '- Outflow'}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Scrollable Transaction Stream */}
-            <div className="flex-1 overflow-y-auto py-2 space-y-2 pr-1 custom-scrollbar">
+            {/* Scrollable Records */}
+            <div className="flex-1 overflow-y-auto space-y-2 max-h-80 pr-0.5 custom-scrollbar">
               {filteredLedger.length === 0 ? (
-                <div className="p-8 text-center flex flex-col items-center justify-center text-on-surface-variant gap-2">
-                  <span className="material-symbols-outlined text-[36px] opacity-40">search_off</span>
-                  <p className="font-body-sm text-body-sm">No transactions matched your filter.</p>
+                <div className="p-8 text-center text-xs text-on-surface-variant">
+                  No records match your filter.
                 </div>
               ) : (
                 filteredLedger.map(tx => {
@@ -691,46 +517,27 @@ export const VaultView: React.FC = () => {
                   return (
                     <div
                       key={tx.id}
-                      className="p-2.5 rounded-control bg-surface-container border border-outline-variant/60 flex items-center justify-between gap-2.5 hover:border-amber-400/30 transition-all"
+                      className="p-2.5 rounded-xl bg-surface-dim border border-outline-variant/40 flex items-center justify-between gap-2"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div
-                          className={`w-8 h-8 rounded-control flex items-center justify-center flex-shrink-0 ${
-                            isEarn
-                              ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-400'
-                              : 'bg-rose-950/70 border border-rose-500/50 text-rose-400'
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isEarn ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'
+                        }`}>
+                          <span className="material-symbols-outlined text-[16px]">
                             {isEarn ? 'arrow_upward' : 'arrow_downward'}
                           </span>
                         </div>
-
                         <div className="flex flex-col min-w-0">
-                          <span className="font-headline-sm text-label-md font-bold text-white truncate">
-                            {tx.reason}
-                          </span>
-                          <span className="font-label-sm text-label-sm text-on-surface-variant">
-                            {dateStr}
-                          </span>
+                          <span className="text-xs font-bold text-white truncate">{tx.reason}</span>
+                          <span className="text-[10px] text-on-surface-variant">{dateStr}</span>
                         </div>
                       </div>
 
                       <div className="flex flex-col items-end flex-shrink-0">
-                        <span
-                          className={`font-headline-sm text-label-lg font-black tracking-tight flex items-center gap-0.5 ${
-                            isEarn ? 'text-emerald-300' : 'text-rose-400'
-                          }`}
-                        >
-                          <span>{isEarn ? '+' : '-'}</span>
-                          <span>{tx.amount.toLocaleString()}</span>
-                          <span className="font-label-sm text-label-sm uppercase ml-0.5 text-on-surface-variant">
-                            {tx.currency}
-                          </span>
+                        <span className={`text-xs font-black tabular-nums ${isEarn ? 'text-emerald-300' : 'text-rose-400'}`}>
+                          {isEarn ? '+' : '-'}{tx.amount.toLocaleString()} {tx.currency}
                         </span>
-                        <span className="font-label-sm text-label-sm text-amber-200/60">
-                          Bal: {tx.balanceAfter.toLocaleString()}
-                        </span>
+                        <span className="text-[10px] text-amber-200/70">Bal: {tx.balanceAfter.toLocaleString()}</span>
                       </div>
                     </div>
                   );
@@ -738,14 +545,10 @@ export const VaultView: React.FC = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="pt-3 border-t border-outline-variant/60 flex items-center justify-between">
-              <span className="font-label-sm text-label-sm text-on-surface-variant">
-                Local-first zero-telemetry cryptoledger
-              </span>
+            <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-end">
               <button
                 onClick={() => setLedgerModalOpen(false)}
-                className="btn btn-navy h-8 px-4 font-label-sm text-label-sm uppercase"
+                className="btn btn-navy h-9 px-4 text-xs font-bold uppercase"
               >
                 Close
               </button>
