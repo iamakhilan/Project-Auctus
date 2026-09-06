@@ -21,7 +21,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
   };
 
   return (
-    <header className="pt-safe fixed top-0 left-0 right-0 z-40 bg-surface/90 border-b border-outline-variant/50 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+    <header className="pt-safe fixed top-0 left-0 right-0 z-40 bg-surface/90 border-b border-outline-variant backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.6)]">
       <div className="max-w-screen mx-auto h-16 px-3 sm:px-4 flex items-center justify-between gap-2">
         {/* Left: Avatar with Level Badge + Screen / Player Title */}
         <div className="flex items-center gap-2.5 min-w-0">
@@ -30,14 +30,14 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
             className="relative flex-shrink-0 flex items-center justify-center group focus:outline-none"
             title="View Commander Profile"
           >
-            <div className="w-10 h-10 rounded-xl bg-surface-container-high border border-amber-400/80 overflow-hidden shadow-card flex items-center justify-center group-hover:border-amber-300 transition-colors">
+            <div className="w-10 h-10 rounded-xl bg-surface-container-high border border-accent/80 overflow-hidden shadow-card flex items-center justify-center group-hover:border-secondary transition-colors">
               <img
                 src="/assets/avatar.png"
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-label-sm text-[10px] font-black border border-yellow-200 shadow-sm leading-tight">
+            <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-md bg-gradient-to-r from-primary to-accent text-light font-label-sm text-[10px] font-black border border-secondary/60 shadow-sm leading-tight">
               {profile.level}
             </span>
           </button>
@@ -57,39 +57,39 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
           {/* Auctus Coins */}
           <button
             onClick={() => setActiveTab('vault')}
-            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-amber-400/40 hover:border-amber-400 active:scale-95 transition-all shadow-sm"
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-secondary/40 hover:border-accent active:scale-95 transition-all shadow-sm"
             title="Treasury Coins"
           >
-            <span className="material-symbols-outlined text-amber-400 text-[16px] fill-1">
+            <span className="material-symbols-outlined text-accent text-[16px] fill-1">
               monetization_on
             </span>
-            <span className="font-label-md text-xs sm:text-sm text-amber-300 font-extrabold tabular-nums">
+            <span className="font-label-md text-xs sm:text-sm text-light font-extrabold tabular-nums">
               {profile.coins >= 1000 ? `${(profile.coins / 1000).toFixed(1)}k` : profile.coins}
             </span>
           </button>
 
           {/* Diamonds / Shards */}
           <div
-            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-sky-400/40 shadow-sm"
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-secondary/40 shadow-sm"
             title="Spire Shards"
           >
-            <span className="material-symbols-outlined text-cyan-400 text-[16px] fill-1">
+            <span className="material-symbols-outlined text-secondary text-[16px] fill-1">
               diamond
             </span>
-            <span className="font-label-md text-xs sm:text-sm text-cyan-300 font-bold tabular-nums">
+            <span className="font-label-md text-xs sm:text-sm text-secondary-light font-bold tabular-nums">
               {profile.diamonds}
             </span>
           </div>
 
           {/* Streak Flame */}
           <div
-            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-rose-500/40 shadow-sm"
+            className="flex items-center gap-1 px-2 py-1 rounded-control bg-surface-container border border-accent/40 shadow-sm"
             title="Consistency Streak"
           >
-            <span className="material-symbols-outlined text-rose-500 text-[16px] fill-1 animate-pulse">
+            <span className="material-symbols-outlined text-accent text-[16px] fill-1 animate-pulse">
               local_fire_department
             </span>
-            <span className="font-label-md text-xs sm:text-sm text-rose-200 font-bold tabular-nums">
+            <span className="font-label-md text-xs sm:text-sm text-light font-bold tabular-nums">
               {profile.streakDays}d
             </span>
           </div>
@@ -99,7 +99,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
             onClick={toggleSound}
             className={`w-8 h-8 rounded-control flex items-center justify-center transition-all ${
               profile.soundEnabled
-                ? 'text-amber-400 bg-surface-container border border-amber-400/40'
+                ? 'text-light bg-primary/30 border border-accent/60'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container border border-transparent'
             }`}
             title={profile.soundEnabled ? 'SFX Audio Enabled' : 'SFX Audio Muted'}

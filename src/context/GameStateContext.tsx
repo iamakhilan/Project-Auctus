@@ -218,7 +218,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           particleCount: 80,
           spread: 80,
           origin: { y: 0.4 },
-          colors: ['#f59e0b', '#fbbf24', '#00e59b', '#38bdf8', '#ffffff'],
+          colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
         });
       }
 
@@ -325,7 +325,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             particleCount: 45,
             spread: 60,
             origin: { y: 0.6 },
-            colors: ['#00e59b', '#10b981', '#fbbf24', '#ffffff'],
+            colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
           });
 
           return result.quest;
@@ -408,7 +408,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         particleCount: 50,
         spread: 60,
         origin: { y: 0.6 },
-        colors: ['#00e5ff', '#10b981', '#fbbf24'],
+        colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
       });
 
       if (res.newMilestoneDay) {
@@ -517,7 +517,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       particleCount: 75,
       spread: 75,
       origin: { y: 0.5 },
-      colors: ['#f59e0b', '#38bdf8', '#00e59b', '#fde047'],
+      colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
     });
 
     setClaimModal({
@@ -573,7 +573,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       particleCount: 50,
       spread: 60,
       origin: { y: 0.5 },
-      colors: ['#00c853', '#fbbf24', '#ffffff'],
+      colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
     });
 
     setClaimModal({
@@ -629,7 +629,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       particleCount: 100,
       spread: 90,
       origin: { y: 0.4 },
-      colors: ['#00e5ff', '#38bdf8', '#f59e0b', '#10b981', '#ffffff'],
+      colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
     });
 
     setClaimModal({
@@ -668,7 +668,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             particleCount: 60,
             spread: 70,
             origin: { y: 0.5 },
-            colors: ['#f59e0b', '#38bdf8', '#ffffff'],
+            colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
           });
         }
       }
@@ -809,7 +809,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       particleCount: 80,
       spread: 70,
       origin: { y: 0.5 },
-      colors: ['#00e5ff', '#38bdf8', '#fbbf24', '#00e59b'],
+      colors: ['#3744c9', '#5763e8', '#8d95e8', '#f3f3fb', '#0c0d1a'],
     });
 
     setClaimModal({

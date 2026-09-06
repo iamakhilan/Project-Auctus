@@ -27,7 +27,7 @@ export function useCapacitorNative({
     const setupNativeUI = async () => {
       try {
         await StatusBar.setStyle({ style: Style.Dark });
-        await StatusBar.setBackgroundColor({ color: '#081326' });
+        await StatusBar.setBackgroundColor({ color: '#0c0d1a' });
         await StatusBar.setOverlaysWebView({ overlay: false });
       } catch {
         // Status bar plugin fallback

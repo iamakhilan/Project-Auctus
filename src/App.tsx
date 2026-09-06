@@ -56,7 +56,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface flex flex-col antialiased selection:bg-amber-400 selection:text-amber-950">
+    <div className="min-h-screen bg-surface text-on-surface flex flex-col antialiased selection:bg-accent selection:text-light">
       {/* Top Fixed Header HUD */}
       <HeaderHUD
         onOpenProfile={() => setActiveTab('citadel')}

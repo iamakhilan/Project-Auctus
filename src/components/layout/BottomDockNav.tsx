@@ -15,7 +15,7 @@ export const BottomDockNav: React.FC = () => {
       label: 'Quests',
       icon: 'history_edu',
       badge: activeQuestsCount > 0 ? activeQuestsCount : undefined,
-      badgeColor: 'bg-rose-500 text-white border-rose-300/40'
+      badgeColor: 'bg-primary text-light border-secondary/50',
     },
     { id: 'focus-arena', label: 'Focus', icon: 'swords' }, // Center action
     {
@@ -23,13 +23,13 @@ export const BottomDockNav: React.FC = () => {
       label: 'Vault',
       icon: 'inventory_2',
       badge: readyChestsCount > 0 ? 'CLAIM' : undefined,
-      badgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 font-black border-yellow-200'
+      badgeColor: 'bg-gradient-to-r from-accent to-primary text-light font-black border-secondary/50',
     },
-    { id: 'citadel', label: 'Citadel', icon: 'shield_person' }
+    { id: 'citadel', label: 'Citadel', icon: 'shield_person' },
   ];
 
   return (
-    <nav className="pb-safe fixed bottom-0 left-0 right-0 z-40 bg-surface/92 border-t border-outline-variant/50 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
+    <nav className="pb-safe fixed bottom-0 left-0 right-0 z-40 bg-surface/92 border-t border-outline-variant backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
       <div className="max-w-screen mx-auto h-16 px-2 sm:px-4 flex items-center justify-around">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
@@ -44,15 +44,15 @@ export const BottomDockNav: React.FC = () => {
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${
                   isActive
-                    ? 'bg-gradient-to-b from-cyan-400 via-sky-500 to-blue-600 text-white border-cyan-200 shadow-[0_4px_16px_rgba(56,189,248,0.5)]'
-                    : 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-amber-950 border-yellow-200/80 shadow-[0_4px_14px_rgba(245,158,11,0.4)]'
+                    ? 'bg-gradient-to-b from-secondary via-accent to-primary text-light border-light/60 shadow-[0_4px_16px_rgba(87,99,232,0.55)]'
+                    : 'bg-gradient-to-b from-accent via-primary to-primary-dark text-light border-secondary/60 shadow-[0_4px_14px_rgba(55,68,201,0.45)]'
                 }`}>
                   <span className="material-symbols-outlined text-[24px] font-black fill-1">
                     swords
                   </span>
                 </div>
                 <span className={`font-label-sm text-[10px] mt-0.5 font-extrabold uppercase tracking-wider ${
-                  isActive ? 'text-cyan-300' : 'text-amber-400'
+                  isActive ? 'text-light' : 'text-secondary'
                 }`}>
                   Focus
                 </span>
@@ -65,7 +65,7 @@ export const BottomDockNav: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex flex-col items-center justify-center min-w-[48px] h-12 transition-all focus:outline-none active:scale-90 ${
-                isActive ? 'text-amber-300' : 'text-on-surface-variant hover:text-on-surface'
+                isActive ? 'text-light' : 'text-on-surface-variant hover:text-on-surface'
               }`}
               aria-label={tab.label}
             >
@@ -73,10 +73,10 @@ export const BottomDockNav: React.FC = () => {
                 {/* Active tab pill */}
                 <div className={`flex items-center justify-center h-7 w-10 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-surface-container-high border border-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.15)]'
+                    ? 'bg-surface-container-high border border-accent/40 shadow-[0_0_10px_rgba(87,99,232,0.25)]'
                     : 'border border-transparent'
                 }`}>
-                  <span className={`material-symbols-outlined text-[20px] ${isActive ? 'fill-1 text-amber-400' : ''}`}>
+                  <span className={`material-symbols-outlined text-[20px] ${isActive ? 'fill-1 text-light' : ''}`}>
                     {tab.icon}
                   </span>
                 </div>
@@ -88,7 +88,7 @@ export const BottomDockNav: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className={`font-label-sm text-[10px] mt-0.5 tracking-tight ${isActive ? 'font-black text-amber-300' : 'font-semibold'}`}>
+              <span className={`font-label-sm text-[10px] mt-0.5 tracking-tight ${isActive ? 'font-black text-light' : 'font-semibold'}`}>
                 {tab.label}
               </span>
             </button>

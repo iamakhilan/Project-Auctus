@@ -102,7 +102,7 @@ export function sendLocalNotification(
             body: options?.body || 'Auctus Notification',
             channelId: 'auctus_alerts',
             smallIcon: 'ic_stat_crest',
-            iconColor: '#FBBF24',
+            iconColor: '#3744c9',
           },
         ],
       }).catch(err => {

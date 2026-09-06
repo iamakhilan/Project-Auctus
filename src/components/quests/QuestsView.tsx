@@ -50,14 +50,14 @@ export const QuestsView: React.FC = () => {
   return (
     <div className="flex flex-col w-full max-w-screen mx-auto px-3.5 sm:px-4 pt-3 pb-8 space-y-4">
       {/* 1. TOP BOUNTY CLEARANCE HERO BANNER */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-surface-container via-surface-container to-surface-container-low border border-outline-variant/60 shadow-card p-4 flex flex-col gap-3">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-surface-container via-surface-container to-surface-container-low border border-outline-variant shadow-card p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+            <div className="w-9 h-9 rounded-xl bg-primary/30 border border-secondary/50 flex items-center justify-center text-secondary">
               <span className="material-symbols-outlined text-[20px] fill-1">military_tech</span>
             </div>
             <div>
-              <span className="font-label-sm text-[11px] text-amber-400 uppercase tracking-wider font-extrabold block">
+              <span className="font-label-sm text-[11px] text-secondary uppercase tracking-wider font-extrabold block">
                 Mission Command
               </span>
               <h2 className="font-headline-sm text-sm sm:text-base text-on-surface font-black">
@@ -68,7 +68,7 @@ export const QuestsView: React.FC = () => {
 
           <button
             onClick={() => setIsForgeOpen(true)}
-            className="btn btn-gold h-9 px-3 font-headline-sm text-xs uppercase tracking-wider font-black shadow-sm"
+            className="btn btn-primary h-9 px-3 font-headline-sm text-xs uppercase tracking-wider font-black shadow-sm"
           >
             <span className="material-symbols-outlined text-[17px]">add</span>
             <span>Forge</span>
@@ -76,9 +76,9 @@ export const QuestsView: React.FC = () => {
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full h-2 bg-surface-dim rounded-full overflow-hidden border border-outline-variant/60 p-px">
+        <div className="w-full h-2 bg-surface-dim rounded-full overflow-hidden border border-outline-variant p-px">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-emerald-aura transition-all duration-500"
+            className="h-full bg-gradient-to-r from-primary to-accent rounded-full shadow-primary-aura transition-all duration-500"
             style={{ width: `${clearancePercent}%` }}
           />
         </div>
@@ -86,16 +86,16 @@ export const QuestsView: React.FC = () => {
         {/* Status Strip */}
         <div className="flex items-center justify-between text-xs text-on-surface-variant font-medium pt-1 border-t border-outline-variant/40">
           <span className="flex items-center gap-1">
-            <strong className="text-amber-300">{totalActive}</strong> active bounties in queue
+            <strong className="text-light">{totalActive}</strong> active bounties in queue
           </span>
-          <span className="text-emerald-400 font-bold">
+          <span className="text-secondary font-bold">
             {clearancePercent}% Clearance
           </span>
         </div>
       </section>
 
       {/* 2. CATEGORY TABS */}
-      <nav className="flex items-center gap-1 bg-surface-dim p-1 rounded-xl border border-outline-variant/60 overflow-x-auto custom-scrollbar">
+      <nav className="flex items-center gap-1 bg-surface-dim p-1 rounded-xl border border-outline-variant overflow-x-auto custom-scrollbar">
         {(
           [
             { id: 'all', label: 'All Active', count: quests.filter(q => !q.isCompleted).length },
@@ -110,12 +110,12 @@ export const QuestsView: React.FC = () => {
             onClick={() => setActiveCategoryTab(tab.id)}
             className={`flex-1 py-1.5 px-2 rounded-lg font-label-sm text-xs flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
               activeCategoryTab === tab.id
-                ? 'bg-navy-hi text-amber-300 border border-amber-400/40 font-black shadow-sm'
+                ? 'bg-navy-hi text-light border border-accent/60 font-black shadow-sm'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
             <span>{tab.label}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-surface-dim text-amber-300 text-[10px] font-bold border border-amber-400/20">
+            <span className="px-1.5 py-0.2 rounded-full bg-surface-dim text-secondary text-[10px] font-bold border border-secondary/30">
               {tab.count}
             </span>
           </button>
@@ -129,8 +129,8 @@ export const QuestsView: React.FC = () => {
             onClick={() => setSelectedTagFilter('All')}
             className={`px-3 py-1 rounded-full font-label-sm text-xs font-bold transition-all whitespace-nowrap ${
               selectedTagFilter === 'All'
-                ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
-                : 'bg-surface-container hover:bg-surface-bright text-sky-200/80 border border-outline-variant/60'
+                ? 'bg-accent text-light font-black shadow-sm'
+                : 'bg-surface-container hover:bg-surface-bright text-on-surface-variant border border-outline-variant'
             }`}
           >
             All Tags
@@ -141,8 +141,8 @@ export const QuestsView: React.FC = () => {
               onClick={() => setSelectedTagFilter(t)}
               className={`px-3 py-1 rounded-full font-label-sm text-xs font-bold transition-all whitespace-nowrap ${
                 selectedTagFilter === t
-                  ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
-                  : 'bg-surface-container hover:bg-surface-bright text-sky-200/80 border border-outline-variant/60'
+                  ? 'bg-primary text-light font-black shadow-sm border border-secondary/50'
+                  : 'bg-surface-container hover:bg-surface-bright text-on-surface-variant border border-outline-variant'
               }`}
             >
               #{t}
@@ -156,14 +156,14 @@ export const QuestsView: React.FC = () => {
         <section className="flex flex-col space-y-3" id="habit-list">
           {habits.length === 0 ? (
             <div className="p-8 rounded-2xl bg-surface-container/60 border border-dashed border-outline-variant text-center flex flex-col items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[36px] text-amber-400/60">auto_fix</span>
-              <h3 className="font-headline-sm text-sm text-white font-bold">No Habits Active</h3>
+              <span className="material-symbols-outlined text-[36px] text-secondary">auto_fix</span>
+              <h3 className="font-headline-sm text-sm text-light font-bold">No Habits Active</h3>
               <p className="text-xs text-on-surface-variant max-w-xs">
                 Forge a daily habit to build streak multipliers and unlock milestone chest rewards.
               </p>
               <button
                 onClick={() => setIsForgeOpen(true)}
-                className="mt-2 btn btn-gold h-9 px-4 text-xs uppercase font-black"
+                className="mt-2 btn btn-primary h-9 px-4 text-xs uppercase font-black"
               >
                 + Forge Habit
               </button>
@@ -179,14 +179,14 @@ export const QuestsView: React.FC = () => {
                   key={habit.id}
                   className={`relative rounded-2xl bg-surface-container border p-4 shadow-card flex flex-col gap-2.5 transition-all ${
                     isDoneToday
-                      ? 'border-emerald-500/40 bg-surface-container/70'
-                      : 'border-outline-variant/70 hover:border-amber-400/40'
+                      ? 'border-accent/40 bg-surface-container/70'
+                      : 'border-outline-variant hover:border-accent/50'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-rose-400 font-extrabold text-xs bg-rose-950/60 border border-rose-500/30 px-2.5 py-0.5 rounded-full">
-                        <span className="material-symbols-outlined text-[14px] fill-1">local_fire_department</span>
+                      <span className="flex items-center gap-1 text-light font-extrabold text-xs bg-primary/40 border border-secondary/40 px-2.5 py-0.5 rounded-full">
+                        <span className="material-symbols-outlined text-[14px] fill-1 text-accent">local_fire_department</span>
                         {habit.streakCount}d Streak
                       </span>
                       <span className="text-[11px] text-on-surface-variant font-medium">
@@ -196,7 +196,7 @@ export const QuestsView: React.FC = () => {
 
                     <button
                       onClick={() => deleteHabit(habit.id)}
-                      className="text-on-surface-variant hover:text-rose-400 p-1"
+                      className="text-on-surface-variant hover:text-light p-1"
                       title="Delete Habit"
                     >
                       <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -204,7 +204,7 @@ export const QuestsView: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="font-headline-sm text-sm sm:text-base text-white font-extrabold">
+                    <h3 className="font-headline-sm text-sm sm:text-base text-light font-extrabold">
                       {habit.title}
                     </h3>
                     {habit.description && (
@@ -217,12 +217,12 @@ export const QuestsView: React.FC = () => {
                   {/* Streak Progress Track */}
                   <div className="flex flex-col gap-1 bg-surface-dim p-2 rounded-xl border border-outline-variant/40">
                     <div className="flex items-center justify-between text-[11px] font-semibold">
-                      <span className="text-amber-300">Milestone: Day {nextMilestone}</span>
+                      <span className="text-secondary">Milestone: Day {nextMilestone}</span>
                       <span className="text-on-surface-variant">{habit.streakCount}/{nextMilestone} days</span>
                     </div>
                     <div className="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full"
+                        className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
                         style={{ width: `${milestonePercent}%` }}
                       />
                     </div>
@@ -234,8 +234,8 @@ export const QuestsView: React.FC = () => {
                     disabled={isDoneToday}
                     className={`h-11 btn font-headline-sm text-xs uppercase tracking-wider font-black w-full ${
                       isDoneToday
-                        ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 cursor-default'
-                        : 'btn-emerald'
+                        ? 'bg-surface-dim border border-accent/40 text-secondary cursor-default'
+                        : 'btn-primary'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">
@@ -254,14 +254,14 @@ export const QuestsView: React.FC = () => {
         <section className="flex flex-col space-y-3" id="quest-list">
           {filteredQuests.length === 0 ? (
             <div className="p-8 rounded-2xl bg-surface-container/60 border border-dashed border-outline-variant text-center flex flex-col items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[36px] text-amber-400/60">military_tech</span>
-              <h3 className="font-headline-sm text-sm text-white font-bold">No Missions In This Filter</h3>
+              <span className="material-symbols-outlined text-[36px] text-secondary">military_tech</span>
+              <h3 className="font-headline-sm text-sm text-light font-bold">No Missions In This Filter</h3>
               <p className="text-xs text-on-surface-variant max-w-xs">
                 Deploy a bounty with the Mission Forge to conquer new milestones.
               </p>
               <button
                 onClick={() => setIsForgeOpen(true)}
-                className="mt-2 btn btn-gold h-9 px-4 text-xs uppercase font-black"
+                className="mt-2 btn btn-primary h-9 px-4 text-xs uppercase font-black"
               >
                 + Forge Bounty
               </button>
@@ -272,17 +272,17 @@ export const QuestsView: React.FC = () => {
                 return (
                   <article
                     key={quest.id}
-                    className="relative rounded-2xl bg-surface-container/60 border border-emerald-500/30 p-3.5 shadow-card flex items-center justify-between gap-3 opacity-80"
+                    className="relative rounded-2xl bg-surface-container/60 border border-accent/30 p-3.5 shadow-card flex items-center justify-between gap-3 opacity-80"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-surface-dim border border-accent/40 flex items-center justify-center text-secondary flex-shrink-0">
                         <span className="material-symbols-outlined text-[18px]">check</span>
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <h3 className="font-headline-sm text-sm text-white line-through opacity-80 truncate font-bold">
+                        <h3 className="font-headline-sm text-sm text-light line-through opacity-80 truncate font-bold">
                           {quest.title}
                         </h3>
-                        <span className="text-[11px] text-emerald-400 font-bold">
+                        <span className="text-[11px] text-secondary font-bold">
                           +{quest.xpReward} XP • +{quest.coinReward} Coins
                         </span>
                       </div>
@@ -290,7 +290,7 @@ export const QuestsView: React.FC = () => {
 
                     <button
                       onClick={() => deleteQuest(quest.id)}
-                      className="text-on-surface-variant hover:text-rose-400 p-1 flex-shrink-0"
+                      className="text-on-surface-variant hover:text-light p-1 flex-shrink-0"
                       title="Delete from archive"
                     >
                       <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -307,40 +307,34 @@ export const QuestsView: React.FC = () => {
                   key={quest.id}
                   className={`relative rounded-2xl bg-surface-container border p-4 shadow-card flex flex-col gap-2.5 transition-all ${
                     isEpic
-                      ? 'border-indigo-500/50 shadow-[0_4px_16px_rgba(99,102,241,0.15)]'
+                      ? 'border-accent shadow-[0_4px_16px_rgba(87,99,232,0.25)]'
                       : isUrgent
-                      ? 'border-rose-500/50 shadow-[0_4px_16px_rgba(225,29,72,0.15)]'
-                      : 'border-outline-variant/70 hover:border-amber-400/40'
+                      ? 'border-secondary shadow-[0_4px_16px_rgba(141,149,232,0.2)]'
+                      : 'border-outline-variant hover:border-accent/50'
                   }`}
                 >
                   {/* Card Header Tags */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded-md font-label-sm text-[10px] font-extrabold uppercase ${
-                        isEpic
-                          ? 'bg-purple-950 text-purple-300 border border-purple-400/40'
-                          : isUrgent
-                          ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                          : 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
-                      }`}>
+                      <span className="px-2 py-0.5 rounded-md font-label-sm text-[10px] font-extrabold uppercase bg-primary/30 text-light border border-secondary/40">
                         {quest.tier}
                       </span>
                       {quest.tag && (
-                        <span className="px-2 py-0.5 rounded-md bg-surface-dim border border-outline-variant/60 text-sky-200 text-[10px] font-semibold">
+                        <span className="px-2 py-0.5 rounded-md bg-surface-dim border border-outline-variant text-secondary text-[10px] font-semibold">
                           #{quest.tag}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-1 text-[11px] text-on-surface-variant font-medium">
-                      <span className="material-symbols-outlined text-[13px] text-amber-400">schedule</span>
+                      <span className="material-symbols-outlined text-[13px] text-secondary">schedule</span>
                       <span>{quest.dueLabel || 'Today'}</span>
                     </div>
                   </div>
 
                   {/* Title & Notes */}
                   <div>
-                    <h3 className="font-headline-sm text-sm sm:text-base text-white font-extrabold">
+                    <h3 className="font-headline-sm text-sm sm:text-base text-light font-extrabold">
                       {quest.title}
                     </h3>
                     {quest.description && (
@@ -353,8 +347,8 @@ export const QuestsView: React.FC = () => {
                   {/* Reward Strip */}
                   <div className="flex items-center justify-between py-1 px-2.5 rounded-xl bg-surface-dim border border-outline-variant/40 text-xs font-bold">
                     <div className="flex items-center gap-3">
-                      <span className="text-emerald-300">+{quest.xpReward} XP</span>
-                      {quest.coinReward > 0 && <span className="text-amber-300">+{quest.coinReward} Coins</span>}
+                      <span className="text-secondary">+{quest.xpReward} XP</span>
+                      {quest.coinReward > 0 && <span className="text-light">+{quest.coinReward} Coins</span>}
                     </div>
                     <span className="text-on-surface-variant font-medium text-[11px]">
                       ~{quest.estimatedMinutes || 25}m
@@ -366,7 +360,7 @@ export const QuestsView: React.FC = () => {
                     {/* Mark Complete Checkbox */}
                     <button
                       onClick={() => completeQuest(quest.id)}
-                      className="w-11 h-11 rounded-xl bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-emerald-400 hover:border-emerald-400 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+                      className="w-11 h-11 rounded-xl bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-accent hover:border-accent flex items-center justify-center active:scale-95 transition-all shadow-sm"
                       title="Conquer Bounty"
                       aria-label="Complete Quest"
                     >
@@ -378,7 +372,7 @@ export const QuestsView: React.FC = () => {
                     {/* Start Focus Button */}
                     <button
                       onClick={() => startFocusSession(quest.estimatedMinutes || 25, quest.id, quest.title)}
-                      className="flex-1 h-11 btn btn-gold font-headline-sm text-xs uppercase tracking-wider font-black shadow-sm"
+                      className="flex-1 h-11 btn btn-primary font-headline-sm text-xs uppercase tracking-wider font-black shadow-sm"
                     >
                       <span className="material-symbols-outlined text-[17px] fill-1">swords</span>
                       <span>Engage Focus</span>
@@ -387,7 +381,7 @@ export const QuestsView: React.FC = () => {
                     {/* Delete Option */}
                     <button
                       onClick={() => deleteQuest(quest.id)}
-                      className="w-9 h-11 rounded-xl bg-surface-dim hover:bg-rose-950/60 border border-outline-variant hover:border-rose-500/40 text-on-surface-variant hover:text-rose-300 flex items-center justify-center transition-all"
+                      className="w-9 h-11 rounded-xl bg-surface-dim hover:bg-surface-container-high border border-outline-variant hover:border-secondary/40 text-on-surface-variant hover:text-light flex items-center justify-center transition-all"
                       title="Dismiss Bounty"
                     >
                       <span className="material-symbols-outlined text-[16px]">delete</span>

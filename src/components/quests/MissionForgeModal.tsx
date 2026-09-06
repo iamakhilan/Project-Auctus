@@ -54,7 +54,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
       <div className="absolute inset-0" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant/70 p-5 sm:p-6 shadow-crown z-10 animate-slideUp flex flex-col gap-4 custom-scrollbar"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant p-5 sm:p-6 shadow-crown z-10 animate-slideUp flex flex-col gap-4 custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
         {/* Mobile Drag Indicator / Sheet Header */}
@@ -62,14 +62,14 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
 
         <div className="flex items-center justify-between pb-3 border-b border-outline-variant/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-primary/30 border border-secondary/50 flex items-center justify-center text-secondary shadow-sm">
               <span className="material-symbols-outlined text-[22px]">hardware</span>
             </div>
             <div>
-              <h2 className="font-headline-sm text-base sm:text-lg text-white font-extrabold tracking-tight">
+              <h2 className="font-headline-sm text-base sm:text-lg text-light font-extrabold tracking-tight">
                 Mission Forge
               </h2>
-              <span className="font-label-sm text-[11px] text-amber-300/90 uppercase font-bold tracking-wider">
+              <span className="font-label-sm text-[11px] text-secondary uppercase font-bold tracking-wider">
                 Deploy Tactical Bounty
               </span>
             </div>
@@ -77,7 +77,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-surface-container-high transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-light hover:bg-surface-container-high transition-colors"
             aria-label="Close modal"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -102,8 +102,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                   onClick={() => setCategory(cat.id as QuestCategory)}
                   className={`h-11 rounded-xl font-label-md text-xs flex items-center justify-center gap-1.5 transition-all ${
                     category === cat.id
-                      ? 'bg-navy-hi border border-amber-400/60 text-amber-300 font-extrabold shadow-card'
-                      : 'bg-surface-dim border border-outline-variant/60 text-on-surface-variant hover:text-white'
+                      ? 'bg-navy-hi border border-accent text-light font-extrabold shadow-card'
+                      : 'bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-light'
                   }`}
                 >
                   <span className="material-symbols-outlined text-[17px]">{cat.icon}</span>
@@ -124,7 +124,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Complete System Architecture Refactor..."
-              className="w-full h-12 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-outline focus:outline-none focus:border-amber-400 shadow-inset-well transition-all"
+              className="w-full h-12 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:border-accent shadow-inset-well transition-all"
             />
           </div>
 
@@ -138,7 +138,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="e.g., Run sanity checks, commit diffs, verify logs..."
-              className="w-full h-10 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-outline focus:outline-none focus:border-amber-400 shadow-inset-well transition-all"
+              className="w-full h-10 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:border-accent shadow-inset-well transition-all"
             />
           </div>
 
@@ -149,10 +149,10 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                 <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider">
                   Bounty Tier & Difficulty
                 </label>
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+                <div className="flex items-center gap-2 text-xs font-bold text-secondary">
                   <span>+{yields.xpReward} XP</span>
                   <span>•</span>
-                  <span className="text-amber-300">+{yields.coinReward} Coins</span>
+                  <span className="text-light">+{yields.coinReward} Coins</span>
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-1.5">
@@ -163,8 +163,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                     onClick={() => setTier(t)}
                     className={`py-2 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all ${
                       tier === t
-                        ? 'bg-amber-400 text-amber-950 font-black shadow-card border border-yellow-200'
-                        : 'bg-surface-dim border border-outline-variant/60 text-sky-200/80 hover:text-white'
+                        ? 'bg-accent text-light font-black shadow-card border border-secondary/60'
+                        : 'bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-light'
                     }`}
                   >
                     <span className="text-xs font-extrabold">{t}</span>
@@ -187,8 +187,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                   onClick={() => setTag(t)}
                   className={`px-3 py-1.5 rounded-full font-label-sm text-xs font-bold transition-all ${
                     tag === t
-                      ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
-                      : 'bg-surface-dim hover:bg-surface-container border border-outline-variant text-sky-200/80'
+                      ? 'bg-primary text-light font-black shadow-sm border border-secondary/50'
+                      : 'bg-surface-dim hover:bg-surface-container border border-outline-variant text-on-surface-variant'
                   }`}
                 >
                   #{t}
@@ -207,7 +207,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                 <select
                   value={deadline}
                   onChange={e => setDeadline(e.target.value as 'Today' | 'Tonight' | 'Tomorrow' | 'This Week')}
-                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm font-semibold focus:outline-none focus:border-amber-400"
+                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm font-semibold focus:outline-none focus:border-accent"
                 >
                   <option value="Today">Today</option>
                   <option value="Tonight">Tonight</option>
@@ -223,7 +223,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                 <select
                   value={estimatedMinutes}
                   onChange={e => setEstimatedMinutes(Number(e.target.value))}
-                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-emerald-300 text-sm font-semibold focus:outline-none focus:border-amber-400"
+                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-secondary text-sm font-semibold focus:outline-none focus:border-accent"
                 >
                   <option value={15}>15 Minutes</option>
                   <option value={25}>25 Minutes (Standard)</option>
@@ -240,13 +240,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
             <button
               type="button"
               onClick={onClose}
-              className="w-28 h-12 rounded-xl bg-surface-dim border border-outline-variant text-on-surface-variant font-headline-sm text-sm font-bold hover:text-white"
+              className="w-28 h-12 rounded-xl bg-surface-dim border border-outline-variant text-on-surface-variant font-headline-sm text-sm font-bold hover:text-light"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-12 btn btn-gold font-headline-sm text-sm uppercase tracking-wider font-black shadow-md"
+              className="flex-1 h-12 btn btn-primary font-headline-sm text-sm uppercase tracking-wider font-black shadow-md"
             >
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
               <span>Deploy to Command</span>

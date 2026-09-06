@@ -8,65 +8,50 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ===== Surface ladder (DESIGN.md) =====
-        "surface": "#081326",
-        "surface-dim": "#060e1d",
-        "surface-container-lowest": "#040914",
-        "surface-container-low": "#0c1a33",
-        "surface-container": "#122547",
-        "surface-container-high": "#193361",
-        "surface-container-highest": "#21427c",
-        "surface-bright": "#2b549e",
-        "surface-variant": "#1c3d75",
+        // ===== Core 5-Color Palette =====
+        deep: "#0c0d1a",
+        light: "#f3f3fb",
+        primary: {
+          DEFAULT: "#3744c9",
+          hover: "#4552db",
+          dark: "#2a349c",
+        },
+        secondary: {
+          DEFAULT: "#8d95e8",
+          dim: "#757ed4",
+          light: "#a8aff3",
+        },
+        accent: {
+          DEFAULT: "#5763e8",
+          hover: "#6b76ec",
+          light: "#8d95e8",
+        },
 
-        // ===== Outline =====
-        "outline": "#4768a3",
-        "outline-variant": "#223c6d",
+        // ===== Surface Ladder (Derived strictly from #0c0d1a with controlled tones) =====
+        "surface": "#0c0d1a",
+        "surface-dim": "#080912",
+        "surface-container-lowest": "#06070e",
+        "surface-container-low": "#111324",
+        "surface-container": "#161930",
+        "surface-container-high": "#1d2140",
+        "surface-container-highest": "#242950",
+        "surface-bright": "#2e3466",
+        "surface-variant": "#1a1e3d",
 
-        // ===== Text =====
-        "on-surface": "#f0f5ff",
-        "on-surface-variant": "#9cb4da",
+        // ===== Outline & Borders =====
+        "outline": "#8d95e8",
+        "outline-variant": "rgba(141, 149, 232, 0.25)",
 
-        // ===== Primary (gold) =====
-        "primary": "#fbbf24",
-        "primary-container": "#f59e0b",
-        "on-primary": "#451a03",
-        "on-primary-container": "#78350f",
-        "primary-fixed": "#fef3c7",
-        "primary-fixed-dim": "#fbbf24",
+        // ===== Text Tokens =====
+        "on-surface": "#f3f3fb",
+        "on-surface-variant": "#8d95e8",
 
-        // ===== Secondary (cyan) =====
-        "secondary": "#38bdf8",
-        "secondary-container": "#153d6f",
-        "on-secondary": "#ffffff",
-        "on-secondary-container": "#78350f",
-        "secondary-fixed": "#fde68a",
-        "secondary-fixed-dim": "#f59e0b",
-
-        // ===== Tertiary (emerald) =====
-        "tertiary": "#00e59b",
-        "tertiary-container": "#00613f",
-        "on-tertiary": "#003823",
-        "tertiary-fixed": "#4bffb4",
-        "tertiary-fixed-dim": "#00e299",
-
-        // ===== Accents & states =====
-        "ruby": "#f43f5e",
-        "ruby-dark": "#881337",
-        "emerald-gem": "#00c853",
-        "emerald-gem-dark": "#00963e",
-        "gold-glow": "#fcd34d",
-        "gold-border": "#f59e0b",
-        "error": "#f43f5e",
-        "error-container": "#e11d48",
-
-        // Interactive navy family (buttons, segmented controls)
-        "navy-hi": "#24457e",
-        "navy": "#19335f",
-        "navy-lo": "#102242",
+        // Interactive Navy/Slate family aliases mapped to palette
+        "navy-hi": "#242950",
+        "navy": "#161930",
+        "navy-lo": "#111324",
       },
       fontSize: {
-        // ===== Type scale (DESIGN.md § Typography) =====
         "display-lg": ["26px", { lineHeight: "30px", letterSpacing: "-0.01em", fontWeight: "800" }],
         "headline-xl": ["20px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "800" }],
         "headline-lg": ["18px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "800" }],
@@ -88,7 +73,6 @@ export default {
         "2xl": "1.25rem",
         "3xl": "1.5rem",
         full: "9999px",
-        // Design-system radii
         card: "1rem",
         control: "0.75rem",
       },
@@ -107,7 +91,6 @@ export default {
         "status-bar-height": "3.5rem",
       },
       maxWidth: {
-        // Layout column for the whole app (DESIGN.md § Radius & Grid)
         screen: "32rem",
       },
       fontFamily: {
@@ -123,23 +106,14 @@ export default {
         "body-sm": ["Plus Jakarta Sans", "sans-serif"],
       },
       boxShadow: {
-        // ===== Elevation ladder (DESIGN.md § Elevation) =====
-        "inset-well": "inset 0 2px 6px rgba(0,0,0,0.55)",
-        "card": "0 4px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
-        "card-raised": "0 8px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)",
-        "crown": "0 8px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 28px rgba(251,191,36,0.30)",
-
-        // ===== Legacy bevels & glows (unchanged) =====
-        "bevel-gold": "0 6px 0 #78350f, 0 12px 24px rgba(245,158,11,0.45)",
-        "bevel-gold-active": "0 2px 0 #78350f, 0 4px 10px rgba(245,158,11,0.3)",
-        "bevel-emerald": "0 4px 0 #00702e, 0 8px 20px rgba(0,200,83,0.4)",
-        "bevel-emerald-active": "0 1px 0 #00702e, 0 3px 8px rgba(0,200,83,0.3)",
-        "bevel-navy": "0 4px 0 #071224, 0 6px 16px rgba(0,0,0,0.5)",
-        "bevel-ruby": "0 4px 0 #4c0519, 0 8px 18px rgba(225,29,72,0.35)",
-        "card-glow": "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)",
-        "gold-aura": "0 0 20px rgba(251,191,36,0.4)",
-        "cyan-aura": "0 0 20px rgba(0,210,255,0.4)",
-        "emerald-aura": "0 0 20px rgba(16,185,129,0.5)",
+        "inset-well": "inset 0 2px 6px rgba(0,0,0,0.65)",
+        "card": "0 4px 16px rgba(0,0,0,0.55), inset 0 1px 0 rgba(141,149,232,0.15)",
+        "card-raised": "0 8px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(141,149,232,0.25)",
+        "crown": "0 8px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(141,149,232,0.25), 0 0 28px rgba(87,99,232,0.30)",
+        "card-glow": "0 8px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(141,149,232,0.20)",
+        "primary-aura": "0 0 20px rgba(55,68,201,0.45)",
+        "accent-aura": "0 0 20px rgba(87,99,232,0.45)",
+        "secondary-aura": "0 0 20px rgba(141,149,232,0.35)",
       },
       keyframes: {
         fadeIn: {

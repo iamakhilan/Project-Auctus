@@ -4,33 +4,35 @@
 
 @layer base {
   :root {
-    --color-primary: #fbbf24;
-    --color-surface: #081326;
-    --color-emerald: #00e59b;
-    --color-cyan: #00d2ff;
+    --color-deep: #0c0d1a;
+    --color-light: #f3f3fb;
+    --color-primary: #3744c9;
+    --color-secondary: #8d95e8;
+    --color-accent: #5763e8;
+    --color-surface: #0c0d1a;
   }
 
   html, body {
     width: 100%;
     margin: 0;
     padding: 0;
-    color: #f0f5ff;
+    color: #f3f3fb;
     font-family: 'Plus Jakarta Sans', sans-serif;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Ambient page depth: soft navy bloom from the top (DESIGN.md § Color) */
+  /* Deep atmosphere page depth strictly using palette tones */
   body {
     background:
-      radial-gradient(ellipse 120% 55% at 50% -10%, #12294e 0%, #081326 58%, #060d1b 100%)
+      radial-gradient(ellipse 120% 55% at 50% -10%, #1a1e4a 0%, #0c0d1a 60%, #080912 100%)
       fixed;
-    background-color: #081326;
+    background-color: #0c0d1a;
   }
 
-  /* Visible focus ring on every keyboard-focusable element */
+  /* Visible focus ring strictly in accent color */
   :focus-visible {
-    outline: 2px solid rgba(251, 191, 36, 0.9);
+    outline: 2px solid #5763e8;
     outline-offset: 2px;
   }
 
@@ -63,19 +65,19 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #060e1d;
+    background: #080912;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1a3361;
+    background: #1d2140;
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
+    background: #5763e8;
   }
 
-  /* Numeric readouts align as tabular data (timers, counters, XP) */
+  /* Numeric readouts align as tabular data */
   .font-headline-xl,
   .font-headline-lg,
   .font-headline-md,
@@ -89,8 +91,7 @@
 
 @layer components {
   /* ============================================================
-     BUTTON STATE MACHINE (DESIGN.md § Interaction Grammar)
-     .btn-* = beveled 3D buttons · hover lifts · active presses
+     BUTTON STATE MACHINE (PALETTE 5-COLOR SYSTEM)
      ============================================================ */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-control font-label-md uppercase tracking-wider select-none;
@@ -102,111 +103,111 @@
     @apply opacity-60 cursor-not-allowed shadow-none;
   }
 
+  /* Primary Action Button (#3744c9 & #5763e8) */
+  .btn-primary,
   .btn-gold {
-    background: linear-gradient(180deg, #fde047 0%, #f59e0b 55%, #d97706 100%);
-    border-top: 1px solid #fef08a;
-    border-bottom: 4px solid #78350f;
-    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.35);
-    color: #451a03;
+    background: linear-gradient(180deg, #5763e8 0%, #3744c9 55%, #2a349c 100%);
+    border-top: 1px solid #8d95e8;
+    border-bottom: 4px solid #0c0d1a;
+    box-shadow: 0 8px 20px rgba(55, 68, 201, 0.45);
+    color: #f3f3fb;
   }
 
+  .btn-primary:hover:not(:disabled),
   .btn-gold:hover:not(:disabled) {
-    filter: brightness(1.06);
-    box-shadow: 0 10px 26px rgba(245, 158, 11, 0.5);
+    filter: brightness(1.12);
+    box-shadow: 0 10px 26px rgba(87, 99, 232, 0.55);
   }
 
+  .btn-primary:active:not(:disabled),
   .btn-gold:active:not(:disabled) {
     transform: translateY(3px);
     border-bottom-width: 1px;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    box-shadow: 0 2px 8px rgba(55, 68, 201, 0.35);
   }
 
-  .btn-navy {
-    background: linear-gradient(180deg, #24457e 0%, #19335f 55%, #102242 100%);
-    border-top: 1px solid rgba(56, 189, 248, 0.35);
-    border-bottom: 4px solid #071224;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
-    color: #f0f5ff;
-  }
-
-  .btn-navy:hover:not(:disabled) {
-    border-top-color: rgba(56, 189, 248, 0.75);
-    filter: brightness(1.14);
-  }
-
-  .btn-navy:active:not(:disabled) {
-    transform: translateY(3px);
-    border-bottom-width: 1px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  }
-
-  .btn-emerald {
-    background: linear-gradient(180deg, #34d399 0%, #10b981 55%, #059669 100%);
-    border-top: 1px solid #a7f3d0;
-    border-bottom: 4px solid #064e3b;
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
-    color: #ffffff;
-  }
-
-  .btn-emerald:hover:not(:disabled) {
-    filter: brightness(1.07);
-    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.5);
-  }
-
-  .btn-emerald:active:not(:disabled) {
-    transform: translateY(3px);
-    border-bottom-width: 1px;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-  }
-
+  /* Secondary Neutral Button (#1d2140 to #111324) */
+  .btn-secondary,
+  .btn-navy,
+  .btn-emerald,
+  .btn-cyan,
   .btn-ruby {
-    background: linear-gradient(180deg, #f43f5e 0%, #e11d48 55%, #be123c 100%);
-    border-top: 1px solid #fecdd3;
-    border-bottom: 4px solid #4c0519;
-    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.35);
-    color: #ffffff;
+    background: linear-gradient(180deg, #1d2140 0%, #161930 55%, #111324 100%);
+    border-top: 1px solid rgba(141, 149, 232, 0.4);
+    border-bottom: 4px solid #06070e;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+    color: #f3f3fb;
   }
 
+  .btn-secondary:hover:not(:disabled),
+  .btn-navy:hover:not(:disabled),
+  .btn-emerald:hover:not(:disabled),
+  .btn-cyan:hover:not(:disabled),
   .btn-ruby:hover:not(:disabled) {
-    filter: brightness(1.07);
-    box-shadow: 0 10px 24px rgba(225, 29, 72, 0.5);
+    border-top-color: #8d95e8;
+    filter: brightness(1.15);
   }
 
+  .btn-secondary:active:not(:disabled),
+  .btn-navy:active:not(:disabled),
+  .btn-emerald:active:not(:disabled),
+  .btn-cyan:active:not(:disabled),
   .btn-ruby:active:not(:disabled) {
     transform: translateY(3px);
     border-bottom-width: 1px;
-    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   }
 
-  .btn-cyan {
-    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
-    border-top: 1px solid #bae6fd;
-    border-bottom: 4px solid #082f49;
-    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.35);
-    color: #ffffff;
+  /* Accent Button (#8d95e8 to #5763e8) */
+  .btn-accent {
+    background: linear-gradient(180deg, #8d95e8 0%, #5763e8 55%, #3744c9 100%);
+    border-top: 1px solid #f3f3fb;
+    border-bottom: 4px solid #0c0d1a;
+    box-shadow: 0 8px 20px rgba(87, 99, 232, 0.45);
+    color: #f3f3fb;
   }
 
-  .btn-cyan:hover:not(:disabled) {
-    filter: brightness(1.08);
-    box-shadow: 0 10px 24px rgba(2, 132, 199, 0.5);
+  .btn-accent:hover:not(:disabled) {
+    filter: brightness(1.12);
+    box-shadow: 0 10px 24px rgba(87, 99, 232, 0.6);
   }
 
-  .btn-cyan:active:not(:disabled) {
+  .btn-accent:active:not(:disabled) {
     transform: translateY(3px);
     border-bottom-width: 1px;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    box-shadow: 0 2px 8px rgba(87, 99, 232, 0.3);
+  }
+
+  /* Light Accent Button (#f3f3fb surface with deep text) */
+  .btn-light {
+    background: linear-gradient(180deg, #ffffff 0%, #f3f3fb 55%, #8d95e8 100%);
+    border-top: 1px solid #ffffff;
+    border-bottom: 4px solid #5763e8;
+    box-shadow: 0 8px 20px rgba(141, 149, 232, 0.35);
+    color: #0c0d1a;
+  }
+
+  .btn-light:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: 0 10px 24px rgba(141, 149, 232, 0.5);
+  }
+
+  .btn-light:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 1px;
+    box-shadow: 0 2px 8px rgba(141, 149, 232, 0.25);
   }
 
   .btn-ghost {
-    background: #193361;
-    border: 1px solid rgba(71, 104, 163, 0.6);
+    background: #161930;
+    border: 1px solid rgba(141, 149, 232, 0.3);
     box-shadow: none;
-    color: #f0f5ff;
+    color: #f3f3fb;
   }
 
   .btn-ghost:hover:not(:disabled) {
-    background: #21427c;
-    border-color: rgba(251, 191, 36, 0.45);
+    background: #1d2140;
+    border-color: #5763e8;
   }
 
   .btn-ghost:active:not(:disabled) {
@@ -224,85 +225,34 @@
   }
 }
 
-/* 3D Game Button Effects (legacy, kept for compatibility) */
-.btn-3d-gold {
-  background: linear-gradient(180deg, #fde047 0%, #f59e0b 50%, #d97706 100%);
-  border-top: 1px solid #fef08a;
-  border-bottom: 4px solid #78350f;
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
-  color: #451a03;
-  transition: all 0.1s ease-in-out;
-}
-
-.btn-3d-gold:hover:not(:disabled) {
-  filter: brightness(1.06);
-  box-shadow: 0 10px 26px rgba(245, 158, 11, 0.55);
-}
-
-.btn-3d-gold:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-}
-
-.btn-3d-emerald {
-  background: linear-gradient(180deg, #34d399 0%, #10b981 50%, #059669 100%);
-  border-top: 1px solid #a7f3d0;
-  border-bottom: 4px solid #064e3b;
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-  color: #ffffff;
-  transition: all 0.1s ease-in-out;
-}
-
-.btn-3d-emerald:hover:not(:disabled) {
-  filter: brightness(1.07);
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.55);
-}
-
-.btn-3d-emerald:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-}
-
-.btn-3d-navy {
-  background: linear-gradient(180deg, #24457e 0%, #19335f 50%, #102242 100%);
-  border-top: 1px solid #38bdf8;
-  border-bottom: 4px solid #071224;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-  color: #f0f5ff;
-  transition: all 0.1s ease-in-out;
-}
-
-.btn-3d-navy:hover:not(:disabled) {
-  filter: brightness(1.15);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-}
-
-.btn-3d-navy:active {
-  transform: translateY(3px);
-  border-bottom-width: 1px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
+/* Legacy 3D Game Button Effects mapped cleanly */
+.btn-3d-gold,
+.btn-3d-emerald,
+.btn-3d-navy,
 .btn-3d-ruby {
-  background: linear-gradient(180deg, #f43f5e 0%, #e11d48 50%, #be123c 100%);
-  border-top: 1px solid #fecdd3;
-  border-bottom: 4px solid #4c0519;
-  box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
-  color: #ffffff;
+  background: linear-gradient(180deg, #5763e8 0%, #3744c9 50%, #2a349c 100%);
+  border-top: 1px solid #8d95e8;
+  border-bottom: 4px solid #0c0d1a;
+  box-shadow: 0 8px 20px rgba(55, 68, 201, 0.4);
+  color: #f3f3fb;
   transition: all 0.1s ease-in-out;
 }
 
+.btn-3d-gold:hover:not(:disabled),
+.btn-3d-emerald:hover:not(:disabled),
+.btn-3d-navy:hover:not(:disabled),
 .btn-3d-ruby:hover:not(:disabled) {
-  filter: brightness(1.07);
-  box-shadow: 0 10px 24px rgba(225, 29, 72, 0.55);
+  filter: brightness(1.12);
+  box-shadow: 0 10px 26px rgba(87, 99, 232, 0.55);
 }
 
+.btn-3d-gold:active,
+.btn-3d-emerald:active,
+.btn-3d-navy:active,
 .btn-3d-ruby:active {
   transform: translateY(3px);
   border-bottom-width: 1px;
-  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+  box-shadow: 0 2px 8px rgba(55, 68, 201, 0.25);
 }
 
 /* Floating Animations */
@@ -340,20 +290,21 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    filter: drop-shadow(0 0 8px rgba(87, 99, 232, 0.5));
   }
   50% {
-    filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.9));
+    filter: drop-shadow(0 0 18px rgba(87, 99, 232, 0.85));
   }
 }
 
-.glow-pulse-gold {
+.glow-pulse-gold,
+.glow-pulse-accent {
   animation: pulseGlow 2s ease-in-out infinite;
 }
 
 /* Custom background patterns */
 .bg-grid-dots {
-  background-image: radial-gradient(rgba(56, 189, 248, 0.15) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(141, 149, 232, 0.15) 1px, transparent 1px);
   background-size: 16px 16px;
 }
 
@@ -362,6 +313,7 @@
   .animate-float,
   .animate-stamp,
   .glow-pulse-gold,
+  .glow-pulse-accent,
   .animate-pulse,
   .animate-ping,
   .animate-bounce {

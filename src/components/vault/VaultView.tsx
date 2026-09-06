@@ -59,17 +59,17 @@ export const VaultView: React.FC = () => {
   return (
     <div className="flex flex-col w-full max-w-screen mx-auto px-3.5 sm:px-4 pt-3 pb-8 space-y-4">
       {/* 1. ROYAL TREASURY BALANCE CHAMBER */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-surface-container via-surface-container to-surface-container-low border border-outline-variant/60 shadow-card p-4 flex flex-col gap-3">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-surface-container via-surface-container to-surface-container-low border border-outline-variant shadow-card p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+            <div className="w-9 h-9 rounded-xl bg-primary/30 border border-secondary/50 flex items-center justify-center text-secondary">
               <span className="material-symbols-outlined text-[20px] fill-1">account_balance</span>
             </div>
             <div>
-              <span className="font-label-sm text-[10px] text-amber-400 uppercase tracking-wider font-extrabold block">
+              <span className="font-label-sm text-[10px] text-secondary uppercase tracking-wider font-extrabold block">
                 Citadel Treasury
               </span>
-              <h2 className="font-headline-sm text-sm sm:text-base text-white font-black">
+              <h2 className="font-headline-sm text-sm sm:text-base text-light font-black">
                 Resource Vault
               </h2>
             </div>
@@ -77,7 +77,7 @@ export const VaultView: React.FC = () => {
 
           <button
             onClick={() => setLedgerModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-dim hover:bg-surface-container-high border border-outline-variant/60 text-amber-300 text-xs font-bold shadow-sm active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-dim hover:bg-surface-container-high border border-outline-variant text-light text-xs font-bold shadow-sm active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-[16px]">receipt_long</span>
             <span>Ledger</span>
@@ -86,30 +86,30 @@ export const VaultView: React.FC = () => {
 
         {/* Currency Triad */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="p-2.5 rounded-xl bg-surface-dim border border-amber-400/30 text-center flex flex-col items-center">
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-outline-variant text-center flex flex-col items-center">
             <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-amber-400 text-[18px] fill-1">monetization_on</span>
-              <span className="font-headline-sm text-sm sm:text-base text-amber-300 font-black tabular-nums">
+              <span className="material-symbols-outlined text-accent text-[18px] fill-1">monetization_on</span>
+              <span className="font-headline-sm text-sm sm:text-base text-light font-black tabular-nums">
                 {profile.coins.toLocaleString()}
               </span>
             </div>
             <span className="text-[10px] text-on-surface-variant font-bold uppercase mt-0.5">Auctus Coins</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-surface-dim border border-sky-400/30 text-center flex flex-col items-center">
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-outline-variant text-center flex flex-col items-center">
             <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-cyan-400 text-[18px] fill-1">diamond</span>
-              <span className="font-headline-sm text-sm sm:text-base text-cyan-300 font-black tabular-nums">
+              <span className="material-symbols-outlined text-secondary text-[18px] fill-1">diamond</span>
+              <span className="font-headline-sm text-sm sm:text-base text-secondary-light font-black tabular-nums">
                 {profile.shards}
               </span>
             </div>
             <span className="text-[10px] text-on-surface-variant font-bold uppercase mt-0.5">Spire Shards</span>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-surface-dim border border-emerald-500/30 text-center flex flex-col items-center">
+          <div className="p-2.5 rounded-xl bg-surface-dim border border-outline-variant text-center flex flex-col items-center">
             <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-emerald-400 text-[18px] fill-1">redeem</span>
-              <span className="font-headline-sm text-sm sm:text-base text-emerald-300 font-black tabular-nums">
+              <span className="material-symbols-outlined text-secondary text-[18px] fill-1">redeem</span>
+              <span className="font-headline-sm text-sm sm:text-base text-light font-black tabular-nums">
                 {dailyStreakClaimed ? 0 : 1}
               </span>
             </div>
@@ -119,9 +119,9 @@ export const VaultView: React.FC = () => {
 
         {/* 24h Flow Summary */}
         <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-surface-dim/70 border border-outline-variant/40 text-xs text-on-surface-variant">
-          <span>24h Earned: <strong className="text-emerald-400">+{netFlowCoins.earned}</strong></span>
-          <span>Spent: <strong className="text-rose-400">-{netFlowCoins.spent}</strong></span>
-          <span className="text-amber-300 font-bold">
+          <span>24h Earned: <strong className="text-secondary">+{netFlowCoins.earned}</strong></span>
+          <span>Spent: <strong className="text-light">-{netFlowCoins.spent}</strong></span>
+          <span className="text-light font-bold">
             Net: {netFlowCoins.net >= 0 ? `+${netFlowCoins.net}` : netFlowCoins.net}
           </span>
         </div>
@@ -131,25 +131,25 @@ export const VaultView: React.FC = () => {
       <section className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between px-0.5">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-amber-400 text-[18px] fill-1">military_tech</span>
-            <h3 className="font-headline-sm text-sm text-white font-extrabold">
+            <span className="material-symbols-outlined text-secondary text-[18px] fill-1">military_tech</span>
+            <h3 className="font-headline-sm text-sm text-light font-extrabold">
               Milestone Loot Chests
             </h3>
           </div>
         </div>
 
         {/* Daily Streak Chest Card */}
-        <div className="rounded-2xl bg-surface-container border border-amber-400/50 p-3.5 shadow-card flex flex-col gap-3">
+        <div className="rounded-2xl bg-surface-container border border-accent/50 p-3.5 shadow-card flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-dim border border-amber-400/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-dim border border-accent/50 flex-shrink-0 overflow-hidden flex items-center justify-center">
               <img src="/assets/chest_streak.png" alt="Streak Chest" className="w-full h-full object-contain" />
             </div>
             <div className="flex flex-col min-w-0 flex-1">
-              <div className="flex items-center gap-1 text-rose-400">
-                <span className="material-symbols-outlined text-[13px] fill-1">local_fire_department</span>
+              <div className="flex items-center gap-1 text-light">
+                <span className="material-symbols-outlined text-[13px] fill-1 text-accent">local_fire_department</span>
                 <span className="text-[10px] font-extrabold uppercase">{profile.streakDays}-Day Streak Reward</span>
               </div>
-              <h4 className="font-headline-sm text-sm text-white font-extrabold mt-0.5">
+              <h4 className="font-headline-sm text-sm text-light font-extrabold mt-0.5">
                 Daily Streak Chest
               </h4>
               <p className="text-xs text-on-surface-variant line-clamp-2 mt-0.5">
@@ -164,7 +164,7 @@ export const VaultView: React.FC = () => {
             className={`h-11 btn font-headline-sm text-xs uppercase tracking-wider font-black w-full ${
               dailyStreakClaimed
                 ? 'bg-surface-dim border border-outline-variant/50 text-on-surface-variant cursor-not-allowed'
-                : 'btn-gold shadow-md'
+                : 'btn-primary shadow-md'
             }`}
           >
             <span className="material-symbols-outlined text-[18px]">redeem</span>
@@ -173,21 +173,21 @@ export const VaultView: React.FC = () => {
         </div>
 
         {/* Weekly Focus Chest */}
-        <div className="rounded-2xl bg-surface-container border border-outline-variant/60 p-3.5 shadow-card flex flex-col gap-2.5">
+        <div className="rounded-2xl bg-surface-container border border-outline-variant p-3.5 shadow-card flex flex-col gap-2.5">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-surface-dim border border-outline-variant/60 flex-shrink-0 overflow-hidden flex items-center justify-center opacity-70">
+            <div className="w-12 h-12 rounded-xl bg-surface-dim border border-outline-variant flex-shrink-0 overflow-hidden flex items-center justify-center opacity-70">
               <img src="/assets/chest_cyber.png" alt="Cyber Chest" className="w-full h-full object-contain grayscale" />
             </div>
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-cyan-400 font-bold uppercase text-[10px]">Unlocks in 2 Days</span>
+                <span className="text-secondary font-bold uppercase text-[10px]">Unlocks in 2 Days</span>
                 <span className="text-on-surface-variant font-medium">14 / 20 hrs</span>
               </div>
-              <h4 className="font-headline-sm text-sm text-white font-bold mt-0.5">
+              <h4 className="font-headline-sm text-sm text-light font-bold mt-0.5">
                 Weekly Focus Grand Chest
               </h4>
               <div className="w-full bg-surface-dim h-1.5 rounded-full overflow-hidden mt-2">
-                <div className="bg-cyan-400 h-full rounded-full" style={{ width: '70%' }} />
+                <div className="bg-accent h-full rounded-full" style={{ width: '70%' }} />
               </div>
             </div>
           </div>
@@ -198,8 +198,8 @@ export const VaultView: React.FC = () => {
       <section className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-amber-400 text-[18px]">storefront</span>
-            <h3 className="font-headline-sm text-sm text-white font-extrabold">
+            <span className="material-symbols-outlined text-secondary text-[18px]">storefront</span>
+            <h3 className="font-headline-sm text-sm text-light font-extrabold">
               Reward Bazaar
             </h3>
           </div>
@@ -209,8 +209,8 @@ export const VaultView: React.FC = () => {
               onClick={() => setActiveShopTab('irl')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 activeShopTab === 'irl'
-                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-white'
+                  ? 'bg-navy-hi border border-accent text-light shadow-sm'
+                  : 'text-on-surface-variant hover:text-light'
               }`}
             >
               Real-Life
@@ -219,8 +219,8 @@ export const VaultView: React.FC = () => {
               onClick={() => setActiveShopTab('game')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 activeShopTab === 'game'
-                  ? 'bg-navy-hi border border-secondary/40 text-white shadow-sm'
-                  : 'text-on-surface-variant hover:text-white'
+                  ? 'bg-navy-hi border border-accent text-light shadow-sm'
+                  : 'text-on-surface-variant hover:text-light'
               }`}
             >
               Perks
@@ -245,10 +245,10 @@ export const VaultView: React.FC = () => {
                       <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <h4 className="font-headline-sm text-xs sm:text-sm text-white/80 truncate font-bold">
+                      <h4 className="font-headline-sm text-xs sm:text-sm text-light/80 truncate font-bold">
                         {item.title}
                       </h4>
-                      <span className="text-[11px] text-cyan-300 font-semibold">
+                      <span className="text-[11px] text-secondary font-semibold">
                         Unlocks at Citadel LV.{item.requiredLevel}
                       </span>
                     </div>
@@ -265,18 +265,18 @@ export const VaultView: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className="rounded-xl bg-surface-container/80 p-3 flex items-center justify-between gap-3 border border-outline-variant/60"
+                  className="rounded-xl bg-surface-container/80 p-3 flex items-center justify-between gap-3 border border-outline-variant"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-surface-dim flex items-center justify-center text-on-surface-variant flex-shrink-0">
                       <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <h4 className="font-headline-sm text-xs sm:text-sm text-white truncate font-bold">
+                      <h4 className="font-headline-sm text-xs sm:text-sm text-light truncate font-bold">
                         {item.title}
                       </h4>
                       <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                        <span className="text-amber-300/80 font-bold flex items-center gap-0.5">
+                        <span className="text-secondary font-bold flex items-center gap-0.5">
                           <span className="material-symbols-outlined text-[13px]">monetization_on</span>
                           {item.cost}
                         </span>
@@ -294,19 +294,19 @@ export const VaultView: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="rounded-xl bg-surface-container p-3 flex items-center justify-between gap-3 border border-outline-variant hover:border-amber-400/40 shadow-card transition-all"
+                className="rounded-xl bg-surface-container p-3 flex items-center justify-between gap-3 border border-outline-variant hover:border-accent/50 shadow-card transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-navy-hi border border-amber-400/30 flex items-center justify-center text-amber-300 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-navy-hi border border-secondary/40 flex items-center justify-center text-secondary flex-shrink-0">
                     <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h4 className="font-headline-sm text-xs sm:text-sm text-white truncate font-bold">
+                    <h4 className="font-headline-sm text-xs sm:text-sm text-light truncate font-bold">
                       {item.title}
                     </h4>
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-amber-300 font-extrabold flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[13px] fill-1">monetization_on</span>
+                      <span className="text-light font-extrabold flex items-center gap-0.5">
+                        <span className="material-symbols-outlined text-[13px] fill-1 text-accent">monetization_on</span>
                         {item.cost}
                       </span>
                       <span className="text-on-surface-variant text-[11px]">• {item.category}</span>
@@ -316,7 +316,7 @@ export const VaultView: React.FC = () => {
 
                 <button
                   onClick={() => redeemReward(item.id)}
-                  className="btn btn-emerald h-9 px-3.5 font-headline-sm text-xs uppercase tracking-wider font-black flex-shrink-0"
+                  className="btn btn-primary h-9 px-3.5 font-headline-sm text-xs uppercase tracking-wider font-black flex-shrink-0"
                 >
                   Redeem
                 </button>
@@ -326,13 +326,13 @@ export const VaultView: React.FC = () => {
 
           <button
             onClick={() => setCustomModalOpen(true)}
-            className="rounded-xl bg-surface-container/60 hover:bg-surface-container border border-dashed border-cyan-400/40 p-3 flex items-center justify-between text-left transition-all mt-1"
+            className="rounded-xl bg-surface-container/60 hover:bg-surface-container border border-dashed border-accent/40 p-3 flex items-center justify-between text-left transition-all mt-1"
           >
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-amber-400 text-[18px]">add_circle</span>
-              <span className="text-xs font-bold text-sky-200">Create Custom Real-World Reward</span>
+              <span className="material-symbols-outlined text-secondary text-[18px]">add_circle</span>
+              <span className="text-xs font-bold text-light">Create Custom Real-World Reward</span>
             </div>
-            <span className="text-[10px] text-amber-300 uppercase font-black">Configure</span>
+            <span className="text-[10px] text-secondary uppercase font-black">Configure</span>
           </button>
         </div>
       </section>
@@ -341,14 +341,14 @@ export const VaultView: React.FC = () => {
       {customModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setCustomModalOpen(false)} />
-          <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-surface-container border border-amber-400/60 p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-4">
+          <div className="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-surface-container border border-accent/60 p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-outline-variant/40">
-              <h3 className="font-headline-sm text-base text-white font-extrabold">
+              <h3 className="font-headline-sm text-base text-light font-extrabold">
                 New Custom Reward
               </h3>
               <button
                 onClick={() => setCustomModalOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-white"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-light"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -365,7 +365,7 @@ export const VaultView: React.FC = () => {
                   placeholder="e.g., Saturday Movie Night, Boba Tea..."
                   value={customTitle}
                   onChange={e => setCustomTitle(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-accent"
                 />
               </div>
 
@@ -380,7 +380,7 @@ export const VaultView: React.FC = () => {
                     step="10"
                     value={customCost}
                     onChange={e => setCustomCost(Number(e.target.value))}
-                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
+                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-accent"
                   />
                 </div>
 
@@ -392,7 +392,7 @@ export const VaultView: React.FC = () => {
                     type="text"
                     value={customCategory}
                     onChange={e => setCustomCategory(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-amber-400"
+                    className="w-full h-11 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-accent"
                   />
                 </div>
               </div>
@@ -409,8 +409,8 @@ export const VaultView: React.FC = () => {
                       onClick={() => setCustomIcon(ic)}
                       className={`h-9 rounded-lg flex items-center justify-center transition-all ${
                         customIcon === ic
-                          ? 'bg-amber-400 text-amber-950 font-bold shadow-sm'
-                          : 'text-on-surface-variant hover:text-white'
+                          ? 'bg-accent text-light font-bold shadow-sm'
+                          : 'text-on-surface-variant hover:text-light'
                       }`}
                     >
                       <span className="material-symbols-outlined text-[18px]">{ic}</span>
@@ -421,7 +421,7 @@ export const VaultView: React.FC = () => {
 
               <button
                 type="submit"
-                className="btn btn-gold w-full h-12 mt-2 font-headline-sm text-xs uppercase tracking-wider font-black shadow-md"
+                className="btn btn-primary w-full h-12 mt-2 font-headline-sm text-xs uppercase tracking-wider font-black shadow-md"
               >
                 Create Custom Reward
               </button>
@@ -434,20 +434,20 @@ export const VaultView: React.FC = () => {
       {ledgerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setLedgerModalOpen(false)} />
-          <div className="relative w-full max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant/70 p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-3 custom-scrollbar">
+          <div className="relative w-full max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant p-5 shadow-crown z-10 animate-slideUp flex flex-col gap-3 custom-scrollbar">
             <div className="flex items-center justify-between pb-2 border-b border-outline-variant/40">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-400 text-[20px]">receipt_long</span>
-                <h3 className="font-headline-sm text-base text-white font-extrabold">
+                <span className="material-symbols-outlined text-secondary text-[20px]">receipt_long</span>
+                <h3 className="font-headline-sm text-base text-light font-extrabold">
                   Treasury Ledger
                 </h3>
-                <span className="text-[10px] text-amber-300 font-bold bg-surface-dim px-2 py-0.5 rounded-full border border-amber-400/20">
+                <span className="text-[10px] text-secondary font-bold bg-surface-dim px-2 py-0.5 rounded-full border border-secondary/30">
                   {transactions.length} records
                 </span>
               </div>
               <button
                 onClick={() => setLedgerModalOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-white"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-light"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
@@ -460,7 +460,7 @@ export const VaultView: React.FC = () => {
                 placeholder="Search ledger entries..."
                 value={ledgerSearch}
                 onChange={e => setLedgerSearch(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-surface-dim border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-amber-400"
+                className="w-full h-9 px-3 rounded-xl bg-surface-dim border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-accent"
               />
 
               <div className="flex items-center justify-between gap-1 flex-wrap">
@@ -471,8 +471,8 @@ export const VaultView: React.FC = () => {
                       onClick={() => setLedgerCurrencyFilter(curr)}
                       className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize ${
                         ledgerCurrencyFilter === curr
-                          ? 'bg-navy-hi text-amber-300 border border-amber-400/40'
-                          : 'text-on-surface-variant hover:text-white'
+                          ? 'bg-navy-hi text-light border border-accent/50'
+                          : 'text-on-surface-variant hover:text-light'
                       }`}
                     >
                       {curr}
@@ -487,8 +487,8 @@ export const VaultView: React.FC = () => {
                       onClick={() => setLedgerTypeFilter(type)}
                       className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize ${
                         ledgerTypeFilter === type
-                          ? 'bg-navy-hi text-cyan-300 border border-cyan-400/40'
-                          : 'text-on-surface-variant hover:text-white'
+                          ? 'bg-navy-hi text-light border border-accent/50'
+                          : 'text-on-surface-variant hover:text-light'
                       }`}
                     >
                       {type === 'all' ? 'All' : type === 'earn' ? '+ Inflow' : '- Outflow'}
@@ -521,23 +521,23 @@ export const VaultView: React.FC = () => {
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          isEarn ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'
+                          isEarn ? 'bg-primary/40 text-light' : 'bg-surface-dim text-on-surface-variant'
                         }`}>
                           <span className="material-symbols-outlined text-[16px]">
                             {isEarn ? 'arrow_upward' : 'arrow_downward'}
                           </span>
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-white truncate">{tx.reason}</span>
+                          <span className="text-xs font-bold text-light truncate">{tx.reason}</span>
                           <span className="text-[10px] text-on-surface-variant">{dateStr}</span>
                         </div>
                       </div>
 
                       <div className="flex flex-col items-end flex-shrink-0">
-                        <span className={`text-xs font-black tabular-nums ${isEarn ? 'text-emerald-300' : 'text-rose-400'}`}>
+                        <span className={`text-xs font-black tabular-nums ${isEarn ? 'text-secondary' : 'text-on-surface-variant'}`}>
                           {isEarn ? '+' : '-'}{tx.amount.toLocaleString()} {tx.currency}
                         </span>
-                        <span className="text-[10px] text-amber-200/70">Bal: {tx.balanceAfter.toLocaleString()}</span>
+                        <span className="text-[10px] text-secondary/70">Bal: {tx.balanceAfter.toLocaleString()}</span>
                       </div>
                     </div>
                   );
@@ -548,7 +548,7 @@ export const VaultView: React.FC = () => {
             <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-end">
               <button
                 onClick={() => setLedgerModalOpen(false)}
-                className="btn btn-navy h-9 px-4 text-xs font-bold uppercase"
+                className="btn btn-secondary h-9 px-4 text-xs font-bold uppercase"
               >
                 Close
               </button>
