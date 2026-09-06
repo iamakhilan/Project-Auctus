@@ -16,6 +16,7 @@ import {
 } from '../../utils/storage';
 import { initialHabits } from '../../domain/habits';
 import { getInitialTransactions } from '../../domain/economy';
+import { syncChestStatusWithTimestamp } from '../../domain/chests';
 import { AuctusV2SaveData } from './types';
 import { V2_KEYS, safeParseJson, migrateV1ToV2 } from './migration';
 
@@ -72,16 +73,17 @@ export function saveQuestsV2(quests: Quest[]): void {
 }
 
 /**
- * Loads chests from V2 storage with automated fallback and migration from V1.
+ * Loads chests from V2 storage with automated fallback, migration, and timestamp synchronization.
  */
 export function loadChestsV2(): ChestSlot[] {
   try {
     const raw = localStorage.getItem(V2_KEYS.CHESTS);
-    if (raw) return safeParseJson(raw, initialChests);
+    const parsed: ChestSlot[] = raw
+      ? safeParseJson(raw, initialChests)
+      : migrateV1ToV2().data.chests;
 
-    const migration = migrateV1ToV2();
-    saveChestsV2(migration.data.chests);
-    return migration.data.chests;
+    const synced = parsed.map(c => syncChestStatusWithTimestamp(c, Date.now()));
+    return synced;
   } catch {
     return initialChests;
   }

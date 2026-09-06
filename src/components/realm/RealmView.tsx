@@ -1,11 +1,13 @@
 import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
+import { calculateSpeedUpCost } from '../../domain/chests';
 
 export const RealmView: React.FC = () => {
   const {
     profile,
     chests,
     unlockChest,
+    speedUpChest,
     claimChestLoot,
     startFocusSession,
     setActiveTab,
@@ -334,10 +336,11 @@ export const RealmView: React.FC = () => {
         <div className="grid grid-cols-4 gap-2 p-2 bg-surface-dim border border-outline-variant/70 rounded-card shadow-inset-well">
           {chests.map(slot => {
             if (slot.status === 'unlocking') {
+              const shardCost = calculateSpeedUpCost(slot.unlockTimeRemainingSeconds);
               return (
                 <div
                   key={slot.id}
-                  className="relative bg-gradient-to-b from-surface-container to-surface-container-low border border-outline-variant rounded-control p-1.5 flex flex-col items-center justify-between min-h-[132px] overflow-hidden shadow-card cursor-pointer active:translate-y-0.5 transition-transform"
+                  className="relative bg-gradient-to-b from-surface-container to-surface-container-low border border-sky-400/40 rounded-control p-1.5 flex flex-col items-center justify-between min-h-[132px] overflow-hidden shadow-card"
                 >
                   <div className="w-full text-center py-0.5 rounded bg-surface-container-high border border-secondary/30">
                     <span className="font-label-sm text-label-sm text-[#7dd3fc] font-black uppercase tracking-tight">
@@ -354,14 +357,22 @@ export const RealmView: React.FC = () => {
                     />
                   </div>
 
-                  <div className="flex flex-col items-center text-center w-full">
-                    <span className="font-label-sm text-label-sm text-on-surface font-extrabold truncate w-full">
-                      {slot.name}
-                    </span>
+                  <div className="flex flex-col items-center text-center w-full gap-1">
                     <span className="font-label-sm text-label-sm text-[#34d399] flex items-center gap-0.5 font-black">
                       <span className="material-symbols-outlined text-[10px]">schedule</span>
                       {formatSeconds(slot.unlockTimeRemainingSeconds)}
                     </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speedUpChest(slot.slotIndex);
+                      }}
+                      className="w-full py-0.5 px-1 rounded bg-sky-950/80 hover:bg-sky-900 border border-sky-400/50 text-sky-200 font-label-sm text-label-sm font-black flex items-center justify-center gap-0.5 active:scale-95 transition-all"
+                      title={`Speed up unlock for ${shardCost} Spire Shard(s)`}
+                    >
+                      <span className="material-symbols-outlined text-[11px] text-sky-300">diamond</span>
+                      <span>{shardCost}</span>
+                    </button>
                   </div>
                 </div>
               );

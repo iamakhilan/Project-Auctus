@@ -48,7 +48,17 @@ import {
   createTransactionEntity,
   recordTransaction,
 } from '../domain/economy';
-import { createChestSlotEntity, rollChestTier, createEmptyChestSlot } from '../domain/chests';
+import {
+  createChestSlotEntity,
+  rollChestTier,
+  createEmptyChestSlot,
+  startChestUnlockEntity,
+  syncChestStatusWithTimestamp,
+  calculateSpeedUpCost,
+  speedUpChestUnlockEntity,
+  rollChestLoot,
+  calculateChestRemainingSeconds,
+} from '../domain/chests';
 import {
   createFocusSessionEntity,
   calculateRemainingSeconds,
@@ -95,6 +105,7 @@ interface GameStateContextType {
   createHabit: (title: string, category?: HabitCategory, description?: string, xpYield?: number, coinYield?: number) => void;
   deleteHabit: (habitId: string) => void;
   unlockChest: (slotIndex: number) => void;
+  speedUpChest: (slotIndex: number) => boolean;
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
   createCustomReward: (title: string, cost: number, category: string, icon: string) => void;
@@ -428,16 +439,49 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.playClick(profile.soundEnabled);
     setChests(prev =>
       prev.map(c => {
-        if (c.slotIndex === slotIndex && c.status === 'queued') {
-          return {
-            ...c,
-            status: 'unlocking',
-          };
+        if (c.slotIndex === slotIndex && (c.status === 'queued' || c.status === 'locked')) {
+          return startChestUnlockEntity(c, Date.now());
         }
         return c;
       })
     );
   }, [profile.soundEnabled]);
+
+  // Speed Up Chest with Spire Shards
+  const speedUpChest = useCallback((slotIndex: number): boolean => {
+    const targetChest = chests.find(c => c.slotIndex === slotIndex);
+    if (!targetChest || targetChest.status !== 'unlocking') return false;
+
+    const remaining = calculateChestRemainingSeconds(targetChest, Date.now());
+    const cost = calculateSpeedUpCost(remaining);
+
+    if (profile.shards < cost) {
+      soundEngine.playClick(profile.soundEnabled);
+      return false;
+    }
+
+    // Deduct shards
+    setProfile(p => ({
+      ...p,
+      shards: p.shards - cost,
+    }));
+
+    const tx = createTransactionEntity({
+      amount: cost,
+      currency: 'shards',
+      type: 'spend',
+      reason: `Speed Up: ${targetChest.name}`,
+      balanceAfter: profile.shards - cost,
+    });
+    setTransactions(t => recordTransaction(t, tx));
+
+    soundEngine.playLevelUp(profile.soundEnabled);
+    setChests(prev =>
+      prev.map(c => (c.slotIndex === slotIndex ? speedUpChestUnlockEntity(c) : c))
+    );
+
+    return true;
+  }, [chests, profile.shards, profile.soundEnabled]);
 
   // Claim Chest Loot
   const claimChestLoot = useCallback((slotIndex: number) => {
@@ -445,15 +489,18 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!targetChest) return;
 
     soundEngine.playCoinClaim(profile.soundEnabled);
-    addXp(targetChest.xpReward);
-    addCoins(targetChest.coinsReward, `Chest: ${targetChest.name}`);
-    if (targetChest.shardsReward > 0) {
-      addShards(targetChest.shardsReward, `Chest: ${targetChest.name}`);
+
+    // Roll loot with tier & level scaling
+    const loot = rollChestLoot(targetChest.tier as any, profile.level);
+    addXp(loot.xp);
+    addCoins(loot.coins, `Loot Deck: ${targetChest.name}`);
+    if (loot.shards > 0) {
+      addShards(loot.shards, `Loot Deck: ${targetChest.name}`);
     }
 
     confetti({
-      particleCount: 70,
-      spread: 70,
+      particleCount: 75,
+      spread: 75,
       origin: { y: 0.5 },
       colors: ['#f59e0b', '#38bdf8', '#00e59b', '#fde047'],
     });
@@ -461,11 +508,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setClaimModal({
       isOpen: true,
       title: `${targetChest.name} Claimed!`,
-      subtitle: 'LOOT SECURED',
-      description: 'Relic rewards and coins deposited into your Citadel Vault.',
-      coins: targetChest.coinsReward,
-      xp: targetChest.xpReward,
-      shards: targetChest.shardsReward,
+      subtitle: 'CHEST LOOT REVEAL',
+      description: 'Loot cards secured and banked to your Citadel Treasury.',
+      coins: loot.coins,
+      xp: loot.xp,
+      shards: loot.shards,
       icon: 'military_tech',
     });
 
@@ -478,7 +525,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...p,
       unlockedChestsCount: p.unlockedChestsCount + 1,
     }));
-  }, [chests, addXp, addCoins, addShards, profile.soundEnabled]);
+  }, [chests, profile.level, addXp, addCoins, addShards, profile.soundEnabled]);
 
   // Redeem a Reward
   const redeemReward = useCallback((rewardId: string): boolean => {
@@ -724,29 +771,27 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearInterval(timer);
   }, [focusSession.isActive, focusSession.isPaused, completeFocusSession]);
 
-  // Tick unlocking chests countdown
+  // Tick unlocking chests countdown synchronized with wall-clock timestamps
   useEffect(() => {
     const interval = setInterval(() => {
-      setChests(prev =>
-        prev.map(c => {
-          if (c.status === 'unlocking' && c.unlockTimeRemainingSeconds > 0) {
-            const nextSec = c.unlockTimeRemainingSeconds - 1;
-            if (nextSec <= 0) {
-              return {
-                ...c,
-                status: 'ready',
-                unlockTimeRemainingSeconds: 0,
-                image: '/assets/chest_ready.png',
-              };
+      const now = Date.now();
+      setChests(prev => {
+        let hasChanged = false;
+        const next = prev.map(c => {
+          if (c.status === 'unlocking') {
+            const synced = syncChestStatusWithTimestamp(c, now);
+            if (
+              synced.status !== c.status ||
+              synced.unlockTimeRemainingSeconds !== c.unlockTimeRemainingSeconds
+            ) {
+              hasChanged = true;
             }
-            return {
-              ...c,
-              unlockTimeRemainingSeconds: nextSec,
-            };
+            return synced;
           }
           return c;
-        })
-      );
+        });
+        return hasChanged ? next : prev;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -777,6 +822,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         createHabit,
         deleteHabit,
         unlockChest,
+        speedUpChest,
         claimChestLoot,
         redeemReward,
         createCustomReward,

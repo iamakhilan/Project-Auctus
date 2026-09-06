@@ -62,6 +62,27 @@ export function rollChestTier(randomSeed = Math.random()): ChestTier {
 }
 
 /**
+ * Calculates dynamic loot yields with minor variance.
+ */
+export function rollChestLoot(
+  tier: ChestTier,
+  playerLevel = 1,
+  randomVariance = Math.random()
+): { xp: number; coins: number; shards: number } {
+  const config = CHEST_TIERS[tier];
+  if (!config) return { xp: 50, coins: 50, shards: 0 };
+
+  const levelMult = 1 + (playerLevel - 1) * 0.05; // 5% bonus per level
+  const varianceMult = 0.9 + randomVariance * 0.2; // 0.9x to 1.1x
+
+  return {
+    xp: Math.round(config.baseXp * levelMult * varianceMult),
+    coins: Math.round(config.baseCoins * levelMult * varianceMult),
+    shards: config.shards,
+  };
+}
+
+/**
  * Creates a new ChestSlot entity for a given slot index and tier.
  */
 export function createChestSlotEntity(
@@ -81,6 +102,79 @@ export function createChestSlotEntity(
     coinsReward: config.baseCoins,
     xpReward: config.baseXp,
     shardsReward: config.shards,
+  };
+}
+
+/**
+ * Initiates the timestamp-based countdown for a chest.
+ */
+export function startChestUnlockEntity(slot: ChestSlot, now = Date.now()): ChestSlot {
+  if (slot.status !== 'queued' && slot.status !== 'locked') return slot;
+
+  const durationSec = slot.totalUnlockSeconds || 3600;
+  return {
+    ...slot,
+    status: 'unlocking',
+    unlockStartedAt: now,
+    unlockEndsAt: now + durationSec * 1000,
+    unlockTimeRemainingSeconds: durationSec,
+  };
+}
+
+/**
+ * Calculates accurate remaining seconds using wall-clock timestamps.
+ */
+export function calculateChestRemainingSeconds(slot: ChestSlot, now = Date.now()): number {
+  if (slot.status === 'ready') return 0;
+  if (slot.status !== 'unlocking') return slot.unlockTimeRemainingSeconds;
+
+  if (slot.unlockEndsAt) {
+    return Math.max(0, Math.ceil((slot.unlockEndsAt - now) / 1000));
+  }
+  return slot.unlockTimeRemainingSeconds;
+}
+
+/**
+ * Recomputes chest status based on wall-clock time.
+ */
+export function syncChestStatusWithTimestamp(slot: ChestSlot, now = Date.now()): ChestSlot {
+  if (slot.status !== 'unlocking') return slot;
+
+  const remaining = calculateChestRemainingSeconds(slot, now);
+  if (remaining <= 0) {
+    return {
+      ...slot,
+      status: 'ready',
+      unlockTimeRemainingSeconds: 0,
+      image: '/assets/chest_ready.png',
+    };
+  }
+
+  return {
+    ...slot,
+    unlockTimeRemainingSeconds: remaining,
+  };
+}
+
+/**
+ * Calculates the Spire Shards cost required to instantly unlock a chest.
+ * Rate: 1 Spire Shard per 3600 seconds (1 hour) remaining, min 1 shard.
+ */
+export function calculateSpeedUpCost(remainingSeconds: number): number {
+  if (remainingSeconds <= 0) return 0;
+  return Math.max(1, Math.ceil(remainingSeconds / 3600));
+}
+
+/**
+ * Instantly completes chest unlock via speed-up.
+ */
+export function speedUpChestUnlockEntity(slot: ChestSlot): ChestSlot {
+  return {
+    ...slot,
+    status: 'ready',
+    unlockTimeRemainingSeconds: 0,
+    unlockEndsAt: undefined,
+    image: '/assets/chest_ready.png',
   };
 }
 

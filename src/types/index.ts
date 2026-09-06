@@ -54,8 +54,10 @@ export interface ChestSlot {
   name: string;
   tier: 'silver' | 'gold' | 'magical' | 'relic' | 'empty';
   status: ChestStatus;
-  unlockTimeRemainingSeconds: number; // For countdown
+  unlockTimeRemainingSeconds: number; // For countdown display
   totalUnlockSeconds: number;
+  unlockStartedAt?: number; // ms timestamp
+  unlockEndsAt?: number; // ms timestamp
   image: string;
   coinsReward: number;
   xpReward: number;
