@@ -587,7 +587,7 @@ export const QuestsView: React.FC = () => {
             {/* Deadline */}
             <select
               value={selectedDeadline}
-              onChange={e => setSelectedDeadline(e.target.value as any)}
+              onChange={e => setSelectedDeadline(e.target.value as 'Today' | 'Tonight' | 'Tomorrow' | 'This Week')}
               className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-rose-300 font-label-sm text-label-sm font-bold focus:outline-none"
             >
               <option value="Today">Today</option>

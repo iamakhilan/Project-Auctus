@@ -61,6 +61,7 @@ import {
   speedUpChestUnlockEntity,
   rollChestLoot,
   calculateChestRemainingSeconds,
+  ChestTier,
 } from '../domain/chests';
 import {
   createFocusSessionEntity,
@@ -122,6 +123,7 @@ interface GameStateContextType {
   openCustomClaimModal: (data: Partial<ClaimModalData>) => void;
   exportData: () => string;
   importData: (json: string) => boolean;
+  checkAchievements: () => void;
   
   // Focus Arena Actions
   startFocusSession: (durationMinutes?: number, questId?: string, questTitle?: string) => void;
@@ -231,7 +233,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ),
       };
     });
-  }, [profile.soundEnabled]);
+  }, []);
 
   const addCoins = useCallback((amount: number, reason = 'Auctus Bounty') => {
     soundEngine.playCoinClaim(profile.soundEnabled);
@@ -504,7 +506,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.playCoinClaim(profile.soundEnabled);
 
     // Roll loot with tier & level scaling
-    const loot = rollChestLoot(targetChest.tier as any, profile.level);
+    const loot = rollChestLoot(targetChest.tier as ChestTier, profile.level);
     addXp(loot.xp);
     addCoins(loot.coins, `Loot Deck: ${targetChest.name}`);
     if (loot.shards > 0) {
@@ -584,7 +586,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     return true;
-  }, [rewards, profile, profile.soundEnabled]);
+  }, [rewards, profile]);
 
   const createCustomReward = useCallback((title: string, cost: number, category: string, icon: string) => {
     const newReward = createCustomRewardEntity(title, cost, category, icon);
@@ -641,39 +643,42 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     return true;
-  }, [profile, profile.soundEnabled]);
+  }, [profile]);
 
-  // Auto-evaluate achievements on activity
-  useEffect(() => {
-    const evalRes = evaluateAchievements(achievements, profile, habits, quests);
-    if (evalRes.newlyUnlocked.length > 0) {
-      setAchievements(evalRes.updated);
-      for (const unlocked of evalRes.newlyUnlocked) {
-        soundEngine.playLevelUp(profile.soundEnabled);
-        addXp(unlocked.rewards.xp);
-        if (unlocked.rewards.coins) {
-          addCoins(unlocked.rewards.coins, `Achievement: ${unlocked.title}`);
+  // Player achievements evaluator
+  const evaluatePlayerAchievements = useCallback((
+    targetProfile: PlayerProfile,
+    targetHabits: Habit[],
+    targetQuests: Quest[]
+  ) => {
+    setAchievements(prevAchievements => {
+      const evalRes = evaluateAchievements(prevAchievements, targetProfile, targetHabits, targetQuests);
+      if (evalRes.newlyUnlocked.length > 0) {
+        for (const unlocked of evalRes.newlyUnlocked) {
+          soundEngine.playLevelUp(targetProfile.soundEnabled);
+          addXp(unlocked.rewards.xp);
+          if (unlocked.rewards.coins) {
+            addCoins(unlocked.rewards.coins, `Achievement: ${unlocked.title}`);
+          }
+          if (unlocked.rewards.shards) {
+            addShards(unlocked.rewards.shards, `Achievement: ${unlocked.title}`);
+          }
+          NotifyTriggers.achievementUnlocked(unlocked.title, unlocked.rewards.titleReward);
+          confetti({
+            particleCount: 60,
+            spread: 70,
+            origin: { y: 0.5 },
+            colors: ['#f59e0b', '#38bdf8', '#ffffff'],
+          });
         }
-        if (unlocked.rewards.shards) {
-          addShards(unlocked.rewards.shards, `Achievement: ${unlocked.title}`);
-        }
-        NotifyTriggers.achievementUnlocked(unlocked.title, unlocked.rewards.titleReward);
-        confetti({
-          particleCount: 60,
-          spread: 70,
-          origin: { y: 0.5 },
-          colors: ['#f59e0b', '#38bdf8', '#ffffff'],
-        });
       }
-    } else {
-      const hasProgressDiff = evalRes.updated.some(
-        (u, idx) => u.currentValue !== achievements[idx]?.currentValue
-      );
-      if (hasProgressDiff) {
-        setAchievements(evalRes.updated);
-      }
-    }
-  }, [profile, habits, quests, addXp, addCoins, addShards]);
+      return evalRes.updated;
+    });
+  }, [addXp, addCoins, addShards]);
+
+  const checkAchievements = useCallback(() => {
+    evaluatePlayerAchievements(profile, habits, quests);
+  }, [evaluatePlayerAchievements, profile, habits, quests]);
 
   const closeClaimModal = () => {
     setClaimModal(prev => ({ ...prev, isOpen: false }));
@@ -937,6 +942,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         openCustomClaimModal,
         exportData,
         importData,
+        checkAchievements,
         startFocusSession,
         pauseFocusSession,
         resumeFocusSession,

@@ -196,7 +196,7 @@ export function evaluateAchievements(
   const bestHabitStreak = habits.reduce((max, h) => Math.max(max, h.bestStreak, h.streakCount), 0);
 
   const updated = currentAchievements.map(ach => {
-    let currentVal = 0;
+    let currentVal: number;
 
     switch (ach.id) {
       // Focus

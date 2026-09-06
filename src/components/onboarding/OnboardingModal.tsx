@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { requestNotificationPermission, isNotificationSupported } from '../../services/notifications';
 
 interface OnboardingModalProps {
@@ -9,25 +9,19 @@ interface OnboardingModalProps {
 const ONBOARDING_STORAGE_KEY = 'auctus_onboarded_v2';
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = false, onClose }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [hasDismissed, setHasDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(localStorage.getItem(ONBOARDING_STORAGE_KEY));
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-  useEffect(() => {
-    if (forceOpen) {
-      setIsOpen(true);
-      setCurrentStep(0);
-      return;
-    }
-    const hasOnboarded = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (!hasOnboarded) {
-      setIsOpen(true);
-    }
-  }, [forceOpen]);
+  const isOpen = forceOpen || !hasDismissed;
 
   const handleFinish = () => {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
-    setIsOpen(false);
+    setHasDismissed(true);
+    setCurrentStep(0);
     if (onClose) onClose();
   };
 

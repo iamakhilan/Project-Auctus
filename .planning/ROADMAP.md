@@ -6,18 +6,18 @@ This roadmap transforms AUCTUS from a prototype into an authentic, production-qu
 
 ## Phases
 
-- [ ] **Phase 1: Test Harness & Quality Setup** — Install Vitest, React Testing Library, ESLint rules, and verify testing infrastructure.
-- [ ] **Phase 2: Game Engine & Domain Extraction** — Extract pure, deterministic game logic (XP, levels, formulas, rewards, streaks) into testable domain modules.
-- [ ] **Phase 3: Timestamp Timing Engine & Focus Arena** — Replace interval-based state with timestamp-anchored timers (`startedAt`, `endsAt`) that survive tab suspension and page refresh.
-- [ ] **Phase 4: Robust Persistence & Migrations** — Implement versioned `localStorage` engine (`v1 -> v2` migrations), corruption recovery, and JSON export/import.
-- [ ] **Phase 5: Enhanced Quest Engine** — Build support for one-time bounties, daily quests, recurring tasks, categories, and completion history.
-- [ ] **Phase 6: Habit Engine & Milestones** — Implement daily habit tracking, individual streaks, and milestone achievements (7d, 30d, 100d, 365d).
-- [ ] **Phase 7: Economy Ledger & Treasury** — Implement transaction ledger for Coins, Mana Gems, and Spire Shards with audit reasons and balance safety.
-- [ ] **Phase 8: Chest Loot Deck System** — Upgrade 4-slot chest deck with timestamp unlocks, accurate countdowns, and balanced loot drops.
-- [ ] **Phase 9: Citadel Progression & Achievements Engine** — Connect real productivity telemetry to Citadel power, tier upgrades, and activity-driven achievements.
-- [ ] **Phase 10: Telemetry, Analytics & Daily Summary** — Build productivity analytics dashboard (7d/30d/90d trends) and "Today's Run" summary.
-- [ ] **Phase 11: Onboarding, Notifications & UX Polish** — Add 30s first-run onboarding, local browser notifications, accessibility, and mobile layout checks.
-- [ ] **Phase 12: CI Pipeline, Build Verification & README** — Add GitHub Actions CI workflow, strict typecheck validation, and full README rewrite.
+- [x] **Phase 1: Test Harness & Quality Setup** — Install Vitest, React Testing Library, ESLint rules, and verify testing infrastructure.
+- [x] **Phase 2: Game Engine & Domain Extraction** — Extract pure, deterministic game logic (XP, levels, formulas, rewards, streaks) into testable domain modules.
+- [x] **Phase 3: Timestamp Timing Engine & Focus Arena** — Replace interval-based state with timestamp-anchored timers (`startedAt`, `endsAt`) that survive tab suspension and page refresh.
+- [x] **Phase 4: Robust Persistence & Migrations** — Implement versioned `localStorage` engine (`v1 -> v2` migrations), corruption recovery, and JSON export/import.
+- [x] **Phase 5: Enhanced Quest Engine** — Build support for one-time bounties, daily quests, recurring tasks, categories, and completion history.
+- [x] **Phase 6: Habit Engine & Milestones** — Implement daily habit tracking, individual streaks, and milestone achievements (7d, 30d, 100d, 365d).
+- [x] **Phase 7: Economy Ledger & Treasury** — Implement transaction ledger for Coins, Mana Gems, and Spire Shards with audit reasons and balance safety.
+- [x] **Phase 8: Chest Loot Deck System** — Upgrade 4-slot chest deck with timestamp unlocks, accurate countdowns, and balanced loot drops.
+- [x] **Phase 9: Citadel Progression & Achievements Engine** — Connect real productivity telemetry to Citadel power, tier upgrades, and activity-driven achievements.
+- [x] **Phase 10: Telemetry, Analytics & Daily Summary** — Build productivity analytics dashboard (7d/30d/90d trends) and "Today's Run" summary.
+- [x] **Phase 11: Onboarding, Notifications & UX Polish** — Add 30s first-run onboarding, local browser notifications, accessibility, and mobile layout checks.
+- [x] **Phase 12: CI Pipeline, Build Verification & README** — Add GitHub Actions CI workflow, strict typecheck validation, and full README rewrite.
 
 ## Phase Details
 
