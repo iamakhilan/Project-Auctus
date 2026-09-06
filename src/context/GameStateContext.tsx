@@ -17,6 +17,8 @@ import {
   saveChests,
   loadRewards,
   saveRewards,
+  loadFocusSession,
+  saveFocusSession,
 } from '../utils/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import confetti from 'canvas-confetti';
@@ -24,6 +26,13 @@ import { calculateLevelProgression } from '../domain/progression';
 import { createQuestEntity, completeQuestEntity } from '../domain/quests';
 import { validateRedemption, deductCoins, createCustomRewardEntity } from '../domain/economy';
 import { createChestSlotEntity, rollChestTier, createEmptyChestSlot } from '../domain/chests';
+import {
+  createFocusSessionEntity,
+  calculateRemainingSeconds,
+  pauseFocusSessionEntity,
+  resumeFocusSessionEntity,
+  calculateFocusYield,
+} from '../domain/focus';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -75,16 +84,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     description: '',
   });
 
-  const [focusSession, setFocusSession] = useState<FocusSessionState>({
-    isActive: false,
-    isPaused: false,
-    targetDurationSeconds: 1500, // 25 min default
-    remainingSeconds: 1500,
-    accumulatedXp: 85,
-    accumulatedCoins: 15,
-    isOvercharged: false,
-    soundscapeTrack: 'binaural',
-  });
+  const [focusSession, setFocusSession] = useState<FocusSessionState>(loadFocusSession);
 
   // Save changes to storage
   useEffect(() => {
@@ -102,6 +102,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     saveRewards(rewards);
   }, [rewards]);
+
+  useEffect(() => {
+    saveFocusSession(focusSession);
+  }, [focusSession]);
 
   const setActiveTab = (tab: TabType) => {
     soundEngine.playClick(profile.soundEnabled);
@@ -360,19 +364,15 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     questTitle?: string
   ) => {
     soundEngine.playClick(profile.soundEnabled);
-    setFocusSession({
-      isActive: true,
-      isPaused: false,
-      targetDurationSeconds: durationMinutes * 60,
-      remainingSeconds: durationMinutes * 60,
-      accumulatedXp: 85,
-      accumulatedCoins: 15,
-      selectedQuestId: questId,
-      selectedQuestTitle: questTitle || 'Deep Work: Strategy Sprint',
+    const newSession = createFocusSessionEntity({
+      durationMinutes,
+      questId,
+      questTitle: questTitle || 'Deep Work: Strategy Sprint',
       isOvercharged: false,
       soundscapeTrack: 'binaural',
     });
 
+    setFocusSession(newSession);
     soundEngine.startAmbience('binaural');
     setActiveTabState('focus-arena');
   }, [profile.soundEnabled]);
@@ -380,23 +380,27 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const pauseFocusSession = useCallback(() => {
     soundEngine.playClick(profile.soundEnabled);
     setFocusSession(prev => {
-      const next = !prev.isPaused;
-      if (next) {
+      if (!prev.isActive) return prev;
+      if (!prev.isPaused) {
         soundEngine.stopAmbience();
-      } else if (prev.soundscapeTrack !== 'none') {
-        soundEngine.startAmbience(prev.soundscapeTrack);
+        return pauseFocusSessionEntity(prev);
+      } else {
+        if (prev.soundscapeTrack !== 'none') {
+          soundEngine.startAmbience(prev.soundscapeTrack);
+        }
+        return resumeFocusSessionEntity(prev);
       }
-      return { ...prev, isPaused: next };
     });
   }, [profile.soundEnabled]);
 
   const resumeFocusSession = useCallback(() => {
     soundEngine.playClick(profile.soundEnabled);
     setFocusSession(prev => {
+      if (!prev.isActive || !prev.isPaused) return prev;
       if (prev.soundscapeTrack !== 'none') {
         soundEngine.startAmbience(prev.soundscapeTrack);
       }
-      return { ...prev, isPaused: false };
+      return resumeFocusSessionEntity(prev);
     });
   }, [profile.soundEnabled]);
 
@@ -407,6 +411,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...prev,
       isActive: false,
       isPaused: false,
+      endsAt: undefined,
+      startedAt: undefined,
+      pausedAt: undefined,
     }));
     setActiveTabState('realm');
   }, [profile.soundEnabled]);
@@ -415,11 +422,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.stopAmbience();
     soundEngine.playQuestComplete(profile.soundEnabled);
 
-    const xpEarned = focusSession.isOvercharged ? 180 : 120;
-    const coinsEarned = focusSession.isOvercharged ? 25 : 15;
+    const yields = calculateFocusYield(
+      Math.round(focusSession.targetDurationSeconds / 60),
+      focusSession.isOvercharged
+    );
 
-    addXp(xpEarned);
-    addCoins(coinsEarned);
+    addXp(yields.xp);
+    addCoins(yields.coins);
 
     if (focusSession.selectedQuestId) {
       completeQuest(focusSession.selectedQuestId);
@@ -442,8 +451,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       title: 'Crucible Triumph!',
       subtitle: 'FOCUS SESSION COMPLETE',
       description: 'Deep work target conquered. Focus Spire upgraded to Tier 3!',
-      coins: coinsEarned,
-      xp: xpEarned,
+      coins: yields.coins,
+      xp: yields.xp,
       icon: 'swords',
     });
 
@@ -451,16 +460,27 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...prev,
       isActive: false,
       isPaused: false,
+      endsAt: undefined,
+      startedAt: undefined,
+      pausedAt: undefined,
     }));
   }, [focusSession, addXp, addCoins, completeQuest, profile.soundEnabled]);
 
   const toggleManaOvercharge = useCallback(() => {
     soundEngine.playOvercharge(profile.soundEnabled);
-    setFocusSession(prev => ({
-      ...prev,
-      isOvercharged: !prev.isOvercharged,
-      accumulatedXp: prev.isOvercharged ? 85 : 140,
-    }));
+    setFocusSession(prev => {
+      const nextOvercharged = !prev.isOvercharged;
+      const yields = calculateFocusYield(
+        Math.round(prev.targetDurationSeconds / 60),
+        nextOvercharged
+      );
+      return {
+        ...prev,
+        isOvercharged: nextOvercharged,
+        accumulatedXp: yields.xp,
+        accumulatedCoins: yields.coins,
+      };
+    });
   }, [profile.soundEnabled]);
 
   const setSoundscapeTrack = useCallback((track: FocusSessionState['soundscapeTrack']) => {
@@ -472,19 +492,21 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  // Tick timer countdown
+  // Tick timer countdown anchored to wall-clock timestamps
   useEffect(() => {
     if (!focusSession.isActive || focusSession.isPaused) return;
 
     const timer = setInterval(() => {
       setFocusSession(prev => {
-        if (prev.remainingSeconds <= 1) {
+        if (!prev.isActive || prev.isPaused) return prev;
+        const remaining = calculateRemainingSeconds(prev, Date.now());
+        if (remaining <= 0) {
           completeFocusSession();
           return { ...prev, remainingSeconds: 0 };
         }
         return {
           ...prev,
-          remainingSeconds: prev.remainingSeconds - 1,
+          remainingSeconds: remaining,
         };
       });
     }, 1000);

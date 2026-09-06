@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
+import { calculateFocusYield } from '../../domain/focus';
 
 export const FocusArenaView: React.FC = () => {
   const {
     focusSession,
+    quests,
+    startFocusSession,
     pauseFocusSession,
     resumeFocusSession,
     cancelFocusSession,
@@ -14,6 +17,8 @@ export const FocusArenaView: React.FC = () => {
   } = useGameState();
 
   const [soundscapeMenuOpen, setSoundscapeMenuOpen] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(25);
+  const [selectedQuestId, setSelectedQuestId] = useState<string | undefined>(undefined);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -22,21 +27,34 @@ export const FocusArenaView: React.FC = () => {
   };
 
   const targetSecs = focusSession.targetDurationSeconds || 1500;
-  const progressRatio = (targetSecs - focusSession.remainingSeconds) / targetSecs;
+  const progressRatio = Math.min(1, Math.max(0, (targetSecs - focusSession.remainingSeconds) / targetSecs));
 
   // Circumference of radius 114 circle = 2 * PI * 114 = 716.28
   const circumference = 716.28;
   const strokeDashoffset = circumference - progressRatio * circumference;
 
-  const getSoundscapeName = () => {
-    switch (focusSession.soundscapeTrack) {
+  const getSoundscapeName = (track = focusSession.soundscapeTrack) => {
+    switch (track) {
       case 'binaural': return 'Deep Space Binaural 432Hz';
       case 'cyber-rain': return 'Cyber Citadel Rainstorm';
       case 'forest-spire': return 'Arcane Forest Resonance';
       case 'white-noise': return 'Cosmic Static Shield';
       case 'none': return 'Muted Atmosphere';
+      default: return 'Deep Space Binaural 432Hz';
     }
   };
+
+  const activeQuest = quests.find(q => q.id === selectedQuestId) || quests.find(q => !q.isCompleted);
+
+  const presets = [
+    { label: '15m', mins: 15, name: 'Tactical Sprint' },
+    { label: '25m', mins: 25, name: 'Crucible Standard' },
+    { label: '45m', mins: 45, name: 'Deep Probe' },
+    { label: '60m', mins: 60, name: 'Titan Focus' },
+    { label: '90m', mins: 90, name: 'Apex Flow' },
+  ];
+
+  const estimatedYield = calculateFocusYield(selectedDuration, false);
 
   return (
     <div className="flex flex-col w-full max-w-screen mx-auto pb-32 pt-3 min-h-screen">
@@ -106,28 +124,43 @@ export const FocusArenaView: React.FC = () => {
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${focusSession.isActive ? 'bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse' : 'bg-cyan-400'}`} />
                 <span className="font-label-sm text-label-sm text-emerald-300 uppercase tracking-wider font-extrabold">
-                  Crucible Mission In Progress
+                  {focusSession.isActive ? 'Crucible Mission In Progress' : 'Designated Target Bounty'}
                 </span>
               </div>
               <span className="font-headline-sm text-headline-sm text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate font-bold">
-                {focusSession.selectedQuestTitle || 'Deep Work: Write Strategy Memo'}
+                {focusSession.isActive
+                  ? focusSession.selectedQuestTitle || 'Deep Work: Strategy Sprint'
+                  : activeQuest ? activeQuest.title : 'Deep Work: Strategy Sprint'}
               </span>
             </div>
           </div>
 
           <button
-            onClick={() => setActiveTab('quests')}
+            onClick={() => {
+              if (focusSession.isActive) {
+                setActiveTab('quests');
+              } else {
+                const uncompleted = quests.filter(q => !q.isCompleted);
+                if (uncompleted.length > 0) {
+                  const currentIdx = uncompleted.findIndex(q => q.id === (selectedQuestId || activeQuest?.id));
+                  const nextIdx = (currentIdx + 1) % uncompleted.length;
+                  setSelectedQuestId(uncompleted[nextIdx].id);
+                }
+              }
+            }}
             className="flex-shrink-0 w-9 h-9 rounded-control bg-surface-container-high hover:bg-surface-bright border border-secondary/25 flex items-center justify-center text-sky-200 hover:text-white shadow-card active:scale-95 transition-all"
-            title="Switch Target Bounty"
+            title={focusSession.isActive ? "View All Quests" : "Cycle Target Bounty"}
           >
-            <span className="material-symbols-outlined text-[20px]">edit_note</span>
+            <span className="material-symbols-outlined text-[20px]">
+              {focusSession.isActive ? 'edit_note' : 'sync'}
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Central Focus Crucible / Circular Holographic Timer Ring */}
+      {/* Central Holographic Timer Ring */}
       <div className="px-4 my-2 flex flex-col items-center justify-center relative">
         {/* Ambient Glow Pods */}
         <div className="absolute w-72 h-72 bg-[#00d2ff]/20 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -165,7 +198,7 @@ export const FocusArenaView: React.FC = () => {
               r="114"
               stroke="url(#arenaCyanGradient)"
               strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
+              strokeDashoffset={focusSession.isActive ? strokeDashoffset : 0}
               strokeLinecap="round"
               strokeWidth="14"
               className="transition-all duration-1000 ease-linear"
@@ -186,7 +219,6 @@ export const FocusArenaView: React.FC = () => {
 
           {/* Inner Holographic Energy Crucible */}
           <div className="w-56 h-56 rounded-full bg-gradient-to-b from-surface-container-low via-[#09152e] to-surface-container-lowest flex flex-col items-center justify-center shadow-[inset_0_4px_16px_rgba(0,0,0,0.8),0_10px_24px_rgba(0,0,0,0.6)] border-2 border-sky-400/40 p-4 relative overflow-hidden text-center">
-            {/* Living Mana Core Icon Illusion */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
               <span className="material-symbols-outlined text-cyan-300 text-[140px] animate-pulse drop-shadow-[0_0_20px_#00d2ff] fill-1">
                 token
@@ -199,16 +231,22 @@ export const FocusArenaView: React.FC = () => {
                   bolt
                 </span>
                 <span className="font-label-sm text-label-sm text-cyan-300 uppercase tracking-wider font-extrabold drop-shadow">
-                  {focusSession.isPaused ? 'Focus Paused' : 'Mana Spire Resonating'}
+                  {focusSession.isActive
+                    ? focusSession.isPaused ? 'Focus Paused' : 'Mana Spire Resonating'
+                    : 'Chamber Ready'}
                 </span>
               </div>
 
               {/* Digital Clock Readout */}
               <span className="font-headline-xl text-[38px] font-black text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,210,255,0.6)] font-mono">
-                {formatTime(focusSession.remainingSeconds)}
+                {focusSession.isActive
+                  ? formatTime(focusSession.remainingSeconds)
+                  : `${selectedDuration}:00`}
               </span>
               <span className="font-body-sm text-body-sm text-sky-200/80 mb-2 font-semibold">
-                Session Target {Math.round(targetSecs / 60)}:00
+                {focusSession.isActive
+                  ? `Session Target ${Math.round(targetSecs / 60)}:00`
+                  : `Target: ${selectedDuration} Minutes`}
               </span>
 
               {/* Real-Time Harvest Badges */}
@@ -217,7 +255,7 @@ export const FocusArenaView: React.FC = () => {
                   auto_awesome
                 </span>
                 <span className="font-label-sm text-label-sm text-amber-300 font-extrabold tracking-wide">
-                  +{focusSession.accumulatedXp} XP Accumulated
+                  +{focusSession.isActive ? focusSession.accumulatedXp : estimatedYield.xp} XP Potential
                 </span>
               </div>
             </div>
@@ -241,8 +279,33 @@ export const FocusArenaView: React.FC = () => {
         </div>
       </div>
 
+      {/* Preset Duration Selector if Not Active */}
+      {!focusSession.isActive && (
+        <div className="px-4 my-3 flex flex-col gap-2">
+          <span className="font-label-sm text-label-sm text-sky-200/70 uppercase font-bold tracking-wider">
+            Select Focus Crucible Duration
+          </span>
+          <div className="grid grid-cols-5 gap-1.5">
+            {presets.map(p => (
+              <button
+                key={p.mins}
+                onClick={() => setSelectedDuration(p.mins)}
+                className={`py-2 px-1 rounded-control font-headline-sm text-center flex flex-col items-center justify-center transition-all ${
+                  selectedDuration === p.mins
+                    ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-slate-950 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)] border border-amber-200'
+                    : 'bg-surface-container hover:bg-surface-bright text-sky-200 border border-outline-variant'
+                }`}
+              >
+                <span className="text-body-md font-extrabold">{p.label}</span>
+                <span className="text-[10px] opacity-80 truncate">{p.mins}m</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Audio Atmosphere / Soundscape Control Card */}
-      <div className="px-4 mt-3 mb-1 relative">
+      <div className="px-4 mt-2 mb-1 relative">
         <div className="bg-gradient-to-b from-surface-container-high via-surface-container to-surface-container-low rounded-control p-3 shadow-card-raised border-t border-secondary/30 border-b-2 border-black/60 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-control bg-navy-hi flex items-center justify-center flex-shrink-0 text-cyan-300 border border-secondary/30 shadow-inset-well">
@@ -303,57 +366,69 @@ export const FocusArenaView: React.FC = () => {
 
       {/* Primary Battle Tactical Controls */}
       <div className="px-4 my-2 flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-2">
-          {/* Pause / Resume Button */}
+        {focusSession.isActive ? (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Pause / Resume Button */}
+              <button
+                onClick={focusSession.isPaused ? resumeFocusSession : pauseFocusSession}
+                className={`btn h-12 font-headline-sm text-headline-sm uppercase tracking-wider font-black ${
+                  focusSession.isPaused
+                    ? 'btn-emerald'
+                    : 'btn-navy'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[20px] text-cyan-300">
+                  {focusSession.isPaused ? 'play_circle' : 'pause_circle'}
+                </span>
+                <span>{focusSession.isPaused ? 'Resume Focus' : 'Pause Focus'}</span>
+              </button>
+
+              {/* Yield Run / Cancel Button */}
+              <button
+                onClick={cancelFocusSession}
+                className="btn btn-ruby h-12 font-headline-sm text-headline-sm uppercase tracking-wider font-black"
+              >
+                <span className="material-symbols-outlined text-[20px] text-rose-200">flag</span>
+                <span>Yield Run</span>
+              </button>
+            </div>
+
+            {/* Overcharge Mana Action Button */}
+            <button
+              onClick={toggleManaOvercharge}
+              className={`btn h-12 w-full font-headline-md text-headline-md uppercase tracking-wide font-black ${
+                focusSession.isOvercharged
+                  ? 'btn-cyan animate-pulse'
+                  : 'btn-gold'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[24px] fill-1">electric_bolt</span>
+              <span className="drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]">
+                {focusSession.isOvercharged
+                  ? 'Mana Overcharged! (+50% Burst Active)'
+                  : 'Overcharge Mana (+50% Burst)'}
+              </span>
+            </button>
+
+            {/* Complete Session Early Action */}
+            <button
+              onClick={completeFocusSession}
+              className="w-full mt-1 py-2 rounded-control bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-label-sm text-label-sm uppercase font-bold hover:bg-emerald-900/70 hover:border-emerald-400/60 transition-colors flex items-center justify-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              <span>Claim Victorious Early Completion</span>
+            </button>
+          </>
+        ) : (
           <button
-            onClick={focusSession.isPaused ? resumeFocusSession : pauseFocusSession}
-            className={`btn h-12 font-headline-sm text-headline-sm uppercase tracking-wider font-black ${
-              focusSession.isPaused
-                ? 'btn-emerald'
-                : 'btn-navy'
-            }`}
+            onClick={() => startFocusSession(selectedDuration, activeQuest?.id, activeQuest?.title)}
+            className="btn btn-gold h-14 w-full font-headline-md text-headline-md uppercase tracking-wide font-black shadow-[0_4px_20px_rgba(245,158,11,0.5)]"
           >
-            <span className="material-symbols-outlined text-[20px] text-cyan-300">
-              {focusSession.isPaused ? 'play_circle' : 'pause_circle'}
-            </span>
-            <span>{focusSession.isPaused ? 'Resume Focus' : 'Pause Focus'}</span>
+            <span className="material-symbols-outlined text-[28px] fill-1">play_arrow</span>
+            <span>Ignite Focus Crucible ({selectedDuration}m)</span>
           </button>
-
-          {/* Yield Run / Cancel Button */}
-          <button
-            onClick={cancelFocusSession}
-            className="btn btn-ruby h-12 font-headline-sm text-headline-sm uppercase tracking-wider font-black"
-          >
-            <span className="material-symbols-outlined text-[20px] text-rose-200">flag</span>
-            <span>Yield Run</span>
-          </button>
-        </div>
-
-        {/* Overcharge Mana Action Button */}
-        <button
-          onClick={toggleManaOvercharge}
-          className={`btn h-12 w-full font-headline-md text-headline-md uppercase tracking-wide font-black ${
-            focusSession.isOvercharged
-              ? 'btn-cyan animate-pulse'
-              : 'btn-gold'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[24px] fill-1">electric_bolt</span>
-          <span className="drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]">
-            {focusSession.isOvercharged
-              ? 'Mana Overcharged! (+50% Burst Active)'
-              : 'Overcharge Mana (+50% Burst)'}
-          </span>
-        </button>
-
-        {/* Complete Session Action Button (for testing or early victory) */}
-        <button
-          onClick={completeFocusSession}
-          className="w-full mt-1 py-2 rounded-control bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 font-label-sm text-label-sm uppercase font-bold hover:bg-emerald-900/70 hover:border-emerald-400/60 transition-colors flex items-center justify-center gap-1"
-        >
-          <span className="material-symbols-outlined text-[16px]">check_circle</span>
-          <span>Claim Victorious Early Completion</span>
-        </button>
+        )}
       </div>
 
       {/* Motivational Progression Footer Card */}

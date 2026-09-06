@@ -1,4 +1,4 @@
-import { PlayerProfile, Quest, ChestSlot, RewardItem } from '../types';
+import { PlayerProfile, Quest, ChestSlot, RewardItem, FocusSessionState } from '../types';
 
 const PROFILE_STORAGE_KEY = 'auctus_profile_v1';
 const QUESTS_STORAGE_KEY = 'auctus_quests_v1';
@@ -273,3 +273,42 @@ export function saveRewards(rewards: RewardItem[]): void {
     console.error('Failed to save rewards', e);
   }
 }
+
+export const FOCUS_SESSION_STORAGE_KEY = 'auctus_focus_session_v1';
+
+export const initialFocusSession: FocusSessionState = {
+  isActive: false,
+  isPaused: false,
+  targetDurationSeconds: 1500, // 25 min default
+  remainingSeconds: 1500,
+  accumulatedXp: 120,
+  accumulatedCoins: 15,
+  isOvercharged: false,
+  soundscapeTrack: 'binaural',
+  sessionMode: 'work',
+};
+
+export function loadFocusSession(): FocusSessionState {
+  try {
+    const saved = localStorage.getItem(FOCUS_SESSION_STORAGE_KEY);
+    if (!saved) return initialFocusSession;
+    const parsed: FocusSessionState = JSON.parse(saved);
+    // If active and was timestamped, derive remaining seconds
+    if (parsed.isActive && parsed.endsAt && !parsed.isPaused) {
+      const remaining = Math.max(0, Math.ceil((parsed.endsAt - Date.now()) / 1000));
+      return { ...parsed, remainingSeconds: remaining };
+    }
+    return parsed;
+  } catch {
+    return initialFocusSession;
+  }
+}
+
+export function saveFocusSession(session: FocusSessionState): void {
+  try {
+    localStorage.setItem(FOCUS_SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch (e) {
+    console.error('Failed to save focus session', e);
+  }
+}
+

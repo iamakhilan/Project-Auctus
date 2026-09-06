@@ -86,6 +86,10 @@ export interface FocusSessionState {
   selectedQuestTitle?: string;
   isOvercharged: boolean;
   soundscapeTrack: 'binaural' | 'cyber-rain' | 'forest-spire' | 'white-noise' | 'none';
+  startedAt?: number;
+  endsAt?: number;
+  pausedAt?: number;
+  sessionMode?: 'work' | 'break';
 }
 
 export interface ClaimModalData {
