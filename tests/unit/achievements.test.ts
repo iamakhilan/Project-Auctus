@@ -67,8 +67,7 @@ describe('Achievements Domain Engine', () => {
       coinReward: 10,
       tier: 'Tier I',
       category: 'bounty',
-      tags: [],
-      priority: 'medium',
+      tag: 'Coding',
       createdAt: new Date().toISOString(),
     }));
 

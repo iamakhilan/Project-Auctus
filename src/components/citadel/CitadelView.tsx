@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { getCitadelTierConfig, canUpgradeCitadelTier } from '../../domain/citadel';
+import { DailySummaryModal } from '../analytics/DailySummaryModal';
 import { AchievementCategory } from '../../types';
 
 export const CitadelView: React.FC = () => {
@@ -15,6 +16,7 @@ export const CitadelView: React.FC = () => {
   } = useGameState();
 
   const [achievementFilter, setAchievementFilter] = useState<AchievementCategory | 'all'>('all');
+  const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
 
   const completedQuests = quests.filter(q => q.isCompleted);
   const xpPercent = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
@@ -258,10 +260,19 @@ export const CitadelView: React.FC = () => {
 
       {/* 4. PRODUCTIVITY TELEMETRY & STATS */}
       <section className="flex flex-col gap-2.5">
-        <h3 className="font-headline-sm text-headline-sm text-white font-bold flex items-center gap-2">
-          <span className="material-symbols-outlined text-cyan-400 text-[20px]">analytics</span>
-          <span>Productivity Telemetry</span>
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-headline-sm text-headline-sm text-white font-bold flex items-center gap-2">
+            <span className="material-symbols-outlined text-cyan-400 text-[20px]">analytics</span>
+            <span>Productivity Telemetry</span>
+          </h3>
+          <button
+            onClick={() => setDailySummaryOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-control bg-surface-dim hover:bg-surface-container border border-amber-400/40 text-amber-300 font-label-sm text-label-sm font-bold shadow-card transition-all active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[16px]">summarize</span>
+            <span>Daily Debrief</span>
+          </button>
+        </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           {/* Total Focus Time */}
@@ -449,6 +460,12 @@ export const CitadelView: React.FC = () => {
           </button>
         </div>
       </section>
+
+      {/* Daily Summary Debrief Modal */}
+      <DailySummaryModal
+        isOpen={dailySummaryOpen}
+        onClose={() => setDailySummaryOpen(false)}
+      />
     </div>
   );
 };
