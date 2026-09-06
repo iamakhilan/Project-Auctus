@@ -20,6 +20,10 @@ import {
 } from '../utils/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import confetti from 'canvas-confetti';
+import { calculateLevelProgression } from '../domain/progression';
+import { createQuestEntity, completeQuestEntity } from '../domain/quests';
+import { validateRedemption, deductCoins, createCustomRewardEntity } from '../domain/economy';
+import { createChestSlotEntity, rollChestTier, createEmptyChestSlot } from '../domain/chests';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -115,19 +119,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // XP & Level Progression System
   const addXp = useCallback((amount: number) => {
     setProfile(prev => {
-      let newXp = prev.xp + amount;
-      let newLevel = prev.level;
-      let newXpTarget = prev.xpToNextLevel;
-      let leveledUp = false;
+      const progression = calculateLevelProgression(
+        prev.xp,
+        prev.level,
+        prev.xpToNextLevel,
+        amount
+      );
 
-      while (newXp >= newXpTarget) {
-        newXp -= newXpTarget;
-        newLevel += 1;
-        newXpTarget = Math.round(newXpTarget * 1.3);
-        leveledUp = true;
-      }
-
-      if (leveledUp) {
+      if (progression.leveledUp) {
         soundEngine.playLevelUp(prev.soundEnabled);
         confetti({
           particleCount: 80,
@@ -139,10 +138,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return {
         ...prev,
-        xp: newXp,
-        level: newLevel,
-        xpToNextLevel: newXpTarget,
-        citadelPower: Math.min(prev.citadelMaxPower, prev.citadelPower + Math.round(amount * 0.4)),
+        xp: progression.xp,
+        level: progression.level,
+        xpToNextLevel: progression.xpToNextLevel,
+        citadelPower: Math.min(
+          prev.citadelMaxPower,
+          prev.citadelPower + progression.citadelPowerBonus
+        ),
       };
     });
   }, [profile.soundEnabled]);
@@ -164,16 +166,23 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Complete a Quest
   const completeQuest = useCallback((questId: string) => {
+    let questCompletionResult: ReturnType<typeof completeQuestEntity> | null = null;
+
     setQuests(prev =>
       prev.map(q => {
         if (q.id === questId && !q.isCompleted) {
+          const result = completeQuestEntity(q);
+          questCompletionResult = result;
           soundEngine.playQuestComplete(profile.soundEnabled);
-          addXp(q.xpReward);
-          if (q.coinReward > 0) {
-            addCoins(q.coinReward);
+          addXp(result.xpEarned);
+          if (result.coinsEarned > 0) {
+            addCoins(result.coinsEarned);
           }
-          if (q.streakShieldReward) {
-            setProfile(p => ({ ...p, streakShields: p.streakShields + q.streakShieldReward! }));
+          if (result.streakShieldsEarned > 0) {
+            setProfile(p => ({
+              ...p,
+              streakShields: p.streakShields + result.streakShieldsEarned,
+            }));
           }
 
           // Trigger particle burst
@@ -184,44 +193,31 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             colors: ['#00e59b', '#10b981', '#fbbf24', '#ffffff'],
           });
 
-          // Check for chest drop into empty slot if available
-          setChests(curChests => {
-            const emptyIdx = curChests.findIndex(c => c.status === 'empty');
-            if (emptyIdx !== -1) {
-              const updated = [...curChests];
-              updated[emptyIdx] = {
-                id: `chest-${Date.now()}`,
-                slotIndex: emptyIdx,
-                name: 'Silver Quest Chest',
-                tier: 'silver',
-                status: 'queued',
-                unlockTimeRemainingSeconds: 3600,
-                totalUnlockSeconds: 3600,
-                image: '/assets/chest_silver.png',
-                coinsReward: 75,
-                xpReward: 120,
-                shardsReward: 1,
-              };
-              return updated;
-            }
-            return curChests;
-          });
-
-          return {
-            ...q,
-            isCompleted: true,
-            completedAt: new Date().toISOString(),
-          };
+          return result.quest;
         }
         return q;
       })
     );
 
-    setProfile(p => ({
-      ...p,
-      completedQuestsCount: p.completedQuestsCount + 1,
-      trophyPoints: p.trophyPoints + 25,
-    }));
+    if (questCompletionResult) {
+      // Check for chest drop into empty slot if available
+      setChests(curChests => {
+        const emptyIdx = curChests.findIndex(c => c.status === 'empty' || c.tier === 'empty');
+        if (emptyIdx !== -1) {
+          const updated = [...curChests];
+          const rolledTier = rollChestTier();
+          updated[emptyIdx] = createChestSlotEntity(emptyIdx, rolledTier);
+          return updated;
+        }
+        return curChests;
+      });
+
+      setProfile(p => ({
+        ...p,
+        completedQuestsCount: p.completedQuestsCount + 1,
+        trophyPoints: p.trophyPoints + 25,
+      }));
+    }
   }, [addXp, addCoins, profile.soundEnabled]);
 
   // Create a new Quest in the Mission Forge
@@ -230,21 +226,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     tier: 'Tier I' | 'Tier II' | 'Tier III',
     dueLabel = 'Today'
   ) => {
-    const xpYield = tier === 'Tier I' ? 80 : tier === 'Tier II' ? 150 : 300;
-    const coinYield = tier === 'Tier I' ? 10 : tier === 'Tier II' ? 20 : 40;
-
-    const newQuest: Quest = {
-      id: `quest-${Date.now()}`,
+    const newQuest = createQuestEntity({
       title,
-      description: 'Tactical bounty deployed from the Mission Forge.',
-      category: 'bounty',
-      tier: tier,
-      xpReward: xpYield,
-      coinReward: coinYield,
-      dueLabel: dueLabel,
-      isCompleted: false,
-      createdAt: new Date().toISOString(),
-    };
+      tier,
+      dueLabel,
+    });
 
     soundEngine.playClick(profile.soundEnabled);
     setQuests(prev => [newQuest, ...prev]);
@@ -298,23 +284,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Reset slot to empty
     setChests(prev =>
-      prev.map(c => {
-        if (c.slotIndex === slotIndex) {
-          return {
-            ...c,
-            name: 'Empty Slot',
-            tier: 'empty',
-            status: 'empty',
-            unlockTimeRemainingSeconds: 0,
-            totalUnlockSeconds: 0,
-            image: '',
-            coinsReward: 0,
-            xpReward: 0,
-            shardsReward: 0,
-          };
-        }
-        return c;
-      })
+      prev.map(c => (c.slotIndex === slotIndex ? createEmptyChestSlot(slotIndex) : c))
     );
 
     setProfile(p => ({
@@ -328,16 +298,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const target = rewards.find(r => r.id === rewardId);
     if (!target) return false;
 
-    if (profile.coins < target.cost) {
+    const validation = validateRedemption(profile, target);
+    if (!validation.isValid) {
       soundEngine.playClick(profile.soundEnabled);
       return false;
     }
 
-    // Deduct coins
-    setProfile(p => ({
-      ...p,
-      coins: p.coins - target.cost,
-    }));
+    // Deduct coins using domain pure function
+    const updated = deductCoins(profile, target.cost);
+    if (!updated) return false;
+
+    setProfile(updated);
 
     soundEngine.playCoinClaim(profile.soundEnabled);
     confetti({
@@ -357,21 +328,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     return true;
-  }, [rewards, profile.coins, profile.soundEnabled]);
+  }, [rewards, profile, profile.soundEnabled]);
 
   const createCustomReward = useCallback((title: string, cost: number, category: string, icon: string) => {
-    const newReward: RewardItem = {
-      id: `reward-custom-${Date.now()}`,
-      title,
-      cost,
-      category,
-      icon: icon || 'stars',
-      type: 'irl',
-      unlocked: true,
-      description: 'Custom player-defined real-world reward.',
-      isCustom: true,
-    };
-
+    const newReward = createCustomRewardEntity(title, cost, category, icon);
     soundEngine.playClick(profile.soundEnabled);
     setRewards(prev => [...prev, newReward]);
   }, [profile.soundEnabled]);
