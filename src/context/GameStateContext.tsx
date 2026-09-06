@@ -25,7 +25,13 @@ import {
 import { soundEngine } from '../utils/audioSynthesizer';
 import confetti from 'canvas-confetti';
 import { calculateLevelProgression } from '../domain/progression';
-import { createQuestEntity, completeQuestEntity } from '../domain/quests';
+import {
+  createQuestEntity,
+  completeQuestEntity,
+  updateQuestEntity,
+  deleteQuestEntity,
+  QuestCreationParams,
+} from '../domain/quests';
 import { validateRedemption, deductCoins, createCustomRewardEntity } from '../domain/economy';
 import { createChestSlotEntity, rollChestTier, createEmptyChestSlot } from '../domain/chests';
 import {
@@ -51,7 +57,13 @@ interface GameStateContextType {
   addCoins: (amount: number) => void;
   addShards: (amount: number) => void;
   completeQuest: (questId: string) => void;
-  createQuest: (title: string, tier: 'Tier I' | 'Tier II' | 'Tier III', dueLabel?: string) => void;
+  createQuest: (
+    titleOrParams: string | QuestCreationParams,
+    tier?: 'Tier I' | 'Tier II' | 'Tier III' | 'Epic' | 'Urgent',
+    dueLabel?: string
+  ) => void;
+  updateQuest: (questId: string, updates: Partial<QuestCreationParams>) => void;
+  deleteQuest: (questId: string) => void;
   unlockChest: (slotIndex: number) => void;
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
@@ -230,18 +242,36 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Create a new Quest in the Mission Forge
   const createQuest = useCallback((
-    title: string,
-    tier: 'Tier I' | 'Tier II' | 'Tier III',
+    titleOrParams: string | QuestCreationParams,
+    tier: 'Tier I' | 'Tier II' | 'Tier III' | 'Epic' | 'Urgent' = 'Tier I',
     dueLabel = 'Today'
   ) => {
-    const newQuest = createQuestEntity({
-      title,
-      tier,
-      dueLabel,
-    });
+    let params: QuestCreationParams;
+    if (typeof titleOrParams === 'string') {
+      params = {
+        title: titleOrParams,
+        tier,
+        dueLabel,
+      };
+    } else {
+      params = titleOrParams;
+    }
 
+    const newQuest = createQuestEntity(params);
     soundEngine.playClick(profile.soundEnabled);
     setQuests(prev => [newQuest, ...prev]);
+  }, [profile.soundEnabled]);
+
+  const updateQuest = useCallback((questId: string, updates: Partial<QuestCreationParams>) => {
+    soundEngine.playClick(profile.soundEnabled);
+    setQuests(prev =>
+      prev.map(q => (q.id === questId ? updateQuestEntity(q, updates) : q))
+    );
+  }, [profile.soundEnabled]);
+
+  const deleteQuest = useCallback((questId: string) => {
+    soundEngine.playClick(profile.soundEnabled);
+    setQuests(prev => deleteQuestEntity(prev, questId));
   }, [profile.soundEnabled]);
 
   // Unlock / Start Timer on a Chest
@@ -580,6 +610,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         addShards,
         completeQuest,
         createQuest,
+        updateQuest,
+        deleteQuest,
         unlockChest,
         claimChestLoot,
         redeemReward,

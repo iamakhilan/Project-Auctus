@@ -4,12 +4,15 @@ export type QuestTier = 'Tier I' | 'Tier II' | 'Tier III' | 'Epic' | 'Urgent' | 
 
 export type QuestCategory = 'bounty' | 'epic' | 'habit';
 
+export type QuestTag = 'Study' | 'Coding' | 'Health' | 'Personal' | 'College' | 'Project' | 'Creative' | 'Work';
+
 export interface Quest {
   id: string;
   title: string;
   description: string;
   category: QuestCategory;
   tier: QuestTier;
+  tag?: QuestTag;
   xpReward: number;
   coinReward: number;
   streakShieldReward?: number;
@@ -21,6 +24,8 @@ export interface Quest {
   isCompleted: boolean;
   completedAt?: string;
   createdAt: string;
+  notes?: string;
+  estimatedMinutes?: number;
 }
 
 export type ChestStatus = 'unlocking' | 'queued' | 'ready' | 'empty' | 'locked';

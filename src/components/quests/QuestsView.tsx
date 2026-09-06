@@ -1,42 +1,67 @@
 import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
+import { QuestTier, QuestCategory, QuestTag } from '../../types';
+import { getTierRewards, sortQuestsByPriority } from '../../domain/quests';
 
 export const QuestsView: React.FC = () => {
-  const { quests, completeQuest, createQuest, startFocusSession } = useGameState();
+  const { quests, completeQuest, createQuest, deleteQuest, startFocusSession } = useGameState();
 
-  const [activeCategoryTab, setActiveCategoryTab] = useState<'bounty' | 'epic' | 'habit' | 'all'>('bounty');
+  const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'bounty' | 'epic' | 'habit' | 'completed'>('all');
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('All');
   const [newTitle, setNewTitle] = useState('');
-  const [selectedTier, setSelectedTier] = useState<'Tier I' | 'Tier II' | 'Tier III'>('Tier II');
-  const [selectedDeadline, setSelectedDeadline] = useState<'Today' | 'Tonight' | 'Tomorrow'>('Today');
+  const [selectedCategory, setSelectedCategory] = useState<QuestCategory>('bounty');
+  const [selectedTier, setSelectedTier] = useState<QuestTier>('Tier II');
+  const [selectedTag, setSelectedTag] = useState<QuestTag>('Coding');
+  const [selectedDeadline, setSelectedDeadline] = useState<'Today' | 'Tonight' | 'Tomorrow' | 'This Week'>('Today');
+  const [estimatedMinutes, setEstimatedMinutes] = useState(25);
 
-  const filteredQuests = quests.filter(q => {
-    if (activeCategoryTab === 'all') return true;
-    return q.category === activeCategoryTab;
-  });
+  const tags: QuestTag[] = ['Study', 'Coding', 'Health', 'Personal', 'College', 'Project', 'Creative', 'Work'];
 
+  const filteredQuests = sortQuestsByPriority(
+    quests.filter(q => {
+      // Category filter
+      if (activeCategoryTab === 'completed') {
+        if (!q.isCompleted) return false;
+      } else if (activeCategoryTab === 'all') {
+        if (q.isCompleted) return false;
+      } else {
+        if (q.isCompleted || q.category !== activeCategoryTab) return false;
+      }
+
+      // Tag filter
+      if (selectedTagFilter !== 'All' && q.tag !== selectedTagFilter) {
+        return false;
+      }
+
+      return true;
+    })
+  );
+
+  const totalActive = quests.filter(q => !q.isCompleted).length;
+  const totalCompleted = quests.filter(q => q.isCompleted).length;
   const totalQuests = quests.length;
-  const completedCount = quests.filter(q => q.isCompleted).length;
-  const clearancePercent = totalQuests > 0 ? Math.round((completedCount / totalQuests) * 100) : 0;
+  const clearancePercent = totalQuests > 0 ? Math.round((totalCompleted / totalQuests) * 100) : 0;
 
-  const getTierYield = (tier: 'Tier I' | 'Tier II' | 'Tier III') => {
-    switch (tier) {
-      case 'Tier I': return { xp: 80, coins: 10 };
-      case 'Tier II': return { xp: 150, coins: 20 };
-      case 'Tier III': return { xp: 300, coins: 40 };
-    }
-  };
+  const currentYield = getTierRewards(selectedTier);
 
   const handleDeploy = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    createQuest(newTitle.trim(), selectedTier, selectedDeadline);
+
+    createQuest({
+      title: newTitle.trim(),
+      category: selectedCategory,
+      tier: selectedTier,
+      tag: selectedTag,
+      dueLabel: selectedDeadline,
+      estimatedMinutes,
+    });
+
     setNewTitle('');
   };
 
-  const currentYield = getTierYield(selectedTier);
-
   return (
-    <div className="flex flex-col w-full max-w-screen mx-auto px-4 pb-32 pt-3 space-y-5">
+    <div className="flex flex-col w-full max-w-screen mx-auto px-4 pb-32 pt-3 space-y-4">
       {/* DAILY CLEARANCE BANNER */}
       <section className="relative overflow-hidden rounded-card bg-gradient-to-b from-surface-container to-surface-container-low border border-outline-variant shadow-card-raised p-4">
         <div className="absolute -right-10 -top-10 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
@@ -51,10 +76,10 @@ export const QuestsView: React.FC = () => {
             </div>
             <div>
               <span className="font-label-sm text-label-sm text-amber-400 uppercase tracking-wider block font-bold">
-                Bounty Deck Alpha
+                Mission Command Deck
               </span>
               <h2 className="font-headline-sm text-headline-sm text-on-surface font-extrabold">
-                Daily Clearance: {completedCount}/{totalQuests} Completed
+                Bounty Progress: {totalCompleted}/{totalQuests} Completed
               </h2>
             </div>
           </div>
@@ -77,85 +102,89 @@ export const QuestsView: React.FC = () => {
         <div className="flex items-center justify-between pt-2 bg-surface-dim/90 border-t border-outline-variant/60 -mx-4 -mb-4 px-4 py-2">
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-amber-400 fill-1">stars</span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Bonus:</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant">Active Queue:</span>
             <span className="font-label-md text-label-lg text-amber-300 font-bold">
-              +250 XP & Relic Box
+              {totalActive} pending bounties
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-label-sm text-label-sm text-emerald-300 uppercase tracking-wider font-extrabold">
-              Unlocks at {totalQuests}/{totalQuests}
+              +25 Trophies / Bounty
             </span>
           </div>
         </div>
       </section>
 
-      {/* HUD NAVIGATION TABS */}
-      <nav className="flex items-center justify-between gap-1.5 bg-surface-dim p-1.5 rounded-control border border-outline-variant/60 shadow-inset-well">
-        <button
-          onClick={() => setActiveCategoryTab('bounty')}
-          className={`flex-1 py-2 px-1 rounded-control font-label-md text-label-lg flex items-center justify-center gap-1 transition-all ${
-            activeCategoryTab === 'bounty'
-              ? 'bg-navy-hi text-amber-300 border border-amber-400/40 font-bold shadow-card'
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px] text-amber-400">swords</span>
-          <span>Bounties</span>
-          <span className="ml-0.5 px-1.5 py-px rounded-full bg-amber-400 text-amber-950 font-label-sm text-label-sm font-black">
-            {quests.filter(q => q.category === 'bounty' && !q.isCompleted).length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveCategoryTab('epic')}
-          className={`flex-1 py-2 px-1 rounded-control font-label-md text-label-lg flex items-center justify-center gap-1 transition-all ${
-            activeCategoryTab === 'epic'
-              ? 'bg-navy-hi text-purple-300 border border-purple-400/40 font-bold shadow-card'
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px] text-purple-400">fort</span>
-          <span>Epic</span>
-          <span className="ml-0.5 px-1.5 py-px rounded-full bg-purple-950/80 border border-purple-500/30 text-purple-300 font-label-sm text-label-sm font-bold">
-            {quests.filter(q => q.category === 'epic' && !q.isCompleted).length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveCategoryTab('habit')}
-          className={`flex-1 py-2 px-1 rounded-control font-label-md text-label-lg flex items-center justify-center gap-1 transition-all ${
-            activeCategoryTab === 'habit'
-              ? 'bg-navy-hi text-cyan-300 border border-cyan-400/40 font-bold shadow-card'
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px] text-cyan-400">auto_fix</span>
-          <span>Habits</span>
-          <span className="ml-0.5 px-1.5 py-px rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-label-sm text-label-sm font-bold">
-            {quests.filter(q => q.category === 'habit' && !q.isCompleted).length}
-          </span>
-        </button>
+      {/* CATEGORY & STATUS TABS */}
+      <nav className="flex items-center justify-between gap-1 bg-surface-dim p-1.5 rounded-control border border-outline-variant/60 shadow-inset-well overflow-x-auto">
+        {(
+          [
+            { id: 'all', label: 'All Active', icon: 'list_alt', count: quests.filter(q => !q.isCompleted).length },
+            { id: 'bounty', label: 'Bounties', icon: 'swords', count: quests.filter(q => q.category === 'bounty' && !q.isCompleted).length },
+            { id: 'epic', label: 'Epic', icon: 'fort', count: quests.filter(q => q.category === 'epic' && !q.isCompleted).length },
+            { id: 'habit', label: 'Habits', icon: 'auto_fix', count: quests.filter(q => q.category === 'habit' && !q.isCompleted).length },
+            { id: 'completed', label: 'Archive', icon: 'inventory_2', count: totalCompleted },
+          ] as const
+        ).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveCategoryTab(tab.id)}
+            className={`flex-1 py-1.5 px-2 rounded-control font-label-sm text-label-sm flex items-center justify-center gap-1 transition-all whitespace-nowrap ${
+              activeCategoryTab === tab.id
+                ? 'bg-navy-hi text-amber-300 border border-amber-400/40 font-black shadow-card'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[15px]">{tab.icon}</span>
+            <span>{tab.label}</span>
+            <span className="ml-0.5 px-1.5 py-px rounded-full bg-surface-dim text-amber-300 text-[11px] font-bold border border-amber-400/20">
+              {tab.count}
+            </span>
+          </button>
+        ))}
       </nav>
+
+      {/* TAG FILTER CHIPS */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <button
+          onClick={() => setSelectedTagFilter('All')}
+          className={`px-2.5 py-1 rounded-full font-label-sm text-label-sm font-bold transition-all whitespace-nowrap ${
+            selectedTagFilter === 'All'
+              ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
+              : 'bg-surface-container hover:bg-surface-bright text-sky-200/80 border border-outline-variant'
+          }`}
+        >
+          All Tags
+        </button>
+        {tags.map(tag => (
+          <button
+            key={tag}
+            onClick={() => setSelectedTagFilter(tag)}
+            className={`px-2.5 py-1 rounded-full font-label-sm text-label-sm font-bold transition-all whitespace-nowrap ${
+              selectedTagFilter === tag
+                ? 'bg-cyan-400 text-slate-950 font-black shadow-sm'
+                : 'bg-surface-container hover:bg-surface-bright text-sky-200/80 border border-outline-variant'
+            }`}
+          >
+            #{tag}
+          </button>
+        ))}
+      </div>
 
       {/* MISSION CARDS STREAM */}
       <section className="flex flex-col space-y-3" id="quest-list">
         {filteredQuests.length === 0 ? (
-          <div className="min-h-[200px] flex flex-col items-center justify-center gap-2 rounded-card bg-surface-container-low/40 border border-dashed border-outline-variant px-6 py-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-surface-dim border border-amber-400/30 flex items-center justify-center text-amber-400/80 shadow-inset-well">
-              <span className="material-symbols-outlined text-[32px]">military_tech</span>
+          <div className="min-h-[160px] flex flex-col items-center justify-center gap-2 rounded-card bg-surface-container-low/40 border border-dashed border-outline-variant px-6 py-6 text-center">
+            <div className="w-12 h-12 rounded-xl bg-surface-dim border border-amber-400/30 flex items-center justify-center text-amber-400/80 shadow-inset-well">
+              <span className="material-symbols-outlined text-[28px]">military_tech</span>
             </div>
             <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              No Active Missions
+              No Missions In This Filter
             </h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-[240px]">
-              Forge a new tactical bounty below to earn XP and loot chests!
+              Deploy a bounty below with the Mission Forge to conquer new milestones.
             </p>
-            <span className="mt-1 font-label-sm text-label-lg text-amber-300 uppercase tracking-wider font-extrabold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
-              Mission Forge
-            </span>
           </div>
         ) : (
           filteredQuests.map(quest => {
@@ -167,59 +196,56 @@ export const QuestsView: React.FC = () => {
                 >
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500" />
 
-                  {/* Glowing Victory Stamp */}
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 rotate-[-12deg] pointer-events-none flex flex-col items-center justify-center px-4 py-1.5 rounded-control bg-emerald-950/90 border-2 border-emerald-400 text-emerald-300 shadow-emerald-aura animate-stamp">
+                  {/* Victory Stamp */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 rotate-[-10deg] pointer-events-none flex flex-col items-center justify-center px-3 py-1 rounded-control bg-emerald-950/90 border-2 border-emerald-400 text-emerald-300 shadow-emerald-aura">
                     <span className="font-headline-sm text-headline-sm tracking-widest font-black uppercase text-emerald-300">
                       VICTORY
                     </span>
                     <span className="font-label-sm text-label-sm tracking-tight text-emerald-200 leading-none font-bold">
-                      CLAIMED +{quest.xpReward} XP
+                      +{quest.xpReward} XP
                     </span>
                   </div>
 
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase font-bold">
                         {quest.tier}
                       </span>
-                      <span className="line-through font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                        Archived
-                      </span>
+                      {quest.tag && (
+                        <span className="px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-300 text-label-sm font-semibold border border-cyan-500/20">
+                          #{quest.tag}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <h3 className="font-headline-sm text-headline-sm text-on-surface line-through opacity-75 mb-1 font-extrabold">
                     {quest.title}
                   </h3>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant line-through mb-2">
-                    {quest.description}
-                  </p>
 
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="flex items-center gap-1 opacity-80">
-                      <span className="material-symbols-outlined text-[16px] text-emerald-400 fill-1">
-                        check_circle
+                  <div className="flex items-center justify-between gap-3 py-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-label-md text-label-md text-emerald-300 font-bold">
+                        +{quest.xpReward} XP
                       </span>
-                      <span className="font-label-md text-label-lg text-emerald-300 font-bold">
-                        +{quest.xpReward} XP Acquired
-                      </span>
-                    </div>
-                    {quest.coinReward > 0 && (
-                      <div className="flex items-center gap-1 opacity-80">
-                        <span className="material-symbols-outlined text-[16px] text-amber-400 fill-1">
-                          monetization_on
-                        </span>
-                        <span className="font-label-md text-label-lg text-amber-300 font-bold">
+                      {quest.coinReward > 0 && (
+                        <span className="font-label-md text-label-md text-amber-300 font-bold">
                           +{quest.coinReward} Coins
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteQuest(quest.id)}
+                      className="text-rose-400/80 hover:text-rose-300 text-body-sm font-semibold p-1"
+                      title="Delete from archive"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
                   </div>
                 </article>
               );
             }
 
-            // Category & Tier Styling
             const isEpic = quest.tier === 'Epic' || quest.category === 'epic';
             const isUrgent = quest.tier === 'Urgent' || quest.isUrgent;
             const isCyan = quest.tier === 'Rare';
@@ -250,18 +276,6 @@ export const QuestsView: React.FC = () => {
                   }`}
                 />
 
-                {/* Ambient Top Glow */}
-                {isEpic && (
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-                )}
-                {isUrgent && (
-                  <div className="absolute -right-4 -bottom-4 opacity-15 pointer-events-none">
-                    <span className="material-symbols-outlined text-[90px] text-rose-500">
-                      local_fire_department
-                    </span>
-                  </div>
-                )}
-
                 {/* Card Header Badges */}
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -277,46 +291,40 @@ export const QuestsView: React.FC = () => {
                       </span>
                     )}
 
-                    {isCyan && (
-                      <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-label-sm text-label-sm tracking-wider uppercase flex items-center gap-1 font-bold">
-                        <span className="material-symbols-outlined text-[12px]">code</span> Citadel Engineering
-                      </span>
-                    )}
-
-                    {!isEpic && !isUrgent && !isCyan && (
+                    {!isEpic && !isUrgent && (
                       <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 font-label-sm text-label-sm tracking-wider uppercase font-bold">
-                        {quest.tier} Bounty
+                        {quest.tier}
                       </span>
                     )}
 
-                    {quest.focusStonesRequired && (
-                      <span className="px-2 py-0.5 rounded-full bg-surface-container-high border border-blue-400/30 text-cyan-300 font-label-sm text-label-sm flex items-center gap-1 font-semibold">
-                        <span className="material-symbols-outlined text-[12px] text-cyan-400">token</span> {quest.focusStonesRequired} Focus Stones
+                    {quest.tag && (
+                      <span className="px-2 py-0.5 rounded-full bg-surface-container-high border border-outline-variant text-sky-200 text-label-sm font-semibold">
+                        #{quest.tag}
                       </span>
                     )}
 
                     {quest.isStreakAtRisk && (
                       <span className="font-label-sm text-label-sm text-rose-300 bg-rose-950/80 border border-rose-500/40 px-2 py-0.5 rounded-md font-bold">
-                        Streak at Risk!
+                        Streak Risk
                       </span>
                     )}
                   </div>
 
-                  {/* Deadline or Streak Tag */}
-                  {quest.dueLabel && (
-                    <div className="flex items-center gap-1 text-rose-400 bg-rose-950/40 border border-rose-500/30 px-2 py-0.5 rounded-md">
-                      <span className="material-symbols-outlined text-[14px]">schedule</span>
-                      <span className="font-label-sm text-label-sm font-semibold">{quest.dueLabel}</span>
-                    </div>
-                  )}
+                  {/* Deadline Tag */}
+                  <div className="flex items-center gap-1 text-sky-200/90 bg-surface-dim border border-outline-variant px-2 py-0.5 rounded-md text-label-sm font-semibold">
+                    <span className="material-symbols-outlined text-[14px] text-amber-400">schedule</span>
+                    <span>{quest.dueLabel || 'Today'}</span>
+                  </div>
                 </div>
 
                 <h3 className="font-headline-sm text-headline-sm text-on-surface mb-1 font-extrabold">
                   {quest.title}
                 </h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant mb-3 line-clamp-2">
-                  {quest.description}
-                </p>
+                {quest.description && (
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-2.5 line-clamp-2">
+                    {quest.description}
+                  </p>
+                )}
 
                 {/* Rewards HUD Bar */}
                 <div className="flex items-center justify-between pt-1 bg-surface-dim border border-outline-variant/60 rounded-control p-2 mb-3 shadow-inset-well">
@@ -336,7 +344,7 @@ export const QuestsView: React.FC = () => {
                           monetization_on
                         </span>
                         <span className="font-label-md text-label-lg text-amber-300 font-extrabold">
-                          +{quest.coinReward} Coins
+                          +{quest.coinReward} G
                         </span>
                       </div>
                     )}
@@ -347,48 +355,48 @@ export const QuestsView: React.FC = () => {
                           verified_user
                         </span>
                         <span className="font-label-md text-label-lg text-cyan-300 font-bold">
-                          +{quest.streakShieldReward} Streak Shield
+                          +1 Shield
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {quest.phaseLabel && (
-                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">
-                      {quest.phaseLabel}
-                    </span>
-                  )}
+                  <span className="text-body-sm text-sky-200/70 font-medium">
+                    ~{quest.estimatedMinutes || 25}m
+                  </span>
                 </div>
 
                 {/* Action Footer */}
                 <div className="flex items-center gap-2">
-                  {/* Mark Completed Checkbox */}
                   <button
                     onClick={() => completeQuest(quest.id)}
                     aria-label="Mark completed"
-                    className="w-12 h-11 rounded-control bg-surface-container-highest border border-outline-variant text-on-surface-variant hover:text-amber-400 hover:border-amber-400/50 flex items-center justify-center transition-all active:scale-90 shadow-card focus:outline-none"
-                    title="Mark mission complete"
+                    className="w-12 h-11 rounded-control bg-surface-container-highest border border-outline-variant text-on-surface-variant hover:text-emerald-400 hover:border-emerald-400/50 flex items-center justify-center transition-all active:scale-90 shadow-card focus:outline-none"
+                    title="Conquer Bounty"
                   >
                     <span className="material-symbols-outlined text-[24px]">
                       check_box_outline_blank
                     </span>
                   </button>
 
-                  {/* Contextual Action Button */}
                   <button
-                    onClick={() => startFocusSession(25, quest.id, quest.title)}
+                    onClick={() => startFocusSession(quest.estimatedMinutes || 25, quest.id, quest.title)}
                     className={`flex-1 h-11 btn uppercase tracking-wider font-black ${
                       isUrgent
                         ? 'btn-emerald font-label-lg text-label-lg border-t border-emerald-300'
-                        : isCyan
-                        ? 'btn-ghost font-label-lg text-label-lg'
                         : 'btn-gold font-label-lg text-label-lg border-t border-yellow-200'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[19px] fill-1">
-                      {isUrgent ? 'bolt' : isCyan ? 'terminal' : 'swords'}
-                    </span>
-                    <span>{isUrgent ? 'Quick Clear' : isCyan ? 'Engage Focus' : 'Engage Focus'}</span>
+                    <span className="material-symbols-outlined text-[19px] fill-1">swords</span>
+                    <span>Engage Focus</span>
+                  </button>
+
+                  <button
+                    onClick={() => deleteQuest(quest.id)}
+                    className="w-10 h-11 rounded-control bg-surface-dim hover:bg-rose-950/60 border border-outline-variant hover:border-rose-500/40 text-on-surface-variant hover:text-rose-300 flex items-center justify-center transition-all"
+                    title="Dismiss Bounty"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
               </article>
@@ -412,10 +420,10 @@ export const QuestsView: React.FC = () => {
             <div className="flex items-center gap-2 bg-surface-dim border border-outline-variant px-2.5 py-1 rounded-md shadow-inset-well">
               <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">Yield:</span>
               <span className="font-label-md text-label-lg text-emerald-300 font-extrabold">
-                +{currentYield.xp} XP
+                +{currentYield.xpReward} XP
               </span>
               <span className="font-label-md text-label-lg text-amber-300 font-extrabold">
-                +{currentYield.coins} G
+                +{currentYield.coinReward} G
               </span>
             </div>
           </div>
@@ -429,52 +437,74 @@ export const QuestsView: React.FC = () => {
               placeholder="Enter tactical bounty title..."
               className="w-full h-11 pl-3 pr-10 rounded-control bg-surface-dim border border-outline-variant text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:border-amber-400 transition-all shadow-inset-well"
             />
-            <button
-              type="button"
-              className="absolute right-2 text-on-surface-variant hover:text-amber-400 transition-colors"
-              title="Voice Input Rune"
-            >
-              <span className="material-symbols-outlined text-[20px]">mic</span>
-            </button>
           </div>
 
-          {/* Meta Selectors: Difficulty + Deadline + Submit */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Difficulty selector chips */}
-            <div className="flex items-center gap-1 bg-surface-dim border border-outline-variant p-1 rounded-control">
-              {(['Tier I', 'Tier II', 'Tier III'] as const).map(tier => (
-                <button
-                  key={tier}
-                  type="button"
-                  onClick={() => setSelectedTier(tier)}
-                  className={`px-2 py-1 rounded font-label-sm text-label-sm transition-all ${
-                    selectedTier === tier
-                      ? 'bg-navy-hi text-amber-300 border border-amber-400/40 font-black shadow-card'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {tier}
-                </button>
-              ))}
-            </div>
-
-            {/* Deadline rune selector */}
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedDeadline(prev => (prev === 'Today' ? 'Tonight' : prev === 'Tonight' ? 'Tomorrow' : 'Today'));
-              }}
-              className="h-9 px-2.5 rounded-control bg-surface-container-high border border-outline-variant text-on-surface flex items-center gap-1 hover:bg-surface-bright transition-colors"
-              title="Set Deadline Rune"
+          {/* Meta Selectors: Category + Tier + Tag + Deadline + Submit */}
+          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+            {/* Category */}
+            <select
+              value={selectedCategory}
+              onChange={e => setSelectedCategory(e.target.value as QuestCategory)}
+              className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-amber-300 font-label-sm text-label-sm font-bold focus:outline-none"
             >
-              <span className="material-symbols-outlined text-[16px] text-amber-400">hourglass_top</span>
-              <span className="font-label-sm text-label-sm font-bold">{selectedDeadline}</span>
-            </button>
+              <option value="bounty">Bounty</option>
+              <option value="epic">Epic</option>
+              <option value="habit">Habit</option>
+            </select>
 
-            {/* Deploy mission button */}
+            {/* Tier */}
+            <select
+              value={selectedTier}
+              onChange={e => setSelectedTier(e.target.value as QuestTier)}
+              className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-cyan-300 font-label-sm text-label-sm font-bold focus:outline-none"
+            >
+              <option value="Tier I">Tier I (Common)</option>
+              <option value="Tier II">Tier II (Rare)</option>
+              <option value="Tier III">Tier III (Heroic)</option>
+              <option value="Epic">Epic</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+
+            {/* Tag */}
+            <select
+              value={selectedTag}
+              onChange={e => setSelectedTag(e.target.value as QuestTag)}
+              className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-sky-200 font-label-sm text-label-sm font-bold focus:outline-none"
+            >
+              {tags.map(t => (
+                <option key={t} value={t}>#{t}</option>
+              ))}
+            </select>
+
+            {/* Deadline */}
+            <select
+              value={selectedDeadline}
+              onChange={e => setSelectedDeadline(e.target.value as any)}
+              className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-rose-300 font-label-sm text-label-sm font-bold focus:outline-none"
+            >
+              <option value="Today">Today</option>
+              <option value="Tonight">Tonight</option>
+              <option value="Tomorrow">Tomorrow</option>
+              <option value="This Week">This Week</option>
+            </select>
+
+            {/* Duration */}
+            <select
+              value={estimatedMinutes}
+              onChange={e => setEstimatedMinutes(Number(e.target.value))}
+              className="h-9 px-2 rounded-control bg-surface-dim border border-outline-variant text-emerald-300 font-label-sm text-label-sm font-bold focus:outline-none"
+              title="Estimated Duration"
+            >
+              <option value={15}>15m</option>
+              <option value={25}>25m</option>
+              <option value={45}>45m</option>
+              <option value={60}>60m</option>
+            </select>
+
+            {/* Forge Button */}
             <button
               type="submit"
-              className="flex-1 h-9 btn btn-gold font-label-md text-label-lg uppercase tracking-wider font-black border-t border-yellow-200"
+              className="flex-1 min-w-[90px] h-9 btn btn-gold font-label-md text-label-lg uppercase tracking-wider font-black border-t border-yellow-200"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
               <span>Forge</span>
