@@ -10,18 +10,18 @@ export const BottomDockNav: React.FC = () => {
 
   const tabs: { id: TabType; label: string; icon: string; badge?: number | string; badgeColor?: string }[] = [
     { id: 'realm', label: 'Realm', icon: 'castle' },
-    { 
-      id: 'quests', 
-      label: 'Quests', 
-      icon: 'history_edu', 
+    {
+      id: 'quests',
+      label: 'Quests',
+      icon: 'history_edu',
       badge: activeQuestsCount > 0 ? activeQuestsCount : undefined,
       badgeColor: 'bg-gradient-to-b from-[#f43f5e] to-[#be123c] text-white border-white/30'
     },
     { id: 'focus-arena', label: 'Focus', icon: 'swords' }, // Center action
-    { 
-      id: 'vault', 
-      label: 'Vault', 
-      icon: 'inventory_2', 
+    {
+      id: 'vault',
+      label: 'Vault',
+      icon: 'inventory_2',
       badge: readyChestsCount > 0 ? 'CLAIM' : undefined,
       badgeColor: 'bg-gradient-to-b from-[#fde047] to-[#f59e0b] text-[#361e00] border-[#ffdf6d]'
     },
@@ -29,8 +29,8 @@ export const BottomDockNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 w-full z-40 pb-safe bg-[#060d1b]/95 border-t border-[#244888]/60 backdrop-blur-xl shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
-      <div className="max-w-md mx-auto h-nav-bar-height px-3 flex items-center justify-around">
+    <nav className="pb-safe fixed bottom-0 w-full z-40 bg-surface-dim/95 border-t border-outline-variant/60 backdrop-blur-xl shadow-[0_-4px_24px_rgba(0,0,0,0.7)]">
+      <div className="max-w-screen mx-auto h-nav-bar-height px-3 flex items-center justify-around">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
 
@@ -39,7 +39,7 @@ export const BottomDockNav: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] -mt-5 transition-transform hover:scale-105 active:scale-95 focus:outline-none"
+                className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] -mt-5 transition-transform hover:scale-[1.04] active:scale-95 focus:outline-none"
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all ${
                   isActive
@@ -50,7 +50,7 @@ export const BottomDockNav: React.FC = () => {
                     swords
                   </span>
                 </div>
-                <span className={`font-label-sm text-[11px] mt-1 font-black ${
+                <span className={`font-label-sm text-label-sm mt-1 font-black ${
                   isActive ? 'text-cyan-300' : 'text-[#fde047]'
                 }`}>
                   Focus
@@ -63,23 +63,30 @@ export const BottomDockNav: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all focus:outline-none ${
-                isActive ? 'text-[#fbc02d] scale-105' : 'text-on-surface-variant hover:text-on-surface'
+              className={`relative flex flex-col items-center justify-center min-w-[52px] min-h-[44px] transition-all focus:outline-none active:scale-90 ${
+                isActive ? 'text-[#fbc02d]' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               <div className="relative">
-                <span className={`material-symbols-outlined text-[22px] ${isActive ? 'fill-1' : ''}`}>
-                  {tab.icon}
-                </span>
+                {/* Active tab pill */}
+                <div className={`flex items-center justify-center h-8 w-12 rounded-control transition-all ${
+                  isActive
+                    ? 'bg-surface-container-high border border-amber-400/25 shadow-[0_0_12px_rgba(251,191,36,0.15)]'
+                    : 'border border-transparent'
+                }`}>
+                  <span className={`material-symbols-outlined text-[22px] ${isActive ? 'fill-1 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]' : ''}`}>
+                    {tab.icon}
+                  </span>
+                </div>
 
                 {/* Badge Notification */}
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1.5 -right-3 px-1.5 py-0.2 rounded-full font-label-sm text-[9px] leading-tight font-black shadow border ${tab.badgeColor}`}>
+                  <span className={`absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 py-px rounded-full font-label-sm text-label-sm leading-none font-black shadow border flex items-center justify-center ${tab.badgeColor}`}>
                     {tab.badge}
                   </span>
                 )}
               </div>
-              <span className={`font-label-sm text-[10px] mt-1 ${isActive ? 'font-black' : 'font-bold'}`}>
+              <span className={`font-label-sm text-label-sm mt-1 ${isActive ? 'font-black' : 'font-bold'}`}>
                 {tab.label}
               </span>
             </button>

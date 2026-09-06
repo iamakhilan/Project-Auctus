@@ -23,11 +23,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
   };
 
   return (
-    <header className="fixed top-0 w-full z-40 pt-safe bg-[#060d1b]/95 border-b border-[#244888]/60 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.6)]">
-      <div className="max-w-4xl mx-auto h-20 px-4 sm:px-6 flex items-center justify-between gap-2">
+    <header className="pt-safe fixed top-0 w-full z-40 bg-surface-dim/95 border-b border-outline-variant/60 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.6)]">
+      <div className="max-w-screen mx-auto h-20 px-4 sm:px-6 flex items-center justify-between gap-2">
         {/* Left Side: Crest, Avatar & Level */}
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setActiveTab('realm')}
             className="flex items-center gap-2.5 focus:outline-none group"
             title="Return to Realm"
@@ -41,34 +41,34 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
 
           {/* Player Avatar with Level Badge */}
           <div className="flex items-center gap-2.5">
-            <div 
+            <div
               onClick={onOpenProfile || (() => setActiveTab('citadel'))}
               className="relative flex items-center justify-center cursor-pointer group"
               title="View Player Profile"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#142a54] border-2 border-amber-400/80 overflow-hidden shadow-[0_0_10px_rgba(251,191,36,0.3)] flex items-center justify-center group-hover:border-amber-300 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-surface-container-high border-2 border-amber-400/80 overflow-hidden shadow-gold-aura flex items-center justify-center group-hover:border-amber-300 transition-colors">
                 <img
                   src="/assets/avatar.png"
                   alt="Player Avatar"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-label-sm text-[9px] font-black border border-yellow-200/80 shadow-md">
+              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-label-sm text-label-sm font-black border border-yellow-200/80 shadow-md">
                 LV.{profile.level}
               </span>
             </div>
 
             {/* XP Progress Bar */}
             <div className="hidden sm:flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[10px] font-label-sm">
+              <div className="flex items-center justify-between font-label-sm text-label-sm">
                 <span className="text-amber-400 font-bold">XP</span>
                 <span className="text-on-surface-variant font-medium">
                   {profile.xp >= 1000 ? `${(profile.xp / 1000).toFixed(1)}k` : profile.xp} / {profile.xpToNextLevel >= 1000 ? `${(profile.xpToNextLevel / 1000).toFixed(1)}k` : profile.xpToNextLevel}
                 </span>
               </div>
-              <div className="w-20 h-2 bg-[#060d1b] rounded-full overflow-hidden border border-[#1a3668]/80 p-[1px]">
+              <div className="w-24 h-1.5 bg-surface-dim rounded-full overflow-hidden border border-outline-variant/60 p-px">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)] transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-emerald-aura transition-all duration-500"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
@@ -83,35 +83,35 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
         {/* Center/Right: Resource Counters (Diamonds, Coins, Streak) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto py-1">
           {/* Diamonds / Mana Gems */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#142a54] border border-[#244888] shadow-sm">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-outline-variant shadow-card">
             <span className="material-symbols-outlined text-cyan-400 text-[16px] fill-1">
               diamond
             </span>
-            <span className="font-label-md text-[13px] text-cyan-300 font-bold">
+            <span className="font-label-md text-body-sm text-cyan-300 font-bold">
               {profile.diamonds}
             </span>
           </div>
 
           {/* Auctus Coins */}
-          <div 
+          <div
             onClick={() => setActiveTab('vault')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#142a54] border border-amber-400/50 shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer hover:border-amber-400 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-amber-400/50 shadow-[0_0_8px_rgba(245,158,11,0.25)] cursor-pointer hover:border-amber-400 active:scale-95 transition-all"
             title="Open Treasury Vault"
           >
             <span className="material-symbols-outlined text-amber-400 text-[16px] fill-1">
               monetization_on
             </span>
-            <span className="font-label-md text-[13px] text-amber-300 font-extrabold">
+            <span className="font-label-md text-body-sm text-amber-300 font-extrabold">
               {profile.coins}
             </span>
           </div>
 
           {/* Streak Flame */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#142a54] border border-rose-500/50 shadow-sm">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-surface-container border border-rose-500/50 shadow-card">
             <span className="material-symbols-outlined text-rose-500 text-[16px] fill-1 animate-pulse">
               local_fire_department
             </span>
-            <span className="font-label-md text-[13px] text-rose-200 font-bold">
+            <span className="font-label-md text-body-sm text-rose-200 font-bold">
               {profile.streakDays}d
             </span>
           </div>
@@ -121,10 +121,10 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
         <div className="flex items-center gap-1">
           <button
             onClick={toggleSound}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+            className={`w-9 h-9 rounded-control flex items-center justify-center transition-all ${
               profile.soundEnabled
-                ? 'text-amber-400 bg-[#142a54] border border-amber-400/40'
-                : 'text-on-surface-variant hover:text-on-surface hover:bg-[#142a54]'
+                ? 'text-amber-400 bg-surface-container border border-amber-400/40'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
             }`}
             title={profile.soundEnabled ? 'Sound Effects Enabled' : 'Sound Effects Muted'}
           >
@@ -135,7 +135,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
 
           <button
             onClick={onOpenSettings || (() => setActiveTab('citadel'))}
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-[#142a54] transition-colors"
+            className="w-9 h-9 rounded-control flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all"
             title="Citadel Settings"
           >
             <span className="material-symbols-outlined text-[19px]">
@@ -145,7 +145,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenSetti
 
           <button
             onClick={onOpenProfile || (() => setActiveTab('citadel'))}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 border border-yellow-200 flex items-center justify-center shadow-md active:scale-95 transition-transform"
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 border border-yellow-200 flex items-center justify-center shadow-md active:scale-95 hover:brightness-110 transition-all"
             title="Commander Profile"
           >
             <span className="material-symbols-outlined text-amber-950 text-[17px] font-bold">
