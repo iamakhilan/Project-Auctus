@@ -2,7 +2,7 @@ import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
 
 export const CitadelView: React.FC = () => {
-  const { profile, toggleSound, quests } = useGameState();
+  const { profile, toggleSound, quests, exportData, importData } = useGameState();
 
   const completedQuests = quests.filter(q => q.isCompleted);
   const xpPercent = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
@@ -175,7 +175,64 @@ export const CitadelView: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. SETTINGS & SOUND PREFERENCES */}
+      {/* 4. DATA BACKUP & RECOVERY VAULT */}
+      <section className="rounded-card bg-surface-container border border-outline-variant p-4 flex flex-col gap-3 shadow-card">
+        <h3 className="font-headline-sm text-headline-sm text-white font-bold flex items-center gap-2">
+          <span className="material-symbols-outlined text-cyan-400 text-[20px]">cloud_sync</span>
+          <span>Data Archives & Backup</span>
+        </h3>
+        <p className="font-body-sm text-body-sm text-sky-200/70">
+          AUCTUS runs entirely local-first. Export a full JSON archive to safeguard your progress across devices or browser resets.
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <button
+            onClick={() => {
+              const json = exportData();
+              const blob = new Blob([json], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `auctus-backup-${new Date().toISOString().split('T')[0]}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="btn btn-gold py-2.5 px-3 text-label-md uppercase font-black flex items-center justify-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[18px]">download</span>
+            <span>Export JSON</span>
+          </button>
+
+          <label className="btn btn-navy py-2.5 px-3 text-label-md uppercase font-black flex items-center justify-center gap-1.5 cursor-pointer">
+            <span className="material-symbols-outlined text-[18px] text-cyan-300">upload_file</span>
+            <span>Import JSON</span>
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  const content = event.target?.result as string;
+                  if (content) {
+                    const success = importData(content);
+                    if (success) {
+                      alert('Auctus data successfully restored!');
+                    } else {
+                      alert('Failed to import backup. Please check file format.');
+                    }
+                  }
+                };
+                reader.readAsText(file);
+              }}
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* 5. SETTINGS & SOUND PREFERENCES */}
       <section className="rounded-card bg-surface-container border border-outline-variant p-4 flex flex-col gap-3 shadow-card">
         <h3 className="font-headline-sm text-headline-sm text-white font-bold">
           Citadel Preferences

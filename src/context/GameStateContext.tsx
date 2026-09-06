@@ -9,17 +9,19 @@ import {
   FocusSessionState,
 } from '../types';
 import {
-  loadProfile,
-  saveProfile,
-  loadQuests,
-  saveQuests,
-  loadChests,
-  saveChests,
-  loadRewards,
-  saveRewards,
-  loadFocusSession,
-  saveFocusSession,
-} from '../utils/storage';
+  loadProfileV2,
+  saveProfileV2,
+  loadQuestsV2,
+  saveQuestsV2,
+  loadChestsV2,
+  saveChestsV2,
+  loadRewardsV2,
+  saveRewardsV2,
+  loadFocusSessionV2,
+  saveFocusSessionV2,
+  exportAuctusBackup,
+  importAuctusBackup,
+} from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import confetti from 'canvas-confetti';
 import { calculateLevelProgression } from '../domain/progression';
@@ -57,6 +59,8 @@ interface GameStateContextType {
   toggleSound: () => void;
   closeClaimModal: () => void;
   openCustomClaimModal: (data: Partial<ClaimModalData>) => void;
+  exportData: () => string;
+  importData: (json: string) => boolean;
   
   // Focus Arena Actions
   startFocusSession: (durationMinutes?: number, questId?: string, questTitle?: string) => void;
@@ -72,10 +76,10 @@ const GameStateContext = createContext<GameStateContextType | undefined>(undefin
 
 export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTabState] = useState<TabType>('realm');
-  const [profile, setProfile] = useState<PlayerProfile>(loadProfile);
-  const [quests, setQuests] = useState<Quest[]>(loadQuests);
-  const [chests, setChests] = useState<ChestSlot[]>(loadChests);
-  const [rewards, setRewards] = useState<RewardItem[]>(loadRewards);
+  const [profile, setProfile] = useState<PlayerProfile>(loadProfileV2);
+  const [quests, setQuests] = useState<Quest[]>(loadQuestsV2);
+  const [chests, setChests] = useState<ChestSlot[]>(loadChestsV2);
+  const [rewards, setRewards] = useState<RewardItem[]>(loadRewardsV2);
 
   const [claimModal, setClaimModal] = useState<ClaimModalData>({
     isOpen: false,
@@ -84,27 +88,27 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     description: '',
   });
 
-  const [focusSession, setFocusSession] = useState<FocusSessionState>(loadFocusSession);
+  const [focusSession, setFocusSession] = useState<FocusSessionState>(loadFocusSessionV2);
 
-  // Save changes to storage
+  // Save changes to V2 storage
   useEffect(() => {
-    saveProfile(profile);
+    saveProfileV2(profile);
   }, [profile]);
 
   useEffect(() => {
-    saveQuests(quests);
+    saveQuestsV2(quests);
   }, [quests]);
 
   useEffect(() => {
-    saveChests(chests);
+    saveChestsV2(chests);
   }, [chests]);
 
   useEffect(() => {
-    saveRewards(rewards);
+    saveRewardsV2(rewards);
   }, [rewards]);
 
   useEffect(() => {
-    saveFocusSession(focusSession);
+    saveFocusSessionV2(focusSession);
   }, [focusSession]);
 
   const setActiveTab = (tab: TabType) => {
@@ -357,6 +361,24 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
+  const exportData = useCallback((): string => {
+    return exportAuctusBackup();
+  }, []);
+
+  const importData = useCallback((json: string): boolean => {
+    const result = importAuctusBackup(json);
+    if (result.success && result.data) {
+      setProfile(loadProfileV2());
+      setQuests(loadQuestsV2());
+      setChests(loadChestsV2());
+      setRewards(loadRewardsV2());
+      setFocusSession(loadFocusSessionV2());
+      soundEngine.playLevelUp(profile.soundEnabled);
+      return true;
+    }
+    return false;
+  }, [profile.soundEnabled]);
+
   // Focus Arena Timer Management
   const startFocusSession = useCallback((
     durationMinutes = 25,
@@ -565,6 +587,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         toggleSound,
         closeClaimModal,
         openCustomClaimModal,
+        exportData,
+        importData,
         startFocusSession,
         pauseFocusSession,
         resumeFocusSession,

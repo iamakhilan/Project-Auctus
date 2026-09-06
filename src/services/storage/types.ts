@@ -1,0 +1,28 @@
+import {
+  PlayerProfile,
+  Quest,
+  ChestSlot,
+  RewardItem,
+  FocusSessionState,
+} from '../../types';
+
+export interface AuctusV2SaveData {
+  schemaVersion: 2;
+  exportedAt: string;
+  profile: PlayerProfile;
+  quests: Quest[];
+  chests: ChestSlot[];
+  rewards: RewardItem[];
+  focusSession?: FocusSessionState;
+  habits?: any[];
+  transactions?: any[];
+  achievements?: any[];
+}
+
+export interface MigrationResult {
+  migrated: boolean;
+  fromVersion: number;
+  toVersion: number;
+  data: AuctusV2SaveData;
+  error?: string;
+}
