@@ -5,6 +5,7 @@ import {
   RewardItem,
   FocusSessionState,
   Habit,
+  EconomyTransaction,
 } from '../../types';
 
 export interface AuctusV2SaveData {
@@ -16,7 +17,7 @@ export interface AuctusV2SaveData {
   rewards: RewardItem[];
   focusSession?: FocusSessionState;
   habits?: Habit[];
-  transactions?: any[];
+  transactions?: EconomyTransaction[];
   achievements?: any[];
 }
 

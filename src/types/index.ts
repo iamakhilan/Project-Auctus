@@ -126,3 +126,17 @@ export interface ClaimModalData {
   icon?: string;
   badge?: string;
 }
+
+export type CurrencyType = 'coins' | 'diamonds' | 'shards';
+export type EconomyTransactionType = 'earn' | 'spend';
+
+export interface EconomyTransaction {
+  id: string;
+  timestamp: number;
+  amount: number;
+  currency: CurrencyType;
+  type: EconomyTransactionType;
+  reason: string;
+  balanceAfter: number;
+}
+

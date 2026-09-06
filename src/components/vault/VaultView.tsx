@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
+import {
+  calculateNetFlow,
+  filterTransactions,
+} from '../../domain/economy';
+import { CurrencyType, EconomyTransactionType } from '../../types';
 
 export const VaultView: React.FC = () => {
   const {
     profile,
     rewards,
+    transactions,
     redeemReward,
     createCustomReward,
     openCustomClaimModal,
@@ -18,7 +24,20 @@ export const VaultView: React.FC = () => {
   const [customCategory, setCustomCategory] = useState('Personal Reward');
   const [customIcon, setCustomIcon] = useState('stars');
 
+  // Ledger state
+  const [ledgerModalOpen, setLedgerModalOpen] = useState(false);
+  const [ledgerCurrencyFilter, setLedgerCurrencyFilter] = useState<CurrencyType | 'all'>('all');
+  const [ledgerTypeFilter, setLedgerTypeFilter] = useState<EconomyTransactionType | 'all'>('all');
+  const [ledgerSearch, setLedgerSearch] = useState('');
+
   const filteredRewards = rewards.filter(r => r.type === activeShopTab);
+
+  const netFlowCoins = calculateNetFlow(transactions, 'coins', 24 * 3600 * 1000);
+  const filteredLedger = filterTransactions(transactions, {
+    currency: ledgerCurrencyFilter,
+    type: ledgerTypeFilter,
+    search: ledgerSearch,
+  });
 
   const handleClaimDailyStreak = () => {
     if (dailyStreakClaimed) return;
@@ -66,11 +85,20 @@ export const VaultView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-dim/90 border border-emerald-500/40 shadow-inset-well">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
-            <span className="font-label-sm text-label-sm text-emerald-400 font-extrabold tracking-wider uppercase">
-              Vault Secure
-            </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLedgerModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-control bg-surface-dim hover:bg-surface-container border border-amber-400/40 text-amber-300 font-label-sm text-label-sm font-bold shadow-card transition-all active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+              <span>Ledger</span>
+            </button>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-dim/90 border border-emerald-500/40 shadow-inset-well">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981] animate-pulse" />
+              <span className="font-label-sm text-label-sm text-emerald-400 font-extrabold tracking-wider uppercase">
+                Secure
+              </span>
+            </div>
           </div>
         </div>
 
@@ -119,6 +147,21 @@ export const VaultView: React.FC = () => {
             <span className="font-label-sm text-label-sm text-emerald-200 uppercase font-black tracking-wider mt-0.5">
               Unclaimed
             </span>
+          </div>
+        </div>
+
+        {/* 24h Flow Pill Banner */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-control bg-surface-dim/70 border border-outline-variant text-label-sm text-on-surface-variant relative z-10">
+          <div className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-[15px] text-amber-400">trending_up</span>
+            <span>24h Inflow: <strong className="text-emerald-400">+{netFlowCoins.earned}</strong></span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-[15px] text-rose-400">shopping_bag</span>
+            <span>Spent: <strong className="text-rose-400">-{netFlowCoins.spent}</strong></span>
+          </div>
+          <div className="font-bold text-amber-300">
+            Net: {netFlowCoins.net >= 0 ? `+${netFlowCoins.net}` : netFlowCoins.net}
           </div>
         </div>
       </section>
@@ -541,6 +584,172 @@ export const VaultView: React.FC = () => {
                 Create Reward
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. TREASURY TRANSACTION HISTORY LEDGER MODAL */}
+      {ledgerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/75 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg max-h-[85vh] rounded-3xl bg-gradient-to-b from-surface-container-high to-surface-container-low border border-amber-400/60 p-5 shadow-crown flex flex-col relative animate-scaleUp">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-control bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+                  <span className="material-symbols-outlined text-[22px]">receipt_long</span>
+                </div>
+                <div>
+                  <h3 className="font-headline-sm text-headline-sm text-white font-extrabold flex items-center gap-2">
+                    Treasury Ledger
+                    <span className="text-label-sm font-semibold px-2 py-0.5 rounded-full bg-surface-dim border border-outline-variant text-amber-300">
+                      {transactions.length} records
+                    </span>
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">
+                    Auditable on-device record of all currency flows.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLedgerModalOpen(false)}
+                className="w-8 h-8 rounded-control flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Filters Bar */}
+            <div className="py-3 flex flex-col gap-2 border-b border-outline-variant/40">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search ledger entries..."
+                    value={ledgerSearch}
+                    onChange={e => setLedgerSearch(e.target.value)}
+                    className="w-full h-8 pl-8 pr-3 rounded-control bg-surface-dim border border-outline-variant text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Currency & Type Filter Pills */}
+              <div className="flex items-center justify-between gap-1 flex-wrap">
+                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-control border border-outline-variant/60">
+                  {(['all', 'coins', 'shards'] as const).map(curr => (
+                    <button
+                      key={curr}
+                      onClick={() => setLedgerCurrencyFilter(curr)}
+                      className={`px-2 py-0.5 rounded-control font-label-sm text-label-sm capitalize transition-all ${
+                        ledgerCurrencyFilter === curr
+                          ? 'bg-navy-hi border border-amber-400/50 text-amber-300 font-bold'
+                          : 'text-on-surface-variant hover:text-white'
+                      }`}
+                    >
+                      {curr}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1 bg-surface-dim p-0.5 rounded-control border border-outline-variant/60">
+                  {(['all', 'earn', 'spend'] as const).map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setLedgerTypeFilter(type)}
+                      className={`px-2 py-0.5 rounded-control font-label-sm text-label-sm capitalize transition-all ${
+                        ledgerTypeFilter === type
+                          ? 'bg-navy-hi border border-sky-400/50 text-sky-300 font-bold'
+                          : 'text-on-surface-variant hover:text-white'
+                      }`}
+                    >
+                      {type === 'all' ? 'All Flow' : type === 'earn' ? '+ Inflow' : '- Outflow'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Scrollable Transaction Stream */}
+            <div className="flex-1 overflow-y-auto py-2 space-y-2 pr-1 custom-scrollbar">
+              {filteredLedger.length === 0 ? (
+                <div className="p-8 text-center flex flex-col items-center justify-center text-on-surface-variant gap-2">
+                  <span className="material-symbols-outlined text-[36px] opacity-40">search_off</span>
+                  <p className="font-body-sm text-body-sm">No transactions matched your filter.</p>
+                </div>
+              ) : (
+                filteredLedger.map(tx => {
+                  const isEarn = tx.type === 'earn';
+                  const dateStr = new Date(tx.timestamp).toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  return (
+                    <div
+                      key={tx.id}
+                      className="p-2.5 rounded-control bg-surface-container border border-outline-variant/60 flex items-center justify-between gap-2.5 hover:border-amber-400/30 transition-all"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-8 h-8 rounded-control flex items-center justify-center flex-shrink-0 ${
+                            isEarn
+                              ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-400'
+                              : 'bg-rose-950/70 border border-rose-500/50 text-rose-400'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {isEarn ? 'arrow_upward' : 'arrow_downward'}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-headline-sm text-label-md font-bold text-white truncate">
+                            {tx.reason}
+                          </span>
+                          <span className="font-label-sm text-label-sm text-on-surface-variant">
+                            {dateStr}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <span
+                          className={`font-headline-sm text-label-lg font-black tracking-tight flex items-center gap-0.5 ${
+                            isEarn ? 'text-emerald-300' : 'text-rose-400'
+                          }`}
+                        >
+                          <span>{isEarn ? '+' : '-'}</span>
+                          <span>{tx.amount.toLocaleString()}</span>
+                          <span className="font-label-sm text-label-sm uppercase ml-0.5 text-on-surface-variant">
+                            {tx.currency}
+                          </span>
+                        </span>
+                        <span className="font-label-sm text-label-sm text-amber-200/60">
+                          Bal: {tx.balanceAfter.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+              <span className="font-label-sm text-label-sm text-on-surface-variant">
+                Local-first zero-telemetry cryptoledger
+              </span>
+              <button
+                onClick={() => setLedgerModalOpen(false)}
+                className="btn btn-navy h-8 px-4 font-label-sm text-label-sm uppercase"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

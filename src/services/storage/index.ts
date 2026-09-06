@@ -5,6 +5,7 @@ import {
   RewardItem,
   FocusSessionState,
   Habit,
+  EconomyTransaction,
 } from '../../types';
 import {
   initialProfile,
@@ -14,6 +15,7 @@ import {
   initialFocusSession,
 } from '../../utils/storage';
 import { initialHabits } from '../../domain/habits';
+import { getInitialTransactions } from '../../domain/economy';
 import { AuctusV2SaveData } from './types';
 import { V2_KEYS, safeParseJson, migrateV1ToV2 } from './migration';
 
@@ -140,6 +142,29 @@ export function saveHabitsV2(habits: Habit[]): void {
 }
 
 /**
+ * Loads economy transactions from V2 storage with automated fallback.
+ */
+export function loadTransactionsV2(): EconomyTransaction[] {
+  try {
+    const raw = localStorage.getItem(V2_KEYS.TRANSACTIONS);
+    const initial = getInitialTransactions();
+    if (raw) return safeParseJson(raw, initial);
+    saveTransactionsV2(initial);
+    return initial;
+  } catch {
+    return getInitialTransactions();
+  }
+}
+
+export function saveTransactionsV2(transactions: EconomyTransaction[]): void {
+  try {
+    localStorage.setItem(V2_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+  } catch (e) {
+    console.error('Failed to save V2 transactions', e);
+  }
+}
+
+/**
  * Loads focus session from V2 storage with automated fallback.
  */
 export function loadFocusSessionV2(): FocusSessionState {
@@ -181,6 +206,7 @@ export function exportAuctusBackup(): string {
     chests: loadChestsV2(),
     rewards: loadRewardsV2(),
     habits: loadHabitsV2(),
+    transactions: loadTransactionsV2(),
     focusSession: loadFocusSessionV2(),
   };
 
@@ -230,6 +256,7 @@ export function importAuctusBackup(jsonString: string): ImportResult {
     if (Array.isArray(parsed.chests)) saveChestsV2(parsed.chests);
     if (Array.isArray(parsed.rewards)) saveRewardsV2(parsed.rewards);
     if (Array.isArray(parsed.habits)) saveHabitsV2(parsed.habits);
+    if (Array.isArray(parsed.transactions)) saveTransactionsV2(parsed.transactions);
     if (parsed.focusSession) saveFocusSessionV2(parsed.focusSession);
 
     return {

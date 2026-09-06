@@ -9,6 +9,9 @@ import {
   FocusSessionState,
   Habit,
   HabitCategory,
+  EconomyTransaction,
+  CurrencyType,
+  EconomyTransactionType,
 } from '../types';
 import {
   loadProfileV2,
@@ -21,6 +24,8 @@ import {
   saveRewardsV2,
   loadHabitsV2,
   saveHabitsV2,
+  loadTransactionsV2,
+  saveTransactionsV2,
   loadFocusSessionV2,
   saveFocusSessionV2,
   exportAuctusBackup,
@@ -36,7 +41,13 @@ import {
   deleteQuestEntity,
   QuestCreationParams,
 } from '../domain/quests';
-import { validateRedemption, deductCoins, createCustomRewardEntity } from '../domain/economy';
+import {
+  validateRedemption,
+  deductCoins,
+  createCustomRewardEntity,
+  createTransactionEntity,
+  recordTransaction,
+} from '../domain/economy';
 import { createChestSlotEntity, rollChestTier, createEmptyChestSlot } from '../domain/chests';
 import {
   createFocusSessionEntity,
@@ -58,13 +69,20 @@ interface GameStateContextType {
   chests: ChestSlot[];
   rewards: RewardItem[];
   habits: Habit[];
+  transactions: EconomyTransaction[];
   claimModal: ClaimModalData;
   focusSession: FocusSessionState;
   
   // Game Actions
   addXp: (amount: number) => void;
-  addCoins: (amount: number) => void;
-  addShards: (amount: number) => void;
+  addCoins: (amount: number, reason?: string) => void;
+  addShards: (amount: number, reason?: string) => void;
+  recordEconomyTransaction: (params: {
+    amount: number;
+    currency: CurrencyType;
+    type: EconomyTransactionType;
+    reason: string;
+  }) => void;
   completeQuest: (questId: string) => void;
   createQuest: (
     titleOrParams: string | QuestCreationParams,
@@ -105,6 +123,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [chests, setChests] = useState<ChestSlot[]>(loadChestsV2);
   const [rewards, setRewards] = useState<RewardItem[]>(loadRewardsV2);
   const [habits, setHabits] = useState<Habit[]>(loadHabitsV2);
+  const [transactions, setTransactions] = useState<EconomyTransaction[]>(loadTransactionsV2);
 
   const [claimModal, setClaimModal] = useState<ClaimModalData>({
     isOpen: false,
@@ -135,6 +154,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     saveHabitsV2(habits);
   }, [habits]);
+
+  useEffect(() => {
+    saveTransactionsV2(transactions);
+  }, [transactions]);
 
   useEffect(() => {
     saveFocusSessionV2(focusSession);
@@ -186,20 +209,69 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, [profile.soundEnabled]);
 
-  const addCoins = useCallback((amount: number) => {
+  const addCoins = useCallback((amount: number, reason = 'Auctus Bounty') => {
     soundEngine.playCoinClaim(profile.soundEnabled);
-    setProfile(prev => ({
-      ...prev,
-      coins: prev.coins + amount,
-    }));
+    setProfile(prev => {
+      const nextCoins = prev.coins + amount;
+      const tx = createTransactionEntity({
+        amount,
+        currency: 'coins',
+        type: 'earn',
+        reason,
+        balanceAfter: nextCoins,
+      });
+      setTransactions(t => recordTransaction(t, tx));
+      return {
+        ...prev,
+        coins: nextCoins,
+      };
+    });
   }, [profile.soundEnabled]);
 
-  const addShards = useCallback((amount: number) => {
-    setProfile(prev => ({
-      ...prev,
-      shards: prev.shards + amount,
-    }));
+  const addShards = useCallback((amount: number, reason = 'Spire Shards Harvest') => {
+    setProfile(prev => {
+      const nextShards = prev.shards + amount;
+      const tx = createTransactionEntity({
+        amount,
+        currency: 'shards',
+        type: 'earn',
+        reason,
+        balanceAfter: nextShards,
+      });
+      setTransactions(t => recordTransaction(t, tx));
+      return {
+        ...prev,
+        shards: nextShards,
+      };
+    });
   }, []);
+
+  const recordEconomyTransaction = useCallback((params: {
+    amount: number;
+    currency: CurrencyType;
+    type: EconomyTransactionType;
+    reason: string;
+  }) => {
+    setTransactions(prev => {
+      let currentBal = 0;
+      if (params.currency === 'coins') currentBal = profile.coins;
+      else if (params.currency === 'shards') currentBal = profile.shards;
+      else if (params.currency === 'diamonds') currentBal = profile.diamonds;
+
+      const balanceAfter = params.type === 'earn'
+        ? currentBal + params.amount
+        : Math.max(0, currentBal - params.amount);
+
+      const tx = createTransactionEntity({
+        amount: params.amount,
+        currency: params.currency,
+        type: params.type,
+        reason: params.reason,
+        balanceAfter,
+      });
+      return recordTransaction(prev, tx);
+    });
+  }, [profile.coins, profile.shards, profile.diamonds]);
 
   // Complete a Quest
   const completeQuest = useCallback((questId: string) => {
@@ -213,7 +285,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           soundEngine.playQuestComplete(profile.soundEnabled);
           addXp(result.xpEarned);
           if (result.coinsEarned > 0) {
-            addCoins(result.coinsEarned);
+            addCoins(result.coinsEarned, `Quest: ${result.quest.title}`);
           }
           if (result.streakShieldsEarned > 0) {
             setProfile(p => ({
@@ -303,7 +375,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       soundEngine.playQuestComplete(profile.soundEnabled);
       addXp(res.xpEarned);
       if (res.coinsEarned > 0) {
-        addCoins(res.coinsEarned);
+        addCoins(res.coinsEarned, `Habit: ${target.title}`);
       }
 
       confetti({
@@ -374,9 +446,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     soundEngine.playCoinClaim(profile.soundEnabled);
     addXp(targetChest.xpReward);
-    addCoins(targetChest.coinsReward);
+    addCoins(targetChest.coinsReward, `Chest: ${targetChest.name}`);
     if (targetChest.shardsReward > 0) {
-      addShards(targetChest.shardsReward);
+      addShards(targetChest.shardsReward, `Chest: ${targetChest.name}`);
     }
 
     confetti({
@@ -424,6 +496,15 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!updated) return false;
 
     setProfile(updated);
+
+    const tx = createTransactionEntity({
+      amount: target.cost,
+      currency: 'coins',
+      type: 'spend',
+      reason: `Redeemed: ${target.title}`,
+      balanceAfter: updated.coins,
+    });
+    setTransactions(t => recordTransaction(t, tx));
 
     soundEngine.playCoinClaim(profile.soundEnabled);
     confetti({
@@ -557,7 +638,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
 
     addXp(yields.xp);
-    addCoins(yields.coins);
+    addCoins(yields.coins, `Focus Arena (${Math.round(focusSession.targetDurationSeconds / 60)}m sprint)`);
 
     if (focusSession.selectedQuestId) {
       completeQuest(focusSession.selectedQuestId);
@@ -681,11 +762,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         chests,
         rewards,
         habits,
+        transactions,
         claimModal,
         focusSession,
         addXp,
         addCoins,
         addShards,
+        recordEconomyTransaction,
         completeQuest,
         createQuest,
         updateQuest,
