@@ -2,18 +2,20 @@
 
 <img src="public/assets/crest.png" width="96" alt="Auctus Crest" />
 
-# ⚔️ AUCTUS
+# ⚔️ AUCTUS V2
 
-### **Level up your real-world productivity.**
+### **The Tactical RPG Productivity Citadel**
 
-*Transform daily tasks, habits, and deep work into an engaging tactical RPG progression system.*
+*Level up your real-world productivity through a dark-fantasy RPG progression system.*
 
 <br>
 
 ![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest_2.1-FCC72B?style=for-the-badge&logo=vitest&logoColor=black)
+![Local--First](https://img.shields.io/badge/Architecture-Local--First-10B981?style=for-the-badge)
 
 </div>
 
@@ -21,130 +23,160 @@
 
 ## 🌍 Overview
 
-**Auctus** is a gamified productivity platform that turns your real life into a tactical RPG. Every task completed earns XP and coins, every focus session forges Focus Stones, and every streak builds your Citadel's power — all rendered in a rich, dark, gold-accented game world.
+**AUCTUS V2** is a personal, local-first productivity engine disguised as an RPG. Built with modular domain engines, robust timestamp-backed timers, schema migrations, and zero external backend dependencies, AUCTUS turns your daily grind into a rewarding progression campaign.
 
-No backend, no accounts, no friction. Your entire progression is stored locally and privately on your device.
+Every task completed earns XP and gold, habits forge streak milestones, focus sprints charge your Citadel power, and time-locked loot chests reward sustained discipline.
 
-<br>
+---
 
-## 🗺️ The World
+## 🗺️ The 5 Citadel Realms
 
-| Realm | What it does |
+| Realm | Purpose & Mechanics |
 |---|---|
-| 🏝️ **Realm** | Your home island — a living overview of your hero, chest slots unlocking in real time, and daily momentum. |
-| 📜 **Quests** | Bounties, epics, and habits across five tiers (Common → Epic). Urgent quests glow red; streaks at risk ask for shields. |
-| ⏱️ **Focus Arena** | A deep-work timer that mines Focus Stones. Pair a session with a quest, overcharge it, and choose your soundscape. |
-| 💎 **Vault** | Chests that unlock over time, plus a Reward Bazaar where coins and gems buy real-life (IRL) or in-game rewards. |
-| 🏰 **Citadel** | Your long-term legacy — tiers, power, and league rank that grow as your real life levels up. |
+| 🏝️ **Realm** | Central command dashboard displaying active hero stats, live chest slots, daily momentum, and quick-action shortcuts. |
+| 📜 **Quests & Habits** | **Mission Forge** with categorized quests (Daily, Main, Bounties, Urgent) and a **Habit Forge** tracking consecutive streak milestones (3d, 7d, 14d, 21d, 30d). |
+| ⏱️ **Focus Arena** | Timestamp-backed deep work arena with Pomodoro cycles, streak multipliers, mana overcharge, and procedural Web Audio soundscapes. |
+| 💎 **Vault & Treasury** | 4-slot timed chest loot system (Bronze, Silver, Gold, Mythic) and a **Treasury Store** for redeeming custom real-world rewards with double-entry transaction ledgers. |
+| 🏰 **Citadel** | Long-term prestige system spanning 5 Citadel Tiers (Genesis Outpost → Celestial Apex Citadel) with passive XP buffs, 15+ achievements, telemetry analytics, and data management. |
 
-<br>
+---
 
-## ✨ Core Systems
+## ✨ Key Architectural Features
 
-- 🎯 **Tiered Quest Engine** — Common, Rare, Urgent, Epic & Tier I–III quests with XP + coin rewards
-- 🔥 **Streaks & Shields** — build daily streaks, spend Streak Shields to protect them
-- ⚡ **Focus Mining** — timer-driven sessions that accumulate XP/coins in real time
-- 📦 **Timed Chest Unlocks** — Silver → Gold → Magical → Relic chests on countdown timers
-- 🛒 **Reward Bazaar** — redeem currency for IRL or in-game rewards; define custom ones
-- 💠 **Triple Economy** — Coins, Mana Gems, and Spire Shards each fuel different systems
-- 🔊 **Procedural Audio** — synthesized soundscapes (Binaural, Cyber Rain, Forest Spire, White Noise) — zero audio files
-- 💾 **Local-First Persistence** — everything saved in `localStorage`, instantly and privately
+### 1. ⚙️ Pure Domain Engine Architecture
+All game logic is cleanly extracted from React components into testable, deterministic pure TypeScript modules (`src/domain/`):
+- **`progression/`**: XP calculations, level thresholds, and stat progression.
+- **`quests/`**: Quest creation, priority sorting, tag filtering, and reward grants.
+- **`habits/`**: Streak tracking, milestone yields, and daily check-ins.
+- **`focus/`**: Wall-clock timestamp math, streak multipliers, and session yields.
+- **`economy/`**: Safe balance deductions, currency conversions, and transaction logs.
+- **`chests/`**: Drop deck loot rolls, timestamp unlock timers, and shard speedups.
+- **`citadel/`**: 5-tier citadel ascendancy, power requirements, and title grants.
+- **`achievements/`**: 15+ automated reactive achievements across all domains.
+- **`analytics/`**: 0–100 discipline ratings, daily focus aggregates, and shareable debriefs.
 
-<br>
+### 2. ⏳ Timestamp-Backed Timer Resilience
+All persistent timers (Focus Arena and Chest Unlocks) store wall-clock timestamps (`startedAt`, `endsAt`, `pausedAt`). Refreshing the browser, closing the tab, or backgrounding the window maintains true countdown precision.
+
+### 3. 🛡️ Robust Local-First Persistence & Migrations
+- Multi-tier `localStorage` schemas with automated V1 → V2 schema migrations.
+- Complete JSON export and import capabilities with timestamped backup payloads.
+- Corrupted JSON safe-fallbacks to prevent user progress loss.
+
+### 4. 🔊 Procedural Web Audio Synthesizer
+Zero external sound files. Real-time synthesized spatial audio and ambient flow soundscapes:
+- **Cyber Citadel Rainstorm**
+- **Deep Space Binaural 432Hz**
+- **Arcane Forest Resonance**
+- **Cosmic Static Shield**
+
+### 5. ⌨️ Global Keyboard Navigation
+- `1` – `5` : Instant screen switching (Realm, Quests, Focus Arena, Vault, Citadel)
+- `M` : Toggle procedural sound effects and audio
+- `?` : Open interactive Onboarding & Tutorial Guide
+- `Esc` : Dismiss active modals and overlays
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+- **Node.js** ≥ 18.x (tested on 20.x and 22.x LTS)
+- **npm** ≥ 9.x
 
-- **Node.js** ≥ 18
-- npm (or your package manager of choice)
-
-### Install & Run
+### Installation & Development
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/iamakhilan/Project-Auctus.git
 cd Project-Auctus
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start the dev server
+# 3. Start development server
 npm run dev
 ```
 
-The app opens at **`http://localhost:5173`** 🎮
-
-### Production Build
-
-```bash
-npm run build    # typechecks + bundles to dist/
-npm run preview  # serve the production build locally
-```
-
-<br>
-
-## 🎨 Design System
-
-Auctus uses a custom **Material-inspired token system** built on Tailwind 3.4:
-
-| Token family | Purpose |
-|---|---|
-| `surface-*` / `on-surface` | Navy surface ladder + contrast-safe foreground colors |
-| `primary` (amber) / `secondary` (cyan) / `tertiary` (emerald) | Semantic accent roles |
-| `font-headline-*` (Rubik) / `font-body-*` (Plus Jakarta Sans) | Modular type scale with baked-in leading & tracking |
-| `shadow-card` → `shadow-crown` | Consistent elevation ladder |
-| `btn-gold` / `btn-navy` / `btn-emerald` … | Full button state machines — hover lift, bevel press, focus rings |
-
-<br>
-
-## 📂 Project Structure
-
-```
-Project-Auctus/
-├── public/assets/          # Chests, crest, crown & island artwork
-├── src/
-│   ├── components/
-│   │   ├── citadel/        # 🏰 Citadel view
-│   │   ├── common/         # Reward modal & shared UI
-│   │   ├── focus/          # ⏱️ Focus Arena & timer
-│   │   ├── layout/         # Header HUD & bottom dock nav
-│   │   ├── quests/         # 📜 Quest board & mission forge
-│   │   ├── realm/          # 🏝️ Realm island view
-│   │   └── vault/          # 💎 Chests & reward bazaar
-│   ├── context/            # Global game state (React Context)
-│   ├── types/              # TypeScript domain models
-│   └── utils/              # Persistence & audio synthesis
-├── tailwind.config.js      # Design tokens & theme
-└── index.css               # Global styles & keyframes
-```
-
-<br>
-
-## 🛠️ Tech Stack
-
-- **[React 18](https://react.dev)** — UI runtime
-- **[TypeScript 5](https://www.typescriptlang.org)** — type-safe domain models
-- **[Vite 5](https://vite.dev)** — instant dev server & optimized builds
-- **[Tailwind CSS 3.4](https://tailwindcss.com)** — token-driven styling
-- **[lucide-react](https://lucide.dev)** — crisp iconography
-- **[canvas-confetti](https://github.com/catdad/canvas-confetti)** — celebration moments ✨
-
-<br>
-
-## 🗺️ Roadmap
-
-- [ ] Cloud sync & multi-device progression
-- [ ] Guilds — shared quests with friends
-- [ ] Seasonal leagues & ranked leaderboards
-- [ ] PWA support for offline play
-
-<br>
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-<div align="center">
+## 🧪 Testing & Quality Assurance
 
-**Forged with focus.** ⚔️ *Auctus — because your real life deserves an XP bar.*
+AUCTUS V2 features comprehensive automated unit testing using **Vitest** and **React Testing Library**:
 
-</div>
+```bash
+# Run all unit tests
+npm test
+
+# Run tests in single-run mode
+npm test -- --run
+
+# Typecheck TypeScript codebase
+npx tsc --noEmit
+
+# Production bundle build
+npm run build
+```
+
+---
+
+## 📂 Codebase Structure
+
+```
+Project-Auctus/
+├── .github/workflows/ci.yml # GitHub Actions CI pipeline
+├── public/assets/           # Optimized PNG artwork & icons
+├── src/
+│   ├── components/          # UI View Layers & Modals
+│   │   ├── analytics/       # Daily Summary Debrief modal
+│   │   ├── citadel/         # Citadel ascension & achievement gallery
+│   │   ├── common/          # Reward claim modal & shared UI
+│   │   ├── focus/           # Focus Arena timer & soundscapes
+│   │   ├── layout/          # Top HUD & Bottom dock navigation
+│   │   ├── onboarding/      # First-run interactive guide
+│   │   ├── quests/          # Quest board & Mission Forge
+│   │   ├── realm/           # Realm dashboard
+│   │   └── vault/           # Chests & Treasury reward bazaar
+│   ├── context/             # Global GameState orchestration
+│   ├── domain/              # Pure business logic engines
+│   │   ├── achievements/    # Achievement condition evaluators
+│   │   ├── analytics/       # Daily telemetry & discipline ratings
+│   │   ├── citadel/         # Citadel tiers & power thresholds
+│   │   ├── chests/          # Loot decks & unlock calculations
+│   │   ├── economy/         # Double-entry ledger & balances
+│   │   ├── focus/           # Timing engine & yield multipliers
+│   │   ├── habits/          # Streak engine & milestones
+│   │   ├── progression/     # Level curves & XP scaling
+│   │   └── quests/          # Quest creation, filters & sorting
+│   ├── hooks/               # Custom React hooks & keyboard shortcuts
+│   ├── services/            # Storage migrations & Web Notifications
+│   │   ├── notifications/   # Local browser notification triggers
+│   │   └── storage/         # Safe schema migrations, backup/restore
+│   ├── types/               # Type-safe domain models & contracts
+│   └── utils/               # Procedural audio engine & math helpers
+├── tests/
+│   └── unit/                # 14 unit test suites covering all domains
+├── index.html
+├── package.json
+├── tailwind.config.js       # Dark navy & gold token theme
+├── tsconfig.json
+└── vite.config.ts
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: [React 18](https://react.dev) + [TypeScript 5](https://www.typescriptlang.org)
+- **Build Tool**: [Vite 5](https://vite.dev)
+- **Styling**: [Tailwind CSS 3.4](https://tailwindcss.com) (Token-based RPG Theme)
+- **Testing**: [Vitest 2.1](https://vitest.dev) + [React Testing Library](https://testing-library.com) + [JSDOM](https://github.com/jsdom/jsdom)
+- **Effects & SFX**: [Canvas Confetti](https://github.com/catdad/canvas-confetti) + Native Web Audio API Synthesizer
+
+---
+
+## 📜 License
+
+MIT © [Akhilan](https://github.com/iamakhilan)
