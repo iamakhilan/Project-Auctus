@@ -10,17 +10,32 @@ import { CitadelView } from './components/citadel/CitadelView';
 import { RewardModal } from './components/common/RewardModal';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useCapacitorNative } from './hooks/useCapacitorNative';
 
 const AppContent: React.FC = () => {
-  const { activeTab, setActiveTab, toggleSound } = useGameState();
+  const { activeTab, setActiveTab, toggleSound, claimModal, closeClaimModal } = useGameState();
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Register Android Native back button, dark status bar, and lifecycle sync
+  useCapacitorNative({
+    activeTab,
+    setActiveTab,
+    isModalOpen: claimModal.isOpen || showTutorial,
+    onCloseModal: () => {
+      if (claimModal.isOpen) closeClaimModal();
+      if (showTutorial) setShowTutorial(false);
+    },
+  });
 
   // Register global shortcuts: 1-5 for screens, M for sound, ? for tutorial
   useKeyboardShortcuts({
     onTabChange: setActiveTab,
     onOpenHelp: () => setShowTutorial(true),
     onToggleSound: toggleSound,
-    onEscape: () => setShowTutorial(false),
+    onEscape: () => {
+      if (claimModal.isOpen) closeClaimModal();
+      setShowTutorial(false);
+    },
   });
 
   const renderCurrentView = () => {

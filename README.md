@@ -102,6 +102,88 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
+## 📱 Android Development & Live Reload
+
+AUCTUS runs as a native Android application powered by [Capacitor](https://capacitorjs.com). With its live-reload architecture, you can edit source code in your editor, save, and see changes update immediately on your physical Android phone without reinstalling the APK.
+
+### 📋 Prerequisites
+- **Node.js** ≥ 18.x
+- **Android Studio** (Hedgehog, Iguana, Jellyfish, Ladybug or newer) with:
+  - Android SDK Platform 34+
+  - Android SDK Build-Tools
+  - Android SDK Platform-Tools (`adb`)
+- **JDK 21** (or bundled Android Studio JBR)
+- **Physical Android Phone** with:
+  - **Developer Options** enabled
+  - **USB Debugging** enabled
+
+---
+
+### ⚡ 1. First-Time Setup & APK Installation
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Build web assets and sync native Capacitor project
+npm run mobile:sync
+
+# 3. Compile the debug APK (automatically detects Java/SDK paths)
+npm run mobile:build
+
+# 4. Install onto your connected Android phone via ADB
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+*Alternatively, open the native project in Android Studio with `npm run mobile:open` and click **Run** (`Shift+F10`).*
+
+---
+
+### 🔥 2. Daily Live Reload Development (No Rebuilding Needed!)
+
+During development, you **never** need to rebuild or reinstall the APK after every code change. Simply run:
+
+```bash
+# Option A — Wi-Fi LAN Mode (Computer and Phone on same Wi-Fi)
+npm run mobile:dev
+
+# Option B — USB Mode (Uses ADB reverse port forwarding — works offline / behind firewalls)
+npm run mobile:dev:usb
+```
+
+#### The Live Development Loop:
+1. Run `npm run mobile:dev` (or `npm run mobile:dev:usb`).
+2. Open **AUCTUS** on your physical phone.
+3. Edit any TypeScript, React, or CSS file in `src/`.
+4. Hit **Save**.
+5. ✨ **Your phone updates instantly via Vite HMR!**
+
+---
+
+### 📦 3. Production APK Packaging
+
+When you are ready to create a standalone, self-contained Android APK that runs offline without any development server:
+
+```bash
+# Build standalone Debug APK
+npm run mobile:build
+
+# Build standalone Release APK
+npm run mobile:build:release
+```
+The resulting APK will be placed in `android/app/build/outputs/apk/` and bundles all assets locally.
+
+---
+
+### 🎮 Native Android Integrations
+- **App ID**: `com.akhilan.auctus`
+- **Branding**: Full adaptive launcher icons & dark navy splash screen (`#081326`)
+- **Android Hardware Back Button**: Closes active modals → navigates to Realm → minimizes app
+- **Safe Area Insets**: Edge-to-edge support with notch & gesture bar avoidance (`env(safe-area-inset-*)`)
+- **Native Notifications**: Timestamp-backed notifications via `@capacitor/local-notifications` with fallback to Web Notifications
+- **Lifecycle Resilience**: Game state & focus timers derive from wall-clock timestamps on app pause/resume
+
+---
+
 ## 🧪 Testing & Quality Assurance
 
 AUCTUS V2 features comprehensive automated unit testing using **Vitest** and **React Testing Library**:

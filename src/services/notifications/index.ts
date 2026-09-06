@@ -1,7 +1,12 @@
 /**
  * AUCTUS Notification Service
- * Provides browser Web Notifications integration with fallback handling.
+ * Provides platform-aware notifications:
+ * - Native Android notifications via @capacitor/local-notifications when running in Capacitor
+ * - Web Notifications API fallback when running in a standard browser
  */
+
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export interface AuctusNotificationPayload {
   title: string;
@@ -11,16 +16,63 @@ export interface AuctusNotificationPayload {
   badge?: string;
 }
 
+export function isNativeApp(): boolean {
+  return Capacitor.isNativePlatform();
+}
+
 export function isNotificationSupported(): boolean {
+  if (isNativeApp()) return true;
   return typeof window !== 'undefined' && 'Notification' in window;
 }
 
 export function getNotificationPermission(): NotificationPermission {
-  if (!isNotificationSupported()) return 'denied';
-  return Notification.permission;
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    return Notification.permission;
+  }
+  return 'default';
+}
+
+export async function getNotificationPermissionState(): Promise<NotificationPermission> {
+  if (isNativeApp()) {
+    try {
+      const status = await LocalNotifications.checkPermissions();
+      if (status.display === 'granted') return 'granted';
+      if (status.display === 'denied') return 'denied';
+      return 'default';
+    } catch {
+      return 'default';
+    }
+  }
+
+  return getNotificationPermission();
 }
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
+  if (isNativeApp()) {
+    try {
+      const status = await LocalNotifications.requestPermissions();
+      if (status.display === 'granted') {
+        // Create default Android notification channel
+        try {
+          await LocalNotifications.createChannel({
+            id: 'auctus_alerts',
+            name: 'Auctus Tactical Alerts',
+            description: 'Focus completion, chest unlock, and streak notifications',
+            importance: 4, // High importance
+            visibility: 1,
+            vibration: true,
+          });
+        } catch {
+          // Channel creation fallback
+        }
+        return 'granted';
+      }
+      return status.display === 'denied' ? 'denied' : 'default';
+    } catch {
+      return 'denied';
+    }
+  }
+
   if (!isNotificationSupported()) return 'denied';
   try {
     const permission = await Notification.requestPermission();
@@ -39,6 +91,31 @@ export function sendLocalNotification(
     badge?: string;
   }
 ): boolean {
+  if (isNativeApp()) {
+    try {
+      const notificationId = Math.floor(Math.random() * 100000) + 1;
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            id: notificationId,
+            title,
+            body: options?.body || 'Auctus Notification',
+            channelId: 'auctus_alerts',
+            smallIcon: 'ic_stat_crest',
+            iconColor: '#FBBF24',
+          },
+        ],
+      }).catch(err => {
+        console.warn('Native notification scheduling failed:', err);
+      });
+      return true;
+    } catch (error) {
+      console.warn('Failed to schedule native notification:', error);
+      return false;
+    }
+  }
+
+  // Web Browser fallback
   if (!isNotificationSupported()) return false;
   if (Notification.permission !== 'granted') return false;
 

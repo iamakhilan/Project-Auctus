@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  isNativeApp,
   isNotificationSupported,
   getNotificationPermission,
+  getNotificationPermissionState,
   requestNotificationPermission,
   sendLocalNotification,
   NotifyTriggers,
@@ -12,12 +14,18 @@ describe('Notification Service', () => {
     vi.restoreAllMocks();
   });
 
-  it('should detect notification support and permission state', () => {
+  it('should detect platform and notification support', async () => {
+    const isNative = isNativeApp();
+    expect(typeof isNative).toBe('boolean');
+
     const supported = isNotificationSupported();
     expect(typeof supported).toBe('boolean');
 
     const perm = getNotificationPermission();
     expect(['default', 'granted', 'denied']).toContain(perm);
+
+    const asyncPerm = await getNotificationPermissionState();
+    expect(['default', 'granted', 'denied']).toContain(asyncPerm);
   });
 
   it('should handle requestNotificationPermission gracefully', async () => {
