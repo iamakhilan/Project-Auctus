@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { TabType } from '../../types';
+import { SwordsIcon } from '../common/GameIcons';
 
 export const BottomDockNav: React.FC = () => {
   const { activeTab, setActiveTab, quests, chests } = useGameState();
@@ -12,24 +13,24 @@ export const BottomDockNav: React.FC = () => {
     { id: 'realm', label: 'Realm', icon: 'castle' },
     {
       id: 'quests',
-      label: 'Quests',
-      icon: 'history_edu',
+      label: 'Missions',
+      icon: 'military_tech',
       badge: activeQuestsCount > 0 ? activeQuestsCount : undefined,
-      badgeColor: 'bg-primary text-light border-secondary/50',
+      badgeColor: 'bg-gradient-to-b from-red to-red-dark text-white border-red-300',
     },
-    { id: 'focus-arena', label: 'Focus', icon: 'swords' }, // Center action
+    { id: 'focus-arena', label: 'BATTLE', icon: 'swords' }, // Center action
     {
       id: 'vault',
       label: 'Vault',
       icon: 'inventory_2',
       badge: readyChestsCount > 0 ? 'CLAIM' : undefined,
-      badgeColor: 'bg-gradient-to-r from-accent to-primary text-light font-black border-secondary/50',
+      badgeColor: 'bg-gradient-to-b from-gold-light to-gold-dark text-game-darkest font-black border-yellow-200 animate-bounce',
     },
     { id: 'citadel', label: 'Citadel', icon: 'shield_person' },
   ];
 
   return (
-    <nav className="pb-safe fixed bottom-0 left-0 right-0 z-40 bg-surface/92 border-t border-outline-variant backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
+    <nav className="pb-safe fixed bottom-0 left-0 right-0 z-40 bg-game-dark/95 border-t-2 border-game-border backdrop-blur-xl shadow-[0_-6px_24px_rgba(0,0,0,0.8)]">
       <div className="max-w-screen mx-auto h-16 px-2 sm:px-4 flex items-center justify-around">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
@@ -39,22 +40,25 @@ export const BottomDockNav: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center justify-center min-w-[56px] -mt-4 transition-transform hover:scale-105 active:scale-95 focus:outline-none"
-                aria-label="Focus Arena"
+                className="relative flex flex-col items-center justify-center min-w-[64px] -mt-5 transition-transform hover:scale-105 active:scale-95 focus:outline-none cursor-pointer group"
+                aria-label="Battle Focus Arena"
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-b from-secondary via-accent to-primary text-light border-light/60 shadow-[0_4px_16px_rgba(87,99,232,0.55)]'
-                    : 'bg-gradient-to-b from-accent via-primary to-primary-dark text-light border-secondary/60 shadow-[0_4px_14px_rgba(55,68,201,0.45)]'
-                }`}>
-                  <span className="material-symbols-outlined text-[24px] font-black fill-1">
-                    swords
-                  </span>
+                {/* Center 3D Battle Button */}
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all shadow-game-card ${
+                    isActive
+                      ? 'btn-game-green border-white scale-105'
+                      : 'btn-game-green border-green-300/80'
+                  }`}
+                >
+                  <SwordsIcon size={28} className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] group-hover:rotate-12 transition-transform" />
                 </div>
-                <span className={`font-label-sm text-[10px] mt-0.5 font-extrabold uppercase tracking-wider ${
-                  isActive ? 'text-light' : 'text-secondary'
-                }`}>
-                  Focus
+                <span
+                  className={`font-game text-[10px] mt-0.5 font-black uppercase tracking-wider ${
+                    isActive ? 'text-green-light' : 'text-game-muted'
+                  }`}
+                >
+                  FOCUS
                 </span>
               </button>
             );
@@ -64,31 +68,35 @@ export const BottomDockNav: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center min-w-[48px] h-12 transition-all focus:outline-none active:scale-90 ${
-                isActive ? 'text-light' : 'text-on-surface-variant hover:text-on-surface'
+              className={`relative flex flex-col items-center justify-center min-w-[50px] h-12 transition-all focus:outline-none active:scale-90 cursor-pointer ${
+                isActive ? 'text-gold-light' : 'text-game-muted hover:text-game-text'
               }`}
               aria-label={tab.label}
             >
               <div className="relative">
                 {/* Active tab pill */}
-                <div className={`flex items-center justify-center h-7 w-10 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-surface-container-high border border-accent/40 shadow-[0_0_10px_rgba(87,99,232,0.25)]'
-                    : 'border border-transparent'
-                }`}>
-                  <span className={`material-symbols-outlined text-[20px] ${isActive ? 'fill-1 text-light' : ''}`}>
+                <div
+                  className={`flex items-center justify-center h-7 w-10 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-game-card border-2 border-gold shadow-[0_0_12px_rgba(245,158,11,0.35)]'
+                      : 'border border-transparent'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-[20px] ${isActive ? 'fill-1 text-gold-light' : ''}`}>
                     {tab.icon}
                   </span>
                 </div>
 
                 {/* Badge Notification */}
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full font-label-sm text-[9px] leading-none font-black shadow border flex items-center justify-center ${tab.badgeColor}`}>
+                  <span
+                    className={`absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full font-game text-[9px] leading-none font-black shadow-md border flex items-center justify-center ${tab.badgeColor}`}
+                  >
                     {tab.badge}
                   </span>
                 )}
               </div>
-              <span className={`font-label-sm text-[10px] mt-0.5 tracking-tight ${isActive ? 'font-black text-light' : 'font-semibold'}`}>
+              <span className={`font-game text-[10px] mt-0.5 tracking-tight ${isActive ? 'font-black text-gold-light' : 'font-bold'}`}>
                 {tab.label}
               </span>
             </button>
