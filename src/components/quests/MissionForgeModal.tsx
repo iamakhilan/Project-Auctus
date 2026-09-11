@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { QuestTier, QuestCategory, QuestTag } from '../../types';
 import { getTierRewards } from '../../domain/quests';
+import { CoinIcon } from '../common/GameIcons';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -49,27 +50,25 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-fadeIn">
       {/* Backdrop touch area */}
       <div className="absolute inset-0" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant p-5 sm:p-6 shadow-crown z-10 animate-slideUp flex flex-col gap-4 custom-scrollbar"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-game-card border-2 border-game-borderHi p-5 sm:p-6 shadow-game-card-raised z-10 animate-scaleUp flex flex-col gap-4 custom-scrollbar"
         onClick={e => e.stopPropagation()}
       >
-        {/* Mobile Drag Indicator / Sheet Header */}
-        <div className="w-12 h-1.5 rounded-full bg-outline-variant mx-auto mb-1 sm:hidden opacity-60" />
-
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/50">
+        {/* Header Plate */}
+        <div className="flex items-center justify-between pb-3 border-b border-game-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/30 border border-secondary/50 flex items-center justify-center text-secondary shadow-sm">
-              <span className="material-symbols-outlined text-[22px]">hardware</span>
+            <div className="w-10 h-10 rounded-xl bg-gold/20 border border-gold/50 flex items-center justify-center text-amber-300 shadow-sm">
+              <span className="material-symbols-outlined text-[24px]">hardware</span>
             </div>
             <div>
-              <h2 className="font-headline-sm text-base sm:text-lg text-light font-extrabold tracking-tight">
+              <h2 className="font-game text-base sm:text-lg text-game-text font-black uppercase tracking-tight">
                 Mission Forge
               </h2>
-              <span className="font-label-sm text-[11px] text-secondary uppercase font-bold tracking-wider">
+              <span className="font-game text-[11px] text-amber-300 uppercase font-black tracking-wider">
                 Deploy Tactical Bounty
               </span>
             </div>
@@ -77,22 +76,22 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-light hover:bg-surface-container-high transition-colors"
+            className="w-8 h-8 rounded-lg bg-game-dark border border-game-border text-game-muted hover:text-game-text flex items-center justify-center active:scale-95 cursor-pointer"
             aria-label="Close modal"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Mission Category Selector */}
           <div>
-            <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+            <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
               Mission Protocol
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'bounty', label: 'Bounty', icon: 'swords' },
+                { id: 'bounty', label: 'Bounty', icon: 'military_tech' },
                 { id: 'epic', label: 'Epic Raid', icon: 'fort' },
                 { id: 'habit', label: 'Habit Forge', icon: 'auto_fix' },
               ].map(cat => (
@@ -100,13 +99,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                   key={cat.id}
                   type="button"
                   onClick={() => setCategory(cat.id as QuestCategory)}
-                  className={`h-11 rounded-xl font-label-md text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  className={`h-11 rounded-xl font-game text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     category === cat.id
-                      ? 'bg-navy-hi border border-accent text-light font-extrabold shadow-card'
-                      : 'bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-light'
+                      ? 'bg-gold text-game-darkest font-black shadow-game-btn-gold border border-yellow-200'
+                      : 'bg-game-darkest border border-game-border text-game-muted hover:text-game-text'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[17px]">{cat.icon}</span>
+                  <span className="material-symbols-outlined text-[18px]">{cat.icon}</span>
                   <span>{cat.label}</span>
                 </button>
               ))}
@@ -115,7 +114,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
 
           {/* Title Input */}
           <div>
-            <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+            <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
               Objective Title *
             </label>
             <input
@@ -124,13 +123,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Complete System Architecture Refactor..."
-              className="w-full h-12 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:border-accent shadow-inset-well transition-all"
+              className="w-full h-12 px-3.5 rounded-xl bg-game-darkest border border-game-border text-game-text text-sm placeholder:text-game-dim focus:outline-none focus:border-blue shadow-inner font-body transition-all"
             />
           </div>
 
           {/* Optional Notes */}
           <div>
-            <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+            <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
               Tactical Notes / Checklist (Optional)
             </label>
             <input
@@ -138,21 +137,24 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="e.g., Run sanity checks, commit diffs, verify logs..."
-              className="w-full h-10 px-3.5 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:outline-none focus:border-accent shadow-inset-well transition-all"
+              className="w-full h-10 px-3.5 rounded-xl bg-game-darkest border border-game-border text-game-text text-sm placeholder:text-game-dim focus:outline-none focus:border-blue shadow-inner font-body transition-all"
             />
           </div>
 
           {/* Tier Selector & Yield Calculator */}
           {category !== 'habit' && (
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider">
+              <div className="flex items-center justify-between mb-1.5 font-game">
+                <label className="text-xs text-game-muted uppercase font-black tracking-wider">
                   Bounty Tier & Difficulty
                 </label>
-                <div className="flex items-center gap-2 text-xs font-bold text-secondary">
-                  <span>+{yields.xpReward} XP</span>
-                  <span>•</span>
-                  <span className="text-light">+{yields.coinReward} Coins</span>
+                <div className="flex items-center gap-2 text-xs font-black">
+                  <span className="text-blue-light">+{yields.xpReward} XP</span>
+                  <span className="text-game-dim">•</span>
+                  <span className="text-amber-300 flex items-center gap-0.5">
+                    <CoinIcon size={12} />
+                    +{yields.coinReward}
+                  </span>
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-1.5">
@@ -161,13 +163,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                     key={t}
                     type="button"
                     onClick={() => setTier(t)}
-                    className={`py-2 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all ${
+                    className={`py-2 px-1 rounded-xl text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
                       tier === t
-                        ? 'bg-accent text-light font-black shadow-card border border-secondary/60'
-                        : 'bg-surface-dim border border-outline-variant text-on-surface-variant hover:text-light'
+                        ? 'bg-blue text-white font-black shadow-game-btn-blue border border-blue-light'
+                        : 'bg-game-darkest border border-game-border text-game-muted hover:text-game-text'
                     }`}
                   >
-                    <span className="text-xs font-extrabold">{t}</span>
+                    <span className="text-xs font-game font-black">{t}</span>
                   </button>
                 ))}
               </div>
@@ -176,7 +178,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
 
           {/* Tag Selector Chips */}
           <div>
-            <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+            <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
               Domain Tag
             </label>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -185,10 +187,10 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
                   key={t}
                   type="button"
                   onClick={() => setTag(t)}
-                  className={`px-3 py-1.5 rounded-full font-label-sm text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-full font-game text-xs font-black transition-all cursor-pointer ${
                     tag === t
-                      ? 'bg-primary text-light font-black shadow-sm border border-secondary/50'
-                      : 'bg-surface-dim hover:bg-surface-container border border-outline-variant text-on-surface-variant'
+                      ? 'bg-gold text-game-darkest shadow-game-btn-gold border border-yellow-200'
+                      : 'bg-game-darkest hover:bg-game-card border border-game-border text-game-muted'
                   }`}
                 >
                   #{t}
@@ -201,13 +203,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
           {category !== 'habit' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+                <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
                   Due Target
                 </label>
                 <select
                   value={deadline}
                   onChange={e => setDeadline(e.target.value as 'Today' | 'Tonight' | 'Tomorrow' | 'This Week')}
-                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-on-surface text-sm font-semibold focus:outline-none focus:border-accent"
+                  className="w-full h-11 px-3 rounded-xl bg-game-darkest border border-game-border text-game-text text-sm font-game font-bold focus:outline-none focus:border-blue cursor-pointer"
                 >
                   <option value="Today">Today</option>
                   <option value="Tonight">Tonight</option>
@@ -217,13 +219,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
               </div>
 
               <div>
-                <label className="font-label-sm text-xs text-on-surface-variant uppercase font-bold tracking-wider block mb-1.5">
+                <label className="font-game text-xs text-game-muted uppercase font-black tracking-wider block mb-1.5">
                   Target Duration
                 </label>
                 <select
                   value={estimatedMinutes}
                   onChange={e => setEstimatedMinutes(Number(e.target.value))}
-                  className="w-full h-11 px-3 rounded-xl bg-surface-dim border border-outline-variant text-secondary text-sm font-semibold focus:outline-none focus:border-accent"
+                  className="w-full h-11 px-3 rounded-xl bg-game-darkest border border-game-border text-game-text text-sm font-game font-bold focus:outline-none focus:border-blue cursor-pointer"
                 >
                   <option value={15}>15 Minutes</option>
                   <option value={25}>25 Minutes (Standard)</option>
@@ -240,16 +242,16 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
             <button
               type="button"
               onClick={onClose}
-              className="w-28 h-12 rounded-xl bg-surface-dim border border-outline-variant text-on-surface-variant font-headline-sm text-sm font-bold hover:text-light"
+              className="w-28 h-12 btn-game btn-game-dark text-xs font-bold uppercase"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-12 btn btn-primary font-headline-sm text-sm uppercase tracking-wider font-black shadow-md"
+              className="flex-1 h-12 btn-game btn-game-green font-game text-sm uppercase tracking-wider font-black shadow-game-btn-green"
             >
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
-              <span>Deploy to Command</span>
+              <span>Deploy Bounty</span>
             </button>
           </div>
         </form>
@@ -257,3 +259,4 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({ isOpen, on
     </div>
   );
 };
+
