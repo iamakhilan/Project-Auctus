@@ -37,11 +37,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
   const steps = [
     {
       stepNumber: 1,
-      badge: 'SYSTEM DIRECTIVE',
+      badge: 'COMMANDER DIRECTIVE',
       title: 'Welcome to AUCTUS',
       subtitle: 'The Personal RPG Productivity Citadel',
       icon: 'military_tech',
-      accentColor: 'from-primary to-accent',
       description:
         'Transform your daily grind into an epic personal progression campaign. Level up your commander, earn Auctus Coins, forge legendary streaks, and unlock new Citadel tiers.',
       highlights: [
@@ -56,7 +55,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
       title: 'Quests & Habit Forge',
       subtitle: 'Forge Daily Habits and Conquer Strategic Bounties',
       icon: 'assignment',
-      accentColor: 'from-secondary to-accent',
       description:
         'Manage urgent objectives with priority sorting and categorize your habits. Claim milestone rewards at 3, 7, 14, 21, and 30 consecutive days.',
       highlights: [
@@ -71,7 +69,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
       title: 'Focus Arena & Soundscapes',
       subtitle: 'Resilient Timers & Immersive Audio Fields',
       icon: 'timer',
-      accentColor: 'from-accent to-primary',
       description:
         'Execute deep work sessions with timestamp-backed timers that never lose track of time even if you refresh or switch tabs. Layer procedural audio to block external noise.',
       highlights: [
@@ -86,7 +83,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
       title: 'Treasury, Chests & Ascension',
       subtitle: 'Loot Deck Probabilities & 15+ Achievements',
       icon: 'castle',
-      accentColor: 'from-primary to-secondary',
       description:
         'Unlock time-locked loot chests with drop rates, spend gold in the Treasury, unlock rare achievements, and ascend the 5 Citadel Tiers to earn legendary titles.',
       highlights: [
@@ -100,27 +96,27 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
   const step = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-container border border-outline-variant shadow-crown flex flex-col custom-scrollbar animate-slideUp">
-        {/* Top Header Glow Bar */}
-        <div className={`h-2 w-full bg-gradient-to-r ${step.accentColor}`} />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn text-white">
+      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-game-panel border-2 border-gold-dark shadow-game-modal flex flex-col custom-scrollbar animate-slideUp">
+        {/* Top Gold Highlight Bar */}
+        <div className="h-2 w-full bg-gradient-to-r from-gold-dark via-gold-accent to-gold-dark" />
 
         {/* Content Container */}
-        <div className="p-5 sm:p-7 flex flex-col gap-4 sm:gap-6">
+        <div className="p-5 sm:p-6 flex flex-col gap-4 sm:gap-5">
           {/* Top Bar with Step Indicators */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-primary/30 border border-secondary/40 text-light font-label-sm text-xs font-extrabold tracking-wider uppercase">
+              <span className="px-2.5 py-1 rounded-md bg-gold-dark/30 border border-gold-dark/50 text-gold-light text-[10px] font-black tracking-widest uppercase">
                 {step.badge}
               </span>
-              <span className="text-on-surface-variant font-label-sm text-label-sm">
+              <span className="text-gray-400 text-xs font-bold">
                 Step {currentStep + 1} of {steps.length}
               </span>
             </div>
 
             <button
               onClick={handleFinish}
-              className="text-on-surface-variant hover:text-on-surface text-sm font-medium transition-colors"
+              className="text-gray-400 hover:text-white text-xs font-black uppercase tracking-wider transition-colors px-2 py-1 rounded-lg hover:bg-game-darker"
             >
               Skip Intro
             </button>
@@ -129,19 +125,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
           {/* Title & Subtitle */}
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${step.accentColor} flex items-center justify-center text-light shadow-md`}>
-                <span className="material-symbols-outlined text-[24px] font-bold">
+              <div className="w-11 h-11 rounded-xl bg-game-darker border-2 border-gold-dark flex items-center justify-center text-gold-accent shadow-game-sm">
+                <span className="material-symbols-outlined text-[24px]">
                   {step.icon}
                 </span>
               </div>
-              <h2 className="font-headline-md text-headline-md font-black text-on-surface">
+              <h2 className="text-lg sm:text-xl font-black text-white tracking-wide">
                 {step.title}
               </h2>
             </div>
-            <p className="font-title-sm text-secondary font-semibold pl-1">
+            <p className="text-xs sm:text-sm text-gold-accent font-bold pl-1">
               {step.subtitle}
             </p>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-2 pl-1 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-300 font-medium mt-2 pl-1 leading-relaxed">
               {step.description}
             </p>
           </div>
@@ -151,43 +147,42 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
             {step.highlights.map((h, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-2xl bg-surface-container border border-outline-variant flex flex-col gap-1.5 shadow-sm hover:border-accent/40 transition-colors"
+                className="p-3.5 rounded-2xl bg-game-darker border-2 border-game-border flex flex-col gap-1.5 shadow-game-card hover:border-gold-accent/50 transition-colors"
               >
-                <div className="flex items-center gap-2 text-secondary">
+                <div className="flex items-center gap-2 text-gold-accent">
                   <span className="material-symbols-outlined text-[20px]">
                     {h.icon}
                   </span>
-                  <span className="font-label-md text-label-md font-bold text-on-surface">
+                  <span className="text-xs font-black text-white">
                     {h.title}
                   </span>
                 </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+                <p className="text-[11px] text-gray-400 font-medium leading-snug">
                   {h.text}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Step 3 or 4 Optional Permission Banner */}
-          {currentStep === 2 && isNotificationSupported()}
+          {/* Optional Permission Banner */}
           {currentStep === 2 && isNotificationSupported() && (
-            <div className="p-3.5 rounded-xl bg-navy-hi border border-accent/40 flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-2xl bg-game-darker border-2 border-blue-500/40 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-secondary text-[22px]">
+                <span className="material-symbols-outlined text-blue-400 text-[22px]">
                   notifications_active
                 </span>
                 <div className="text-xs">
-                  <p className="text-light font-bold">Enable Session Notifications</p>
-                  <p className="text-secondary">Get alerted when your focus timer finishes.</p>
+                  <p className="text-white font-black">Enable Session Notifications</p>
+                  <p className="text-gray-400">Get alerted when your focus timer finishes.</p>
                 </div>
               </div>
               <button
                 onClick={handleEnableNotifications}
                 disabled={notificationsEnabled}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   notificationsEnabled
-                    ? 'bg-primary/40 text-light border border-secondary/40'
-                    : 'btn-primary'
+                    ? 'btn-game-dark text-gray-400'
+                    : 'btn-game-blue text-white'
                 }`}
               >
                 {notificationsEnabled ? 'Enabled ✓' : 'Enable Alerts'}
@@ -196,15 +191,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
           )}
 
           {/* Step Progression Dots & Action Buttons */}
-          <div className="flex items-center justify-between pt-2 border-t border-outline-variant">
+          <div className="flex items-center justify-between pt-3 border-t-2 border-game-border">
             {/* Step Indicators */}
             <div className="flex items-center gap-1.5">
               {steps.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentStep(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    i === currentStep ? 'w-8 bg-accent shadow-accent-aura' : 'w-2 bg-outline-variant hover:bg-on-surface-variant'
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    i === currentStep
+                      ? 'w-7 bg-gold-accent shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                      : 'w-2.5 bg-game-darker border border-game-border hover:bg-gray-600'
                   }`}
                   aria-label={`Go to step ${i + 1}`}
                 />
@@ -216,7 +213,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
               {currentStep > 0 && (
                 <button
                   onClick={() => setCurrentStep(prev => prev - 1)}
-                  className="px-4 py-2 rounded-xl bg-surface-container border border-outline-variant text-on-surface hover:text-light text-sm font-bold transition-all"
+                  className="btn-game-dark px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-gray-300 hover:text-white"
                 >
                   Back
                 </button>
@@ -225,20 +222,20 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ forceOpen = fa
               {currentStep < steps.length - 1 ? (
                 <button
                   onClick={() => setCurrentStep(prev => prev + 1)}
-                  className="btn btn-primary px-5 py-2.5 rounded-xl text-light font-bold text-sm shadow-md transition-all flex items-center gap-1.5"
+                  className="btn-game-green px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-game-btn active:scale-95 text-white"
                 >
                   Next
-                  <span className="material-symbols-outlined text-[18px]">
+                  <span className="material-symbols-outlined text-[16px]">
                     arrow_forward
                   </span>
                 </button>
               ) : (
                 <button
                   onClick={handleFinish}
-                  className="btn btn-primary px-6 py-2.5 rounded-xl text-light font-black text-sm shadow-md transition-all flex items-center gap-2"
+                  className="btn-game-gold px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-game-btn active:scale-95 text-game-darker"
                 >
                   Enter AUCTUS
-                  <span className="material-symbols-outlined text-[18px]">
+                  <span className="material-symbols-outlined text-[16px]">
                     rocket_launch
                   </span>
                 </button>
