@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameStateProvider, useGameState } from './context/GameStateContext';
+import { useGameState } from './context/GameStateContext';
 import { HeaderHUD } from './components/layout/HeaderHUD';
 import { NavTabs } from './components/layout/NavTabs';
 import { RealmView } from './components/realm/RealmView';
@@ -7,12 +7,19 @@ import { QuestsView } from './components/quests/QuestsView';
 import { FocusArenaView } from './components/focus/FocusArenaView';
 import { VaultView } from './components/vault/VaultView';
 import { CitadelView } from './components/citadel/CitadelView';
+import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
 import { RewardClaimModal } from './components/common/RewardClaimModal';
 import { OnboardingModal } from './components/common/OnboardingModal';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 const AppContent: React.FC = () => {
   const { activeTab, setActiveTab, claimModal, closeClaimModal } = useGameState();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useKeyboardShortcuts({
+    onHelp: () => setShowOnboarding(true),
+    onEscape: () => setShowOnboarding(false),
+  });
 
   return (
     <div className="min-h-screen bg-[#f7f7f7] text-[var(--gray-text)] font-body flex flex-col antialiased">
@@ -32,6 +39,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'focus' && <FocusArenaView />}
         {activeTab === 'vault' && <VaultView />}
         {activeTab === 'citadel' && <CitadelView />}
+        {activeTab === 'analytics' && <AnalyticsDashboard />}
       </main>
 
       {/* Global Modals */}
@@ -62,11 +70,7 @@ const AppContent: React.FC = () => {
 };
 
 export const App: React.FC = () => {
-  return (
-    <GameStateProvider>
-      <AppContent />
-    </GameStateProvider>
-  );
+  return <AppContent />;
 };
 
 export default App;
