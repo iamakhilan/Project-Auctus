@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Feather Bold';
+  src: url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.eot');
+  src: url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.eot?#iefix') format('embedded-opentype'),
+       url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.woff') format('woff'),
+       url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.ttf') format('truetype'),
+       url('https://db.onlinewebfonts.com/t/14936bb7a4b6575fd2eee80a3ab52cc2.svg#Feather Bold') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --green: rgb(88, 204, 2);
+  --green-hover: rgb(75, 178, 0);
+  --green-shadow: #61B800;
+  --dark-blue: rgb(16, 15, 62);
+  --blue: rgb(28, 176, 246);
+  --gray-text: rgb(75, 75, 75);
+  --gray-light: rgb(119, 119, 119);
+  --border-color: rgb(229, 229, 229);
+  --nav-text: rgb(175, 175, 175);
+  --footer-green: #4EC604;
+  --red: #FF4B4B;
+  --orange: #FF9600;
+  --golden: #FFC800;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Nunito', 'DIN Round Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--gray-text);
+  background-color: #ffffff;
+}
+
+/* Duolingo Section Header with extending line */
+.section-label-light {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--nav-text);
+  margin-bottom: 24px;
+}
+
+.section-label-light::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+  margin-left: 16px;
+}
+
+.section-label-dark {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 24px;
+}
+
+.section-label-dark::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin-left: 16px;
+}
+
+/* Duolingo 3D Button Base Styles */
+.duo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease, opacity 0.15s ease;
+  outline: none;
+  white-space: nowrap;
+}
+
+.duo-btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent !important;
+}
+
+.duo-btn-sm {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.duo-btn-sm:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent !important;
+}
+
+/* Tooltip animation & styling */
+.tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--dark-blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+}
+
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--dark-blue) transparent transparent transparent;
+}
+
+/* Custom styles for grid layout */
+.duo-main-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.duo-panel {
+  padding: 36px 40px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.duo-panel-odd {
+  border-right: 1px solid var(--border-color);
+}
+
+.duo-panel-even {
+  border-right: none;
+}
+
+@media (max-width: 900px) {
+  .duo-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .duo-panel-odd {
+    border-right: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .duo-panel {
+    padding: 28px 20px;
+  }
+}
