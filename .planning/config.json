@@ -1,9 +1,0 @@
-{
-  "project_name": "Auctus",
-  "runtime": "antigravity",
-  "storage_version": 2,
-  "granularity": "fine",
-  "workflow": {
-    "subagent_timeout": 300000
-  }
-}
