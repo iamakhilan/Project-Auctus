@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import { INITIAL_PROFILE, StorageService, loadFromStorage } from './storage';
 
