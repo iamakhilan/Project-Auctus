@@ -94,12 +94,25 @@ export const CitadelView: React.FC = () => {
     });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     soundEngine.playClick();
     const data = exportData();
-    navigator.clipboard.writeText(data);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2500);
+    try {
+      await navigator.clipboard.writeText(data);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2500);
+    } catch {
+      // Fallback: offer download if clipboard blocked
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `auctus-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2500);
+    }
   };
 
   const handleImport = () => {
@@ -207,6 +220,7 @@ export const CitadelView: React.FC = () => {
               </span>
             </div>
             <button
+              type="button"
               onClick={handleAscend}
               disabled={!canAscend}
               className={`w-full h-11 rounded-2xl font-['Feather_Bold'] text-xs font-black uppercase transition-all ${
@@ -328,7 +342,9 @@ export const CitadelView: React.FC = () => {
               { id: 'streak', label: 'Streak' },
             ].map((c) => (
               <button
+              type="button"
                 key={c.id}
+                aria-pressed={activeCategory === c.id}
                 onClick={() => {
                   soundEngine.playClick();
                   setActiveCategory(c.id as typeof activeCategory);
@@ -370,7 +386,8 @@ export const CitadelView: React.FC = () => {
                     {ach.rewards.gems && <span className="text-[#db2777]">+{ach.rewards.gems} 💎</span>}
                   </div>
                   {isCompleted ? (
-                    <button onClick={() => handleClaimAchievement(ach)} className="px-3 py-1 rounded-xl bg-[var(--golden)] text-[var(--dark-blue)] font-black text-xs uppercase shadow-xs hover:scale-105 transition-transform cursor-pointer">
+                    <button
+              type="button" onClick={() => handleClaimAchievement(ach)} className="px-3 py-1 rounded-xl bg-[var(--golden)] text-[var(--dark-blue)] font-black text-xs uppercase shadow-xs hover:scale-105 transition-transform cursor-pointer">
                       CLAIMED 🌟
                     </button>
                   ) : (
@@ -399,7 +416,8 @@ export const CitadelView: React.FC = () => {
           <div className="p-4 bg-[#f8fafc] rounded-3xl border-2 border-[#e2e8f0] space-y-3">
             <h4 className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)]">Export Productivity Data (JSON)</h4>
             <p className="text-xs text-[var(--gray-text)] font-semibold">Creates portable snapshot of quests, habits, chests, and player levels.</p>
-            <button onClick={handleExport} className="px-4 py-2 bg-[var(--blue)] hover:bg-[#0095de] text-white font-['Feather_Bold'] text-xs font-black uppercase rounded-xl border-b-3 border-[#0b80ba] active:translate-y-0.5 transition-all cursor-pointer shadow-xs">
+            <button
+              type="button" onClick={handleExport} className="px-4 py-2 bg-[var(--blue)] hover:bg-[#0095de] text-white font-['Feather_Bold'] text-xs font-black uppercase rounded-xl border-b-3 border-[#0b80ba] active:translate-y-0.5 transition-all cursor-pointer shadow-xs">
               {copySuccess ? 'COPIED TO CLIPBOARD! ✅' : '📋 EXPORT TO CLIPBOARD'}
             </button>
           </div>
@@ -414,7 +432,7 @@ export const CitadelView: React.FC = () => {
                 if (importFieldError) setImportFieldError(null);
                 if (importStatus?.type === 'error') setImportStatus(null);
               }}
-              placeholder='Paste JSON save data string here... (must contain profile/quests/etc.)'
+              placeholder='Paste JSON save data string here... (must contain profile/quests/etc.)'              aria-label="Import JSON backup"
               rows={3}
               className={`w-full px-3 py-2 rounded-2xl border-2 font-mono text-xs focus:outline-hidden resize-none transition-colors ${
                 importFieldError
@@ -444,18 +462,35 @@ export const CitadelView: React.FC = () => {
                 {importStatus.type === 'success' ? '✅' : '⛔'} {importStatus.msg}
               </div>
             )}
-            <button
-              onClick={handleImport}
-              disabled={!!(liveValidation && !liveValidation.ok)}
-              className={`px-4 py-2 font-['Feather_Bold'] text-xs font-black uppercase rounded-xl border-b-3 active:translate-y-0.5 transition-all shadow-xs ${
-                liveValidation && !liveValidation.ok
-                  ? 'bg-[#f0f0f0] text-[var(--gray-light)] border-transparent cursor-not-allowed'
-                  : 'bg-[var(--green)] hover:bg-[var(--green-hover)] text-white border-[var(--green-shadow)] cursor-pointer'
-              }`}
-            >
-              📥 RESTORE BACKUP
-            </button>
-            <p className="text-[11px] font-bold text-[var(--gray-light)]">Rejected imports leave current save untouched.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+              type="button"
+                onClick={handleImport}
+                disabled={!!(liveValidation && !liveValidation.ok)}
+                className={`px-4 py-2 font-['Feather_Bold'] text-xs font-black uppercase rounded-xl border-b-3 active:translate-y-0.5 transition-all shadow-xs ${
+                  liveValidation && !liveValidation.ok
+                    ? 'bg-[#f0f0f0] text-[var(--gray-light)] border-transparent cursor-not-allowed'
+                    : 'bg-[var(--green)] hover:bg-[var(--green-hover)] text-white border-[var(--green-shadow)] cursor-pointer'
+                }`}
+              >
+                📥 RESTORE BACKUP
+              </button>
+              <label className="px-4 py-2 bg-white border-2 border-[#e5e5e5] hover:border-[var(--blue)] text-[var(--dark-blue)] font-['Feather_Bold'] text-xs font-black uppercase rounded-xl cursor-pointer transition-all">
+                📂 LOAD FILE
+                <input type="file" accept=".json,application/json" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const text = String(reader.result || '');
+                    setImportJsonText(text);
+                  };
+                  reader.readAsText(file);
+                  e.currentTarget.value = '';
+                }} />
+              </label>
+            </div>
+            <p className="text-[11px] font-bold text-[var(--gray-light)]">Rejected imports leave current save untouched. Or load a .json file directly.</p>
           </div>
         </div>
       </div>

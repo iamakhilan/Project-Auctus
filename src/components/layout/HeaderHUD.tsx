@@ -17,10 +17,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
         
         {/* Brand & Level Progress */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <div 
-            className="flex items-center gap-2 cursor-pointer group" 
+          <button
+              type="button"
+            className="flex items-center gap-2 cursor-pointer group"
             onClick={onOpenProfile}
-            title="Commander Profile"
+            aria-label="View profile and commander statistics"
           >
             <div className="w-10 h-10 rounded-2xl bg-[var(--green)] border-b-4 border-[var(--green-shadow)] flex items-center justify-center text-white font-black text-xl shadow-xs group-hover:scale-105 active:translate-y-1 transition-all">
               ⚡
@@ -38,7 +39,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
                 {profile.title}
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Level & XP Gauge */}
           <div className="flex items-center gap-2 bg-[#f7f7f7] border-2 border-[#e5e5e5] px-3 py-1.5 rounded-2xl">
@@ -47,11 +48,11 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
                 <span className="text-xs font-black text-[var(--dark-blue)]">
                   LVL {profile.level}
                 </span>
-                <span className="text-[11px] font-bold text-[var(--gray-light)]">
+                <span className="text-[11px] font-bold text-[var(--gray-light)]" aria-label={`${profile.xp} out of ${profile.xpToNextLevel} experience points`}>
                   {profile.xp}/{profile.xpToNextLevel} XP
                 </span>
               </div>
-              <div className="w-20 sm:w-32 h-2.5 bg-[#e5e5e5] rounded-full overflow-hidden mt-0.5">
+              <div className="w-20 sm:w-32 h-2.5 bg-[#e5e5e5] rounded-full overflow-hidden mt-0.5" role="progressbar" aria-valuenow={xpPercentage} aria-valuemin={0} aria-valuemax={100}>
                 <div
                   className="h-full bg-[var(--green)] rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${xpPercentage}%` }}
@@ -103,6 +104,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
           {/* Help Button */}
           {onOpenHelp && (
             <button
+              type="button"
               onClick={onOpenHelp}
               className="w-9 h-9 rounded-xl border-2 border-[#e5e5e5] bg-white text-[var(--dark-blue)] hover:border-[var(--blue)] hover:bg-[#f0f9ff] flex items-center justify-center text-sm font-black transition-all"
               title="How to Play"
@@ -113,6 +115,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
 
           {/* Sound Mute Toggle */}
           <button
+              type="button"
             onClick={toggleSound}
             className={`w-9 h-9 rounded-xl border-2 flex items-center justify-center text-sm font-bold transition-all ${
               profile.soundEnabled

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 
@@ -16,11 +17,19 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
   const [icon, setIcon] = useState('🎮');
   const [description, setDescription] = useState('');
 
+  const panelRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+  const [titleError, setTitleError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) setTitleError(null);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) { setTitleError('Please enter a reward title.'); return; }
+    setTitleError(null);
 
     soundEngine.playSuccess();
     createCustomReward(
@@ -39,8 +48,8 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
   const icons = ['🎮', '🍕', '☕', '🍿', '🛍️', '📚', '🏖️', '🎬', '🍦', '🚴'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-md bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 transform animate-scaleUp">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Forge Reward" className="relative w-full max-w-md bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 transform animate-scaleUp" onClick={(e) => e.stopPropagation()}>
         
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -52,6 +61,7 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
           </div>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             className="w-8 h-8 rounded-xl bg-[#f0f0f0] text-[var(--gray-text)] hover:bg-[#e0e0e0] font-black text-sm flex items-center justify-center cursor-pointer"
           >
             ✕
@@ -60,24 +70,31 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+            <label htmlFor="custom-reward-title" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
               Reward Title
             </label>
             <input
               type="text"
+              id="custom-reward-title"
+              maxLength={60}
               required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); if (titleError) setTitleError(null); }}
               placeholder="e.g. 1 Hour Video Games, Boba Tea"
-              className="w-full px-4 py-2.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[#d48806] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)]"
+              aria-invalid={!!titleError}
+              aria-describedby={titleError ? "custom-reward-title-error" : undefined}
+              className={`w-full px-4 py-2.5 rounded-2xl border-2 focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] ${titleError ? 'border-[var(--red)] bg-[#ffeef0]' : 'border-[#e5e5e5] focus:border-[#d48806]'}`}
             />
+            {titleError && <p id="custom-reward-title-error" className="text-xs font-bold text-[var(--red)] mt-1" role="alert">{titleError}</p>}
+            <div className="text-[11px] font-bold text-[var(--gray-light)] text-right mt-1">{title.length}/60</div>
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+            <label htmlFor="custom-reward-cost" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
               Cost in Gold Coins (🟡)
             </label>
             <input
+              id="custom-reward-cost"
               type="number"
               min="10"
               max="10000"
@@ -98,6 +115,7 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
                 <button
                   key={c}
                   type="button"
+                  aria-pressed={category === c}
                   onClick={() => setCategory(c)}
                   className={`py-2 px-1 rounded-xl border-2 text-[11px] font-['Feather_Bold'] font-bold transition-all ${
                     category === c
@@ -120,6 +138,7 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
                 <button
                   key={ic}
                   type="button"
+                  aria-pressed={icon === ic}
                   onClick={() => setIcon(ic)}
                   className={`w-9 h-9 rounded-xl border-2 text-lg flex items-center justify-center transition-all ${
                     icon === ic
@@ -134,11 +153,12 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+            <label htmlFor="custom-reward-desc" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
               Description
             </label>
             <input
               type="text"
+              id="custom-reward-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Unwind without guilt after 2 hours of focus"

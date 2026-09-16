@@ -172,6 +172,7 @@ export const RealmView: React.FC = () => {
               return (
                 <div key={st.id} className={`flex flex-col items-center transition-transform ${offsetClass}`}>
                   <button
+                    type="button"
                     onClick={() => {
                       if (isActive) {
                         handleStartQuickFocus();
@@ -233,6 +234,7 @@ export const RealmView: React.FC = () => {
             </p>
 
             <button
+              type="button"
               onClick={handleStartQuickFocus}
               className="w-full h-12 bg-[var(--orange)] hover:bg-[#e08500] text-white font-['Feather_Bold'] text-base font-black tracking-wider uppercase rounded-2xl border-b-4 border-[#c77700] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
             >
@@ -247,6 +249,7 @@ export const RealmView: React.FC = () => {
                 Priority Missions
               </h3>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   setActiveTab('quests');
@@ -278,12 +281,13 @@ export const RealmView: React.FC = () => {
                           +{q.xpReward} XP
                         </span>
                       </div>
-                      <h4 className="font-bold text-xs text-[var(--dark-blue)] truncate">
+                      <h4 className="font-bold text-xs text-[var(--dark-blue)] truncate" title={q.title}>
                         {q.title}
                       </h4>
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => handleCompleteQuickQuest(q.id)}
                       className="px-3 py-1.5 rounded-xl bg-[var(--green)] hover:bg-[var(--green-hover)] text-white text-xs font-black uppercase border-b-3 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer shadow-xs whitespace-nowrap"
                     >
@@ -302,6 +306,7 @@ export const RealmView: React.FC = () => {
                 Active Habit Streaks
               </h3>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   setActiveTab('quests');
@@ -320,7 +325,7 @@ export const RealmView: React.FC = () => {
                 >
                   <span className="text-xl">{h.icon || '🔥'}</span>
                   <div className="min-w-0">
-                    <div className="font-black text-xs text-[var(--dark-blue)] truncate">
+                    <div className="font-black text-xs text-[var(--dark-blue)] truncate" title={h.title}>
                       {h.title}
                     </div>
                     <div className="text-[11px] font-extrabold text-[var(--orange)]">

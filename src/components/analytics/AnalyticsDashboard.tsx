@@ -186,8 +186,9 @@ const EconomyChart: React.FC<{
 
   if (cumulative.length === 0) {
     return (
-      <div className="w-full h-[140px] flex items-center justify-center rounded-2xl bg-[#fafafa] border-2 border-dashed border-[#e5e5e5] text-sm font-bold text-[var(--gray-light)]">
-        No economy history yet
+      <div className="w-full h-[140px] flex flex-col items-center justify-center rounded-2xl bg-[#fafafa] border-2 border-dashed border-[#e5e5e5]">
+        <span className="text-sm font-bold text-[var(--gray-light)]">No economy history yet</span>
+        <span className="text-xs font-semibold text-[var(--gray-light)]">Complete quests or redeem rewards to see balance changes.</span>
       </div>
     );
   }

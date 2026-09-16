@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QuestCategory, QuestTag } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -34,6 +35,23 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
   const [habitXpYield, setHabitXpYield] = useState(50);
   const [habitCoinYield, setHabitCoinYield] = useState(25);
 
+  const panelRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+
+  const [questError, setQuestError] = useState<string | null>(null);
+  const [habitError, setHabitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setQuestError(null);
+      setHabitError(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setQuestError(null);
+    setHabitError(null);
+  }, [mode]);
+
   if (!isOpen) return null;
 
   const handleCategoryChange = (cat: QuestCategory) => {
@@ -60,8 +78,11 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
 
   const handleCreateQuest = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!questTitle.trim()) return;
-
+    if (!questTitle.trim()) {
+      setQuestError('Please enter a mission title.');
+      return;
+    }
+    setQuestError(null);
     soundEngine.playSuccess();
     createQuest({
       title: questTitle.trim(),
@@ -81,8 +102,11 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
 
   const handleCreateHabit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!habitTitle.trim()) return;
-
+    if (!habitTitle.trim()) {
+      setHabitError('Please enter a habit title.');
+      return;
+    }
+    setHabitError(null);
     soundEngine.playSuccess();
     createHabit({
       title: habitTitle.trim(),
@@ -117,8 +141,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
   const habitIcons = ['⚡', '🔥', '💧', '🏃', '📚', '🧘', '💻', '🎨', '🥗', '🌙'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 transform animate-scaleUp max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={mode === 'quest' ? 'Forge Mission' : 'Forge Habit'} className="relative w-full max-w-lg bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 transform animate-scaleUp max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         
         {/* Header & Mode Switch */}
         <div className="flex items-center justify-between mb-4">
@@ -130,6 +154,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             className="w-8 h-8 rounded-xl bg-[#f0f0f0] text-[var(--gray-text)] hover:bg-[#e0e0e0] font-black text-sm flex items-center justify-center cursor-pointer"
           >
             ✕
@@ -166,25 +191,32 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
         {mode === 'quest' ? (
           <form onSubmit={handleCreateQuest} className="space-y-4">
             <div>
-              <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+              <label htmlFor="forge-quest-title" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
                 Mission Title
               </label>
               <input
                 type="text"
+                id="forge-quest-title"
+                maxLength={80}
                 required
                 value={questTitle}
-                onChange={(e) => setQuestTitle(e.target.value)}
+                onChange={(e) => { setQuestTitle(e.target.value); if (questError) setQuestError(null); }}
                 placeholder="e.g. Build Auth Microservice, Complete 30m Run"
-                className="w-full px-4 py-2.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)]"
+                aria-invalid={!!questError}
+                aria-describedby={questError ? "quest-title-error" : undefined}
+                className={`w-full px-4 py-2.5 rounded-2xl border-2 focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] ${questError ? 'border-[var(--red)] bg-[#ffeef0]' : 'border-[#e5e5e5] focus:border-[var(--blue)]'}`}
               />
+              {questError && <p id="quest-title-error" className="text-xs font-bold text-[var(--red)] mt-1" role="alert">{questError}</p>}
+              <div className="text-[11px] font-bold text-[var(--gray-light)] text-right mt-1">{questTitle.length}/80</div>
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+              <label htmlFor="forge-quest-desc" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
                 Description (Optional)
               </label>
               <input
                 type="text"
+                id="forge-quest-desc"
                 value={questDesc}
                 onChange={(e) => setQuestDesc(e.target.value)}
                 placeholder="Brief summary or tactical objectives"
@@ -202,6 +234,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
                   <button
                     key={cat}
                     type="button"
+                    aria-pressed={category === cat}
                     onClick={() => handleCategoryChange(cat)}
                     className={`py-2 px-3 rounded-xl border-2 text-xs font-['Feather_Bold'] capitalize font-bold transition-all ${
                       category === cat
@@ -225,6 +258,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
                   <button
                     key={t}
                     type="button"
+                    aria-pressed={tag === t}
                     onClick={() => setTag(t)}
                     className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                       tag === t
@@ -248,6 +282,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
                   <button
                     key={m}
                     type="button"
+                    aria-pressed={duration === m}
                     onClick={() => handleDurationChange(m)}
                     className={`py-1.5 rounded-xl border-2 text-xs font-black transition-all ${
                       duration === m
@@ -284,17 +319,23 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
           /* Habit Form */
           <form onSubmit={handleCreateHabit} className="space-y-4">
             <div>
-              <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+              <label htmlFor="forge-habit-title" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
                 Habit Title
               </label>
               <input
                 type="text"
+                id="forge-habit-title"
+                maxLength={80}
                 required
                 value={habitTitle}
-                onChange={(e) => setHabitTitle(e.target.value)}
+                onChange={(e) => { setHabitTitle(e.target.value); if (habitError) setHabitError(null); }}
                 placeholder="e.g. Morning 20m Meditation, Drink 2L Water"
-                className="w-full px-4 py-2.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--orange)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)]"
+                aria-invalid={!!habitError}
+                aria-describedby={habitError ? "habit-title-error" : undefined}
+                className={`w-full px-4 py-2.5 rounded-2xl border-2 focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] ${habitError ? 'border-[var(--red)] bg-[#ffeef0]' : 'border-[#e5e5e5] focus:border-[var(--orange)]'}`}
               />
+              {habitError && <p id="habit-title-error" className="text-xs font-bold text-[var(--red)] mt-1" role="alert">{habitError}</p>}
+              <div className="text-[11px] font-bold text-[var(--gray-light)] text-right mt-1">{habitTitle.length}/80</div>
             </div>
 
             {/* Habit Category */}
@@ -307,6 +348,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
                   <button
                     key={c}
                     type="button"
+                    aria-pressed={habitCategory === c}
                     onClick={() => handleHabitCategoryChange(c)}
                     className={`py-2 px-1 rounded-xl border-2 text-[11px] font-['Feather_Bold'] capitalize font-bold transition-all ${
                       habitCategory === c
@@ -330,6 +372,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
                   <button
                     key={ic}
                     type="button"
+                    aria-pressed={habitIcon === ic}
                     onClick={() => setHabitIcon(ic)}
                     className={`w-10 h-10 rounded-xl border-2 text-xl flex items-center justify-center transition-all ${
                       habitIcon === ic

@@ -48,9 +48,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const error = useCallback((message: string) => push('error', message), [push]);
 
   useEffect(() => {
+    const timersMap = timers.current;
     return () => {
-      timers.current.forEach((h) => window.clearTimeout(h));
-      timers.current.clear();
+      timersMap.forEach((h) => window.clearTimeout(h));
+      timersMap.clear();
     };
   }, []);
 

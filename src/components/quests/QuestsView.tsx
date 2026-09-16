@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { QuestTag } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { MissionForgeModal } from './MissionForgeModal';
@@ -35,7 +35,14 @@ export const QuestsView: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteType, setConfirmDeleteType] = useState<'quest' | 'habit' | null>(null);
 
-  const filteredQuests = quests.filter((q) => {
+  // Debounced search for smoother filtering on large quest lists
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const filteredQuests = useMemo(() => quests.filter((q) => {
     const matchesCat =
       activeFilter === 'all'
         ? true
@@ -43,11 +50,11 @@ export const QuestsView: React.FC = () => {
         ? false
         : q.category === activeFilter;
     const matchesTag = selectedTag === 'all' || q.tag === selectedTag;
+    const qLower = debouncedSearch.toLowerCase();
     const matchesSearch =
-      q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (q.description && q.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      !qLower || q.title.toLowerCase().includes(qLower) || (q.description && q.description.toLowerCase().includes(qLower));
     return matchesCat && matchesTag && matchesSearch;
-  });
+  }), [quests, activeFilter, selectedTag, debouncedSearch]);
 
   const handleLaunchFocus = (questId: string, questTitle: string, minutes: number = 25) => {
     soundEngine.playClick();
@@ -105,18 +112,21 @@ export const QuestsView: React.FC = () => {
   };
 
   const EmptyIllustration: React.FC<{ filter: string }> = ({ filter }) => (
-    <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-8 sm:p-10 text-center">
-      <div className="mx-auto w-20 h-20 rounded-3xl bg-[#f7f7f7] border-2 border-[#e5e5e5] flex items-center justify-center text-4xl mb-4">
+    <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-8 sm:p-10 text-center hover:border-[#b9e5fb] transition-colors">
+      <div className="mx-auto w-20 h-20 rounded-3xl bg-[#f7f7f7] border-2 border-[#e5e5e5] flex items-center justify-center text-4xl mb-4 transform hover:scale-105 transition-transform">
         {filter === 'habits' ? '🌱' : filter === 'daily' ? '📅' : filter === 'bounty' ? '🎯' : filter === 'epic' ? '👑' : '🗺️'}
       </div>
-      <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">No missions in this sector</h3>
-      <p className="text-xs font-bold text-[var(--gray-light)] mt-1 max-w-sm mx-auto">
+      <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">
+        {filter === 'habits' ? 'No rituals found' : 'No missions in this sector'}
+      </h3>
+      <p className="text-xs font-bold text-[var(--gray-light)] mt-1 max-w-sm mx-auto leading-relaxed">
         {filter === 'habits'
           ? 'Forge your first daily habit and start building an unbreakable streak.'
-          : 'No missions match current filters. Try clearing search or forge a new one!'}
+          : 'The tactical map is clear. Forge a new mission or broaden your filter criteria to see more.'}
       </p>
-      <div className="flex items-center justify-center gap-2 mt-4">
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
         <button
+              type="button"
           onClick={() => {
             setSearchQuery('');
             setSelectedTag('all');
@@ -124,15 +134,16 @@ export const QuestsView: React.FC = () => {
           }}
           className="px-4 py-2 rounded-2xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-xs font-black uppercase text-[var(--gray-text)] hover:bg-[#ececec] transition-colors cursor-pointer"
         >
-          Clear Filters
+          Reset Filters
         </button>
         <button
+              type="button"
           onClick={() => {
             soundEngine.playClick();
             setModalDefaultTab(filter === 'habits' ? 'habit' : 'quest');
             setIsModalOpen(true);
           }}
-          className="px-4 py-2 rounded-2xl bg-[var(--green)] text-white font-black text-xs uppercase border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 shadow-xs cursor-pointer"
+          className="px-4 py-2 rounded-2xl bg-[var(--green)] text-white font-black text-xs uppercase border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 shadow-xs cursor-pointer hover:bg-[var(--green-hover)] transition-all"
         >
           + Forge {filter === 'habits' ? 'Habit' : 'Mission'}
         </button>
@@ -154,6 +165,7 @@ export const QuestsView: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
+              type="button"
             onClick={() => {
               soundEngine.playClick();
               setModalDefaultTab('quest');
@@ -164,6 +176,7 @@ export const QuestsView: React.FC = () => {
             <span>+ FORGE QUEST</span>
           </button>
           <button
+              type="button"
             onClick={() => {
               soundEngine.playClick();
               setModalDefaultTab('habit');
@@ -186,7 +199,9 @@ export const QuestsView: React.FC = () => {
           { id: 'habits', label: 'Habits Forge', icon: '🔥' },
         ].map((f) => (
           <button
+              type="button"
             key={f.id}
+            aria-pressed={activeFilter === f.id}
             onClick={() => {
               soundEngine.playClick();
               setActiveFilter(f.id as typeof activeFilter);
@@ -211,10 +226,16 @@ export const QuestsView: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="🔍 Search missions by keyword..."
+            autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="search"
+            aria-label="Search missions by keyword"
             className="w-full sm:w-72 px-4 py-2 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-xs text-[var(--dark-blue)]"
           />
           <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0">
             <button
+              type="button"
+              aria-pressed={selectedTag === 'all'}
               onClick={() => setSelectedTag('all')}
               className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 selectedTag === 'all'
@@ -226,7 +247,9 @@ export const QuestsView: React.FC = () => {
             </button>
             {tags.map((t) => (
               <button
+              type="button"
                 key={t}
+                aria-pressed={selectedTag === t}
                 onClick={() => setSelectedTag(t)}
                 className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   selectedTag === t
@@ -272,6 +295,7 @@ export const QuestsView: React.FC = () => {
                     {/* Left: Checkbox + Quest info */}
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
                       <button
+              type="button"
                         onClick={() => {
                           soundEngine.playClick();
                           completeQuest(quest.id);
@@ -326,12 +350,14 @@ export const QuestsView: React.FC = () => {
                             />
                             <div className="flex items-center gap-2">
                               <button
+              type="button"
                                 onClick={saveEditQuest}
                                 className="px-3 py-1 rounded-xl bg-[var(--green)] text-white text-xs font-black uppercase border-b-2 border-[var(--green-shadow)] cursor-pointer"
                               >
                                 Save
                               </button>
                               <button
+              type="button"
                                 onClick={() => setEditingQuestId(null)}
                                 className="px-3 py-1 rounded-xl bg-[#f0f0f0] text-[var(--gray-text)] text-xs font-bold cursor-pointer"
                               >
@@ -342,6 +368,7 @@ export const QuestsView: React.FC = () => {
                         ) : (
                           <>
                             <h3
+                              title={quest.title}
                               className={`font-['Feather_Bold'] text-base text-[var(--dark-blue)] leading-snug ${
                                 isDone ? 'line-through text-[var(--gray-light)]' : ''
                               }`}
@@ -372,6 +399,7 @@ export const QuestsView: React.FC = () => {
                       <div className="flex items-center gap-1">
                         {!isDone && !isEditing && (
                           <button
+              type="button"
                             onClick={() => handleLaunchFocus(quest.id, quest.title, quest.estimatedMinutes || 25)}
                             className="px-3 py-1.5 rounded-xl bg-[var(--orange)] hover:bg-[#e08500] text-white text-xs font-black uppercase border-b-3 border-[#c77700] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer shadow-xs whitespace-nowrap flex items-center gap-1"
                             title="Fight Procrastination Boss with this Quest"
@@ -381,6 +409,7 @@ export const QuestsView: React.FC = () => {
                         )}
                         {!isEditing && (
                           <button
+              type="button"
                             onClick={() => startEditQuest(quest.id, quest.title, quest.description)}
                             className="w-8 h-8 rounded-xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--blue)] hover:text-[var(--blue)] flex items-center justify-center text-xs transition-colors cursor-pointer"
                             title="Edit Quest"
@@ -389,6 +418,7 @@ export const QuestsView: React.FC = () => {
                           </button>
                         )}
                         <button
+              type="button"
                           onClick={() => handleDelete(quest.id, 'quest')}
                           className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-colors cursor-pointer border-2 ${
                             confirmDeleteId === quest.id && confirmDeleteType === 'quest'
@@ -430,6 +460,7 @@ export const QuestsView: React.FC = () => {
               <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">No habits forged yet</h3>
               <p className="text-xs font-bold text-[var(--gray-light)] mt-1">Forge daily rituals to build unbreakable streaks and earn multipliers.</p>
               <button
+              type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   setModalDefaultTab('habit');
@@ -472,10 +503,12 @@ export const QuestsView: React.FC = () => {
                                   className="px-2 py-1 rounded-xl border-2 border-[#e5e5e5] focus:border-[var(--orange)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] w-36"
                                   autoFocus
                                 />
-                                <button onClick={saveEditHabit} className="px-2 py-1 rounded-lg bg-[var(--green)] text-white text-[11px] font-black cursor-pointer">
+                                <button
+              onClick={saveEditHabit} className="px-2 py-1 rounded-lg bg-[var(--green)] text-white text-[11px] font-black cursor-pointer">
                                   Save
                                 </button>
-                                <button onClick={() => setEditingHabitId(null)} className="px-2 py-1 rounded-lg bg-[#f0f0f0] text-xs cursor-pointer">
+                                <button
+              onClick={() => setEditingHabitId(null)} className="px-2 py-1 rounded-lg bg-[#f0f0f0] text-xs cursor-pointer">
                                   ✕
                                 </button>
                               </div>
@@ -487,6 +520,7 @@ export const QuestsView: React.FC = () => {
                         <div className="flex items-center gap-1">
                           {!isEditingHabit && (
                             <button
+              type="button"
                               onClick={() => startEditHabit(habit.id, habit.title)}
                               className="w-7 h-7 rounded-lg bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--orange)] hover:text-[var(--orange)] flex items-center justify-center text-xs transition-colors cursor-pointer"
                               title="Edit Habit"
@@ -495,6 +529,7 @@ export const QuestsView: React.FC = () => {
                             </button>
                           )}
                           <button
+              type="button"
                             onClick={() => handleDelete(habit.id, 'habit')}
                             className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-colors cursor-pointer border-2 ${
                               confirmDeleteId === habit.id && confirmDeleteType === 'habit'
@@ -580,6 +615,7 @@ export const QuestsView: React.FC = () => {
                         <span className="text-[#d48806]">+{habit.coinYield} 🟡</span>
                       </div>
                       <button
+              type="button"
                         onClick={() => {
                           soundEngine.playClick();
                           checkInHabit(habit.id);

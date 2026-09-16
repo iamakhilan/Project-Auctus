@@ -307,7 +307,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits]);
 
   // Quest Actions
-  const completeQuest = (questId: string) => {
+  const completeQuest = useCallback((questId: string) => {
     const quest = quests.find(q => q.id === questId);
     if (!quest || quest.isCompleted) return;
 
@@ -327,7 +327,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       coins: quest.coinsReward,
       icon: '🎯',
     });
-  };
+  }, [quests, addXp, addCoins, openClaimModal]);
 
   const createQuest = (data: Omit<Quest, 'id' | 'isCompleted'>) => {
     const newQuest: Quest = {
@@ -496,8 +496,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Cleanup chest auto-fill timeouts on unmount
   useEffect(() => {
+    const chestTimeouts = chestTimeoutRefs.current;
     return () => {
-      chestTimeoutRefs.current.forEach(clearTimeout);
+      chestTimeouts.forEach(clearTimeout);
     };
   }, []);
 
@@ -661,7 +662,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return { ...prev, isActive: false, isPaused: false, remainingSeconds: 0 };
     });
-  }, [addXp, addCoins, openClaimModal]);
+  }, [addXp, addCoins, openClaimModal, completeQuest]);
 
   // Keep ref in sync for interval closure
   useEffect(() => {

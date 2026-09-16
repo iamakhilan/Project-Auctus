@@ -71,6 +71,8 @@ export const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onSelectTab }) => {
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={`${tab.label}${tab.badge ? `, ${tab.badge}` : ''}`}
               className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-2xl font-['Feather_Bold'] text-sm sm:text-base font-extrabold tracking-wide transition-all duration-150 cursor-pointer ${
                 isActive
                   ? 'bg-[#eef8ff] text-[var(--blue)] border-2 border-[#b9e5fb] shadow-xs'

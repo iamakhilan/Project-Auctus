@@ -185,7 +185,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: '1 Hour Gaming Session',
     cost: 150,
     category: 'Entertainment',
-    icon: '??',
+    icon: '🎮',
     description: 'Guilt-free gaming block on your favorite PC or console game.',
   },
   {
@@ -193,7 +193,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Artisan Espresso / Cafe Treat',
     cost: 100,
     category: 'Treats',
-    icon: '?',
+    icon: '☕',
     description: 'A specialty coffee or dessert at your favorite local cafe.',
   },
   {
@@ -201,7 +201,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Movie Night & Popcorn',
     cost: 220,
     category: 'Leisure',
-    icon: '??',
+    icon: '🎬',
     description: 'Watch a movie or new series episode with complete peace of mind.',
   },
   {
@@ -209,7 +209,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Book / Tech Gear Purchase',
     cost: 500,
     category: 'Investment',
-    icon: '??',
+    icon: '📚',
     description: 'Buy that book, mechanical keycap, or productivity gadget.',
   },
 ];
@@ -220,7 +220,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'First Blood',
     description: 'Complete your first tactical bounty.',
     category: 'quests',
-    icon: '??',
+    icon: '🎯',
     targetValue: 1,
     currentValue: 1,
     isUnlocked: true,
@@ -232,7 +232,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Focus Champion',
     description: 'Log over 250 minutes in the Focus Arena.',
     category: 'focus',
-    icon: '??',
+    icon: '⚔️',
     targetValue: 250,
     currentValue: 285,
     isUnlocked: true,
@@ -244,7 +244,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Iron Discipline',
     description: 'Reach a consecutive 14-day streak flame.',
     category: 'streak',
-    icon: '??',
+    icon: '🔥',
     targetValue: 14,
     currentValue: 14,
     isUnlocked: true,
@@ -256,7 +256,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Citadel Ascendant',
     description: 'Ascend to Citadel Tier II (Bastion Outpost).',
     category: 'citadel',
-    icon: '??',
+    icon: '🏰',
     targetValue: 2,
     currentValue: 2,
     isUnlocked: true,
@@ -268,7 +268,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Centurion',
     description: 'Complete 50 total missions.',
     category: 'quests',
-    icon: '??',
+    icon: '🏆',
     targetValue: 50,
     currentValue: 19,
     isUnlocked: false,
@@ -279,7 +279,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Deep Work Master',
     description: 'Accumulate 1,000 focus minutes.',
     category: 'focus',
-    icon: '?',
+    icon: '🧠',
     targetValue: 1000,
     currentValue: 285,
     isUnlocked: false,
@@ -367,6 +367,7 @@ export const StorageService = {
       rewards: StorageService.getRewards(),
       achievements: StorageService.getAchievements(),
       transactions: StorageService.getTransactions(),
+      version: "2.0",
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(backup, null, 2);
@@ -375,6 +376,10 @@ export const StorageService = {
   importBackup: (json: string): boolean => {
     try {
       const data = JSON.parse(json);
+      // version-aware: accept 2.0 and legacy (no version) backups
+      if (data.version && data.version !== '2.0' && data.version !== '1.0') {
+        // unknown future version — still attempt to import known keys
+      }
       if (data.profile) StorageService.setProfile(data.profile);
       if (data.quests) StorageService.setQuests(data.quests);
       if (data.habits) StorageService.setHabits(data.habits);

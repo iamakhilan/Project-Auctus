@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
 
 interface DailySummaryModalProps {
@@ -49,14 +50,15 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
     };
   }, [quests, habits, transactions, todayStr]);
 
+  const panelRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
   if (!isOpen) return null;
 
   const completionPct =
     quests.length > 0 ? Math.round((stats.completedCount / Math.max(1, quests.filter((q) => q.category === 'daily').length)) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl border-2 border-[#e5e5e5] shadow-2xl overflow-hidden animate-scaleUp">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Daily Summary" className="relative w-full max-w-lg bg-white rounded-3xl border-2 border-[#e5e5e5] shadow-2xl overflow-hidden animate-scaleUp" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-gradient-to-r from-[var(--dark-blue)] to-[#1a237e] p-6 text-white relative overflow-hidden">
           <div className="absolute -right-6 -top-6 text-7xl opacity-10 pointer-events-none">📊</div>

@@ -91,6 +91,7 @@ export const VaultView: React.FC = () => {
           <p className="text-sm font-bold text-[var(--gray-light)]">Unlock loot chests, spend earned coins in the Rewards Bazaar, and audit your treasury!</p>
         </div>
         <button
+              type="button"
           onClick={() => {
             soundEngine.playClick();
             setIsModalOpen(true);
@@ -109,7 +110,9 @@ export const VaultView: React.FC = () => {
           { id: 'ledger', label: 'Treasury Ledger', icon: '📜' },
         ].map((t) => (
           <button
+              type="button"
             key={t.id}
+            aria-pressed={activeSubTab === t.id}
             onClick={() => {
               soundEngine.playClick();
               setActiveSubTab(t.id as typeof activeSubTab);
@@ -163,25 +166,32 @@ export const VaultView: React.FC = () => {
                     )}
                     <div className="pt-2">
                       {isEmpty ? (
-                        <div className="h-11 flex items-center justify-center rounded-2xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-xs font-black text-[var(--gray-light)]">EMPTY SLOT</div>
+                        <div className="flex flex-col items-center justify-center gap-1 h-11 rounded-2xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-xs font-black text-[var(--gray-light)]" role="status" aria-label="Empty chest slot, auto-fills in about 30 seconds">
+                          <span>EMPTY SLOT</span>
+                          <span className="text-[10px] font-bold text-[var(--gray-light)]">Auto-fills in ~30s</span>
+                        </div>
                       ) : isReady ? (
                         <button
+              type="button"
                           onClick={() => {
                             soundEngine.playClick();
                             claimChestLoot(chest.slotIndex);
                           }}
+                          aria-label={`Open and claim ${chest.name} rewards`}
                           className="w-full h-11 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-xs font-black uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer shadow-md animate-pulse"
                         >
                           🎉 OPEN & CLAIM!
                         </button>
                       ) : isUnlocking ? (
                         <div className="space-y-2">
-                          <div className="text-xs font-mono font-black text-[var(--orange)] bg-white px-2 py-1 rounded-xl border-2 border-[#ffd6a5]">⏳ {formatRemainingTime(chest.unlockEndsAt)}</div>
+                          <div className="text-xs font-mono font-black text-[var(--orange)] bg-white px-2 py-1 rounded-xl border-2 border-[#ffd6a5]" role="timer" aria-live="polite" aria-label={`Unlocking ${chest.name}, ${formatRemainingTime(chest.unlockEndsAt)} remaining`}>⏳ {formatRemainingTime(chest.unlockEndsAt)}</div>
                           <button
+              type="button"
                             onClick={() => {
                               soundEngine.playClick();
                               speedUpChest(chest.slotIndex);
                             }}
+                            aria-label={`Speed up ${chest.name} for 10 gems`}
                             className="w-full h-9 bg-[var(--blue)] hover:bg-[#0095de] text-white font-['Feather_Bold'] text-[11px] font-black uppercase rounded-xl border-b-3 border-[#0b80ba] active:translate-y-0.5 transition-all cursor-pointer"
                           >
                             ⚡ SPEED UP (💎 10)
@@ -189,10 +199,12 @@ export const VaultView: React.FC = () => {
                         </div>
                       ) : (
                         <button
+              type="button"
                           onClick={() => {
                             soundEngine.playClick();
                             startChestUnlock(chest.slotIndex);
                           }}
+                          aria-label={`Start unlocking ${chest.name}, ${Math.round(chest.totalUnlockSeconds / 60)} minutes`}
                           className="w-full h-11 bg-white hover:bg-[#fafafa] text-[var(--dark-blue)] font-['Feather_Bold'] text-xs font-black uppercase rounded-2xl border-2 border-[#d9d9d9] hover:border-[var(--blue)] transition-all cursor-pointer"
                         >
                           🔓 START UNLOCK ({Math.round(chest.totalUnlockSeconds / 60)}m)
@@ -221,6 +233,7 @@ export const VaultView: React.FC = () => {
               desc="Forge a custom reward to motivate your next win!"
               action={
                 <button
+              type="button"
                   onClick={() => setIsModalOpen(true)}
                   className="px-4 py-2 rounded-2xl bg-[#d48806] text-white font-black text-xs uppercase border-b-4 border-[#8c5900] cursor-pointer"
                 >
@@ -248,6 +261,7 @@ export const VaultView: React.FC = () => {
                     <div className="pt-3 border-t-2 border-[#f0f0f0] flex items-center justify-between gap-3">
                       <div className="font-['Feather_Bold'] text-base font-black text-[#d48806]">{r.cost} 🟡</div>
                       <button
+              type="button"
                         onClick={() => {
                           soundEngine.playClick();
                           redeemReward(r.id);
@@ -288,7 +302,9 @@ export const VaultView: React.FC = () => {
                 type="text"
                 value={ledgerSearch}
                 onChange={(e) => setLedgerSearch(e.target.value)}
-                placeholder="Search by reason or type (earn/spend)..."
+                placeholder="Search by reason or type (earn/spend)..."                autoComplete="off"
+                spellCheck={false}
+                enterKeyHint="search"                aria-label="Search ledger by reason or type"
                 className="w-full pl-8 pr-3 py-2 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-xs text-[var(--dark-blue)]"
               />
             </div>
@@ -299,7 +315,9 @@ export const VaultView: React.FC = () => {
                 { id: 'gems', label: '💎 Gems' },
               ].map((c) => (
                 <button
+              type="button"
                   key={c.id}
+                  aria-pressed={ledgerCurrency === c.id}
                   onClick={() => {
                     soundEngine.playClick();
                     setLedgerCurrency(c.id as typeof ledgerCurrency);
@@ -314,6 +332,7 @@ export const VaultView: React.FC = () => {
             </div>
             {(ledgerSearch || ledgerCurrency !== 'all') && (
               <button
+              type="button"
                 onClick={() => {
                   setLedgerSearch('');
                   setLedgerCurrency('all');
@@ -335,6 +354,7 @@ export const VaultView: React.FC = () => {
                 </p>
                 {(ledgerSearch || ledgerCurrency !== 'all') && (
                   <button
+              type="button"
                     onClick={() => {
                       setLedgerSearch('');
                       setLedgerCurrency('all');
@@ -385,6 +405,7 @@ export const VaultView: React.FC = () => {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between p-3 bg-[#fafafa] border-t-2 border-[#e5e5e5] gap-2">
                     <button
+              type="button"
                       onClick={() => {
                         soundEngine.playClick();
                         setLedgerPage((p) => Math.max(1, p - 1));
@@ -406,6 +427,7 @@ export const VaultView: React.FC = () => {
                         }
                         return (
                           <button
+              type="button"
                             key={n}
                             onClick={() => {
                               soundEngine.playClick();
@@ -421,6 +443,7 @@ export const VaultView: React.FC = () => {
                       })}
                     </div>
                     <button
+              type="button"
                       onClick={() => {
                         soundEngine.playClick();
                         setLedgerPage((p) => Math.min(totalPages, p + 1));

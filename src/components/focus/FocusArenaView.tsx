@@ -142,7 +142,7 @@ export const FocusArenaView: React.FC = () => {
           </svg>
 
           {/* Center Digital Display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none" role="timer" aria-live="polite" aria-atomic="true" aria-label={focusSession.isActive ? `Time remaining ${formatTime(focusSession.remainingSeconds)}` : `Ready to start ${selectedDuration} minute session`}>
             <span className="text-xs font-black uppercase text-[var(--gray-light)] tracking-widest mb-1">
               {focusSession.isActive
                 ? focusSession.isPaused
@@ -179,7 +179,9 @@ export const FocusArenaView: React.FC = () => {
                   { m: 60, label: '60m Flow' },
                 ].map((preset) => (
                   <button
+              type="button"
                     key={preset.m}
+                    aria-pressed={selectedDuration === preset.m}
                     onClick={() => {
                       soundEngine.playClick();
                       setSelectedDuration(preset.m);
@@ -250,6 +252,7 @@ export const FocusArenaView: React.FC = () => {
 
             {/* Start Button */}
             <button
+              type="button"
               onClick={handleStart}
               className="w-full h-14 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-lg font-black tracking-wider uppercase rounded-2xl border-b-6 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2"
             >
@@ -262,6 +265,7 @@ export const FocusArenaView: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               {focusSession.isPaused ? (
                 <button
+              type="button"
                   onClick={() => {
                     soundEngine.playClick();
                     resumeFocusSession();
@@ -272,6 +276,7 @@ export const FocusArenaView: React.FC = () => {
                 </button>
               ) : (
                 <button
+              type="button"
                   onClick={() => {
                     soundEngine.playClick();
                     pauseFocusSession();
@@ -283,6 +288,7 @@ export const FocusArenaView: React.FC = () => {
               )}
 
               <button
+              type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   completeFocusSession();
@@ -294,6 +300,7 @@ export const FocusArenaView: React.FC = () => {
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 soundEngine.playClick();
                 cancelFocusSession();
@@ -334,7 +341,9 @@ export const FocusArenaView: React.FC = () => {
             const isPlaying = focusSession.soundscapeTrack === track.id;
             return (
               <button
+              type="button"
                 key={track.id}
+                aria-pressed={isPlaying}
                 onClick={() => handleSoundscapeChange(track.id as typeof focusSession.soundscapeTrack)}
                 className={`py-3 px-2 rounded-2xl border-2 font-['Feather_Bold'] text-xs font-extrabold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
                   isPlaying
