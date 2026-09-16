@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 
@@ -7,58 +7,81 @@ export const RealmView: React.FC = () => {
     profile,
     quests,
     habits,
+    chests,
     completeQuest,
     setActiveTab,
     startFocusSession,
   } = useGameState();
 
-  const dailyQuests = quests.filter((q) => q.category === 'daily');
-  const completedDailyCount = dailyQuests.filter((q) => q.isCompleted).length;
-  const pendingQuests = quests.filter((q) => !q.isCompleted).slice(0, 3);
+  const today = new Date().toISOString().split('T')[0];
 
-  // Duolingo Journey Stages
-  const stages = [
-    {
-      id: 1,
-      name: 'Dawn Patrol',
-      icon: '🌅',
-      status: 'completed',
-      xp: 50,
-      desc: 'Morning routine & planning',
-    },
-    {
-      id: 2,
-      name: 'Focus Blitz',
-      icon: '⚡',
-      status: 'active',
-      xp: 120,
-      desc: '25-minute deep work sprint',
-    },
-    {
-      id: 3,
-      name: 'Tactical Bounty',
-      icon: '🎯',
-      status: 'locked',
-      xp: 80,
-      desc: 'High-priority task execution',
-    },
-    {
-      id: 4,
-      name: 'Habit Forge',
-      icon: '🔥',
-      status: 'locked',
-      xp: 100,
-      desc: 'Daily habit check-in milestone',
-    },
-    {
-      id: 5,
-      name: 'Chronos Boss Trial',
-      icon: '👑',
-      status: 'locked',
-      xp: 250,
-      desc: 'Epic deep work boss victory',
-    },
-  ];
+  const dailyQuests = useMemo(() => quests.filter((q) => q.category === 'daily'), [quests]);
+  const completedDailyCount = dailyQuests.filter((q) => q.isCompleted).length;
+  const pendingQuests = useMemo(() => quests.filter((q) => !q.isCompleted).slice(0, 3), [quests]);
+
+  const habitsCheckedToday = useMemo(() => habits.filter((h) => h.lastCompletedDate === today).length, [habits, today]);
+  const chestReadyCount = useMemo(() => chests.filter((c) => c.status === 'ready').length, [chests]);
+  const citadelPowerPct = profile.citadelMaxPower > 0 ? profile.citadelPower / profile.citadelMaxPower : 0;
+
+  // Dynamic stages derived from live game state
+  const stages = useMemo(() => {
+    const bountyQuests = quests.filter((q) => q.category === 'bounty');
+    const bountyCompleted = bountyQuests.filter((q) => q.isCompleted).length;
+    const habitsTotal = habits.length;
+
+    const raw: Array<{ id: number; name: string; icon: string; xp: number; desc: string; isCompleted: boolean }> = [
+      {
+        id: 1,
+        name: 'Dawn Patrol',
+        icon: '🌅',
+        xp: 50,
+        desc: dailyQuests.length === 0 ? 'No daily quests — ready to plan' : `${completedDailyCount}/${dailyQuests.length} daily quests done`,
+        isCompleted: dailyQuests.length === 0 ? true : completedDailyCount >= dailyQuests.length,
+      },
+      {
+        id: 2,
+        name: 'Focus Blitz',
+        icon: '⚡',
+        xp: 120,
+        desc: habitsCheckedToday > 0 ? `${habitsCheckedToday} habit check-in today` : 'Complete a habit check-in to ignite focus',
+        isCompleted: habitsCheckedToday >= 1,
+      },
+      {
+        id: 3,
+        name: 'Tactical Bounty',
+        icon: '🎯',
+        xp: 80,
+        desc: bountyQuests.length === 0 ? 'No bounty quests pending' : `${bountyCompleted}/${bountyQuests.length} bounties cleared`,
+        isCompleted: bountyQuests.length === 0 ? completedDailyCount >= 1 : bountyCompleted >= bountyQuests.length,
+      },
+      {
+        id: 4,
+        name: 'Habit Forge',
+        icon: '🔥',
+        xp: 100,
+        desc: habitsTotal === 0 ? 'No habits tracked' : `${habitsCheckedToday}/${Math.min(2, habitsTotal)} habit milestone`,
+        isCompleted: habitsTotal === 0 ? false : habitsCheckedToday >= Math.min(2, habitsTotal),
+      },
+      {
+        id: 5,
+        name: 'Chronos Boss Trial',
+        icon: '👑',
+        xp: 250,
+        desc: chestReadyCount > 0 ? `${chestReadyCount} chest(s) ready to claim` : `Citadel power ${Math.round(citadelPowerPct * 100)}% — charge to unlock`,
+        isCompleted: chestReadyCount > 0 && citadelPowerPct >= 0.5,
+      },
+    ];
+
+    let foundActive = false;
+    return raw.map((s) => {
+      if (s.isCompleted) return { ...s, status: 'completed' as const };
+      if (!foundActive) {
+        foundActive = true;
+        return { ...s, status: 'active' as const };
+      }
+      return { ...s, status: 'locked' as const };
+    });
+  }, [quests, dailyQuests.length, completedDailyCount, habits, habitsCheckedToday, chestReadyCount, citadelPowerPct]);
 
   const handleStartQuickFocus = () => {
     soundEngine.playClick();
@@ -93,7 +116,6 @@ export const RealmView: React.FC = () => {
               Conquer today's milestones, power up your Citadel, and defeat procrastination!
             </p>
           </div>
-
           {/* Daily Progress Gauge */}
           <div className="bg-white text-[var(--dark-blue)] p-4 sm:p-5 rounded-2xl border-b-4 border-[#e5e5e5] shadow-md min-w-[220px] text-center">
             <div className="text-xs font-black uppercase text-[var(--gray-light)] mb-1">
@@ -110,10 +132,17 @@ export const RealmView: React.FC = () => {
                 }}
               />
             </div>
+            <div className="mt-2 flex items-center justify-center gap-2 text-[11px] font-bold text-[var(--gray-light)]">
+              <span>🔥 {habitsCheckedToday} habits today</span>
+              <span>•</span>
+              <span>🎁 {chestReadyCount} chests ready</span>
+            </div>
+            <div className="mt-1 text-[11px] font-extrabold text-[var(--gray-light)]">
+              Citadel Power {profile.citadelPower}/{profile.citadelMaxPower} ({Math.round(citadelPowerPct * 100)}%)
+            </div>
           </div>
         </div>
       </div>
-
       {/* 2-Column Grid: Journey Roadmap + Quick Action Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
@@ -131,7 +160,7 @@ export const RealmView: React.FC = () => {
             <span className="text-2xl">🗺️</span>
           </div>
 
-          {/* Stepping Stones Path */}
+          {/* Stepping Stones Path — derived from live game state */}
           <div className="relative flex flex-col items-center gap-6 py-4 w-full">
             {stages.map((st, idx) => {
               const offsets = ['translate-x-0', 'translate-x-8', '-translate-x-8', 'translate-x-4', 'translate-x-0'];

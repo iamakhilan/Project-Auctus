@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   TabType,
   PlayerProfile,
   Quest,
   Habit,
   ChestSlot,
+  ChestTier,
   RewardItem,
   Achievement,
   EconomyTransaction,
@@ -35,14 +36,17 @@ interface GameStateContextType {
   completeQuest: (questId: string) => void;
   createQuest: (quest: Omit<Quest, 'id' | 'isCompleted'>) => void;
   deleteQuest: (questId: string) => void;
+  updateQuest: (questId: string, patch: Partial<Quest>) => void;
   checkInHabit: (habitId: string) => void;
   createHabit: (habit: Omit<Habit, 'id' | 'streakCount' | 'bestStreak'>) => void;
   deleteHabit: (habitId: string) => void;
+  updateHabit: (habitId: string, patch: Partial<Habit>) => void;
   startChestUnlock: (slotIndex: number) => void;
   speedUpChest: (slotIndex: number) => boolean;
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
   createCustomReward: (title: string, cost: number, category: string, icon: string, description: string) => void;
+  editReward: (rewardId: string, patch: Partial<RewardItem>) => void;
   ascendCitadel: () => boolean;
   toggleSound: () => void;
   openClaimModal: (data: Partial<ClaimModalData>) => void;
@@ -63,6 +67,28 @@ interface GameStateContextType {
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
+
+// Chest tier helpers for auto-fill
+function rollChestTier(): ChestTier {
+  const r = Math.random() * 100;
+  if (r < 55) return 'bronze';
+  if (r < 85) return 'silver';
+  if (r < 97) return 'gold';
+  return 'mythic';
+}
+
+function chestConfigForTier(tier: ChestTier): { name: string; totalUnlockSeconds: number; coinsReward: number; xpReward: number; gemsReward: number } {
+  switch (tier) {
+    case 'bronze':
+      return { name: 'Bronze Supply Chest', totalUnlockSeconds: 3600, coinsReward: 50, xpReward: 30, gemsReward: 2 };
+    case 'silver':
+      return { name: 'Silver Quest Chest', totalUnlockSeconds: 7200, coinsReward: 100, xpReward: 60, gemsReward: 5 };
+    case 'gold':
+      return { name: 'Gold Relic Chest', totalUnlockSeconds: 14400, coinsReward: 200, xpReward: 120, gemsReward: 10 };
+    case 'mythic':
+      return { name: 'Mythic Obsidian Chest', totalUnlockSeconds: 28800, coinsReward: 400, xpReward: 250, gemsReward: 25 };
+  }
+}
 
 export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<TabType>('realm');
@@ -95,6 +121,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     description: '',
   });
 
+  // Refs for leak-free focus timer
+  const focusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const completeFocusSessionRef = useRef<() => void>(() => {});
+  const chestTimeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   // Sync profile & state to storage
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
   useEffect(() => { StorageService.setQuests(quests); }, [quests]);
@@ -114,7 +145,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setProfile(p => ({ ...p, soundEnabled: !p.soundEnabled }));
   };
 
-  const openClaimModal = (data: Partial<ClaimModalData>) => {
+  const openClaimModal = useCallback((data: Partial<ClaimModalData>) => {
     setClaimModal({
       isOpen: true,
       title: data.title || 'Victory Reward',
@@ -123,11 +154,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       coins: data.coins,
       xp: data.xp,
       gems: data.gems,
-      icon: data.icon || '??',
+      icon: data.icon || '🎉',
     });
     soundEngine.playSuccess();
     triggerConfetti();
-  };
+  }, []);
 
   const closeClaimModal = () => {
     setClaimModal(prev => ({ ...prev, isOpen: false }));
@@ -189,6 +220,92 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (amount > 0) soundEngine.playSuccess();
   }, []);
 
+  // Achievement auto-evaluator — watches profile + habits, auto-unlocks matching entries once
+  useEffect(() => {
+    const getProgress = (ach: Achievement): number => {
+      switch (ach.category) {
+        case 'quests':
+          return profile.completedQuestsCount;
+        case 'focus':
+          return profile.totalFocusMinutes;
+        case 'streak':
+          return profile.streakDays;
+        case 'citadel':
+          return profile.citadelTier;
+        case 'habits': {
+          const maxStreak = habits.reduce((max, h) => Math.max(max, h.streakCount), 0);
+          return maxStreak;
+        }
+        default:
+          return ach.currentValue;
+      }
+    };
+
+    const toUnlock = achievements.filter(a => !a.isUnlocked && getProgress(a) >= a.targetValue);
+    if (toUnlock.length === 0) return;
+
+    // Update achievements state only once per entry
+    setAchievements(prev =>
+      prev.map(a => {
+        if (a.isUnlocked) return a;
+        const prog = getProgress(a);
+        const shouldUnlock = prog >= a.targetValue;
+        if (!shouldUnlock) {
+          // keep currentValue in sync for UI even if not yet unlocked
+          if (a.currentValue !== prog) return { ...a, currentValue: prog };
+          return a;
+        }
+        return {
+          ...a,
+          currentValue: prog,
+          isUnlocked: true,
+          unlockedAt: new Date().toISOString(),
+        };
+      })
+    );
+
+    // Fire rewards + modal for each newly unlocked achievement (only once because we filtered isUnlocked)
+    toUnlock.forEach(ach => {
+      const prog = getProgress(ach);
+      // keep currentValue consistent even before state flush
+      if (ach.rewards.xp) addXp(ach.rewards.xp);
+      if (ach.rewards.coins) addCoins(ach.rewards.coins, `Achievement: ${ach.title}`);
+      if (ach.rewards.gems) addGems(ach.rewards.gems, `Achievement: ${ach.title}`);
+      openClaimModal({
+        title: ach.title,
+        subtitle: 'ACHIEVEMENT UNLOCKED',
+        description: ach.description + (ach.rewards.titleReward ? ` Title unlocked: ${ach.rewards.titleReward}` : ''),
+        xp: ach.rewards.xp,
+        coins: ach.rewards.coins,
+        gems: ach.rewards.gems,
+        icon: ach.icon,
+      });
+      // ensure visible currentValue sync even if async
+      void prog;
+    });
+  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, addXp, addCoins, addGems, openClaimModal]);
+
+  // Keep achievement currentValue synced even when not unlocking (e.g., progress bar UI)
+  useEffect(() => {
+    setAchievements(prev => {
+      let changed = false;
+      const next = prev.map(a => {
+        if (a.isUnlocked) return a;
+        let prog = a.currentValue;
+        switch (a.category) {
+          case 'quests': prog = profile.completedQuestsCount; break;
+          case 'focus': prog = profile.totalFocusMinutes; break;
+          case 'streak': prog = profile.streakDays; break;
+          case 'citadel': prog = profile.citadelTier; break;
+          case 'habits': prog = habits.reduce((m, h) => Math.max(m, h.streakCount), 0); break;
+        }
+        if (prog !== a.currentValue) { changed = true; return { ...a, currentValue: prog }; }
+        return a;
+      });
+      return changed ? next : prev;
+    });
+  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits]);
+
   // Quest Actions
   const completeQuest = (questId: string) => {
     const quest = quests.find(q => q.id === questId);
@@ -208,7 +325,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       description: `Objective conquered under tag #${quest.tag}!`,
       xp: quest.xpReward,
       coins: quest.coinsReward,
-      icon: '??',
+      icon: '🎯',
     });
   };
 
@@ -225,6 +342,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteQuest = (questId: string) => {
     setQuests(prev => prev.filter(q => q.id !== questId));
   };
+
+  const updateQuest = useCallback((questId: string, patch: Partial<Quest>) => {
+    setQuests(prev => prev.map(q => (q.id === questId ? { ...q, ...patch, id: q.id } : q)));
+    soundEngine.playClick();
+  }, []);
 
   // Habit Actions
   const checkInHabit = (habitId: string) => {
@@ -254,11 +376,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     openClaimModal({
       title: habit.title,
-      subtitle: `${newStreak} DAY STREAK! ??`,
+      subtitle: `${newStreak} DAY STREAK! 🔥`,
       description: `Discipline multiplier ${multiplier}x applied!`,
       xp: xpEarned,
       coins: coinsEarned,
-      icon: '??',
+      icon: '🔥',
     });
   };
 
@@ -276,6 +398,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteHabit = (habitId: string) => {
     setHabits(prev => prev.filter(h => h.id !== habitId));
   };
+
+  const updateHabit = useCallback((habitId: string, patch: Partial<Habit>) => {
+    setHabits(prev => prev.map(h => (h.id === habitId ? { ...h, ...patch, id: h.id } : h)));
+    soundEngine.playClick();
+  }, []);
 
   // Chest Actions
   const startChestUnlock = (slotIndex: number) => {
@@ -321,7 +448,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           ? {
               ...c,
               status: 'empty',
-              tier: 'bronze',
+              tier: 'bronze' as ChestTier,
               name: 'Empty Slot',
               unlockStartedAt: undefined,
               unlockEndsAt: undefined,
@@ -337,9 +464,42 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       coins: chest.coinsReward,
       xp: chest.xpReward,
       gems: chest.gemsReward,
-      icon: '??',
+      icon: '🎁',
     });
+
+    // Chest auto-fill: schedule new random chest after 30s delay
+    const timeout = setTimeout(() => {
+      const tier = rollChestTier();
+      const cfg = chestConfigForTier(tier);
+      setChests(prev =>
+        prev.map(c => {
+          if (c.slotIndex !== slotIndex) return c;
+          // Only fill if still empty (functional update guard)
+          if (c.status !== 'empty') return c;
+          return {
+            ...c,
+            tier,
+            name: cfg.name,
+            status: 'locked',
+            totalUnlockSeconds: cfg.totalUnlockSeconds,
+            coinsReward: cfg.coinsReward,
+            xpReward: cfg.xpReward,
+            gemsReward: cfg.gemsReward,
+            unlockStartedAt: undefined,
+            unlockEndsAt: undefined,
+          };
+        })
+      );
+    }, 30000);
+    chestTimeoutRefs.current.push(timeout);
   };
+
+  // Cleanup chest auto-fill timeouts on unmount
+  useEffect(() => {
+    return () => {
+      chestTimeoutRefs.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Chest Timer Tick
   useEffect(() => {
@@ -378,13 +538,18 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       title,
       cost,
       category,
-      icon: icon || '??',
+      icon: icon || '🎁',
       description,
       isCustom: true,
     };
     setRewards(prev => [newReward, ...prev]);
     soundEngine.playSuccess();
   };
+
+  const editReward = useCallback((rewardId: string, patch: Partial<RewardItem>) => {
+    setRewards(prev => prev.map(r => (r.id === rewardId ? { ...r, ...patch, id: r.id } : r)));
+    soundEngine.playClick();
+  }, []);
 
   // Citadel Ascension
   const ascendCitadel = (): boolean => {
@@ -407,7 +572,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       description: 'Passive +20% XP rate unlocked across all focus arenas.',
       xp: 300,
       gems: 30,
-      icon: '??',
+      icon: '🏰',
     });
     return true;
   };
@@ -432,47 +597,76 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.startSoundscape('cyber-rain');
   };
 
-  const pauseFocusSession = () => {
+  const pauseFocusSession = useCallback(() => {
     setFocusSession(prev => ({ ...prev, isPaused: true }));
     soundEngine.stopSoundscape();
-  };
-
-  const resumeFocusSession = () => {
-    setFocusSession(prev => ({ ...prev, isPaused: false }));
-    soundEngine.startSoundscape(focusSession.soundscapeTrack);
-  };
-
-  const cancelFocusSession = () => {
-    setFocusSession(prev => ({ ...prev, isActive: false, isPaused: false }));
-    soundEngine.stopSoundscape();
-  };
-
-  const completeFocusSession = () => {
-    const multiplier = focusSession.isOvercharged ? 1.5 : 1.0;
-    const finalXp = Math.round(focusSession.accumulatedXp * multiplier);
-    const finalCoins = Math.round(focusSession.accumulatedCoins * multiplier);
-    const mins = Math.round(focusSession.targetDurationSeconds / 60);
-
-    addXp(finalXp);
-    addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
-    setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
-
-    if (focusSession.selectedQuestId) {
-      completeQuest(focusSession.selectedQuestId);
+    if (focusIntervalRef.current) {
+      clearInterval(focusIntervalRef.current);
+      focusIntervalRef.current = null;
     }
+  }, []);
 
+  const resumeFocusSession = useCallback(() => {
+    setFocusSession(prev => ({ ...prev, isPaused: false }));
+    // soundscape restarts in effect / direct
+    setFocusSession(prev => {
+      soundEngine.startSoundscape(prev.soundscapeTrack);
+      return prev;
+    });
+  }, []);
+
+  const cancelFocusSession = useCallback(() => {
+    if (focusIntervalRef.current) {
+      clearInterval(focusIntervalRef.current);
+      focusIntervalRef.current = null;
+    }
+    soundEngine.stopSoundscape();
     setFocusSession(prev => ({ ...prev, isActive: false, isPaused: false }));
+  }, []);
+
+  const completeFocusSession = useCallback(() => {
+    // teardown interval first to prevent leak
+    if (focusIntervalRef.current) {
+      clearInterval(focusIntervalRef.current);
+      focusIntervalRef.current = null;
+    }
     soundEngine.stopSoundscape();
 
-    openClaimModal({
-      title: 'Combat Arena Victory!',
-      subtitle: `${mins} MINUTE FOCUS COMPLETED`,
-      description: focusSession.selectedQuestTitle ? `Objective: ${focusSession.selectedQuestTitle}` : 'Deep work sprint successfully concluded.',
-      xp: finalXp,
-      coins: finalCoins,
-      icon: '??',
+    setFocusSession(prev => {
+      if (!prev.isActive) return prev;
+      const multiplier = prev.isOvercharged ? 1.5 : 1.0;
+      const finalXp = Math.round(prev.accumulatedXp * multiplier);
+      const finalCoins = Math.round(prev.accumulatedCoins * multiplier);
+      const mins = Math.round(prev.targetDurationSeconds / 60);
+
+      // side-effects via setters (safe inside updater via queue)
+      addXp(finalXp);
+      addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
+      setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
+
+      if (prev.selectedQuestId) {
+        // defer quest completion to next tick to avoid nested state batch issues
+        const qid = prev.selectedQuestId;
+        setTimeout(() => completeQuest(qid), 0);
+      }
+
+      openClaimModal({
+        title: 'Combat Arena Victory!',
+        subtitle: `${mins} MINUTE FOCUS COMPLETED`,
+        description: prev.selectedQuestTitle ? `Objective: ${prev.selectedQuestTitle}` : 'Deep work sprint successfully concluded.',
+        xp: finalXp,
+        coins: finalCoins,
+        icon: '⚔️',
+      });
+
+      return { ...prev, isActive: false, isPaused: false, remainingSeconds: 0 };
     });
-  };
+  }, [addXp, addCoins, openClaimModal]);
+
+  // Keep ref in sync for interval closure
+  useEffect(() => {
+    completeFocusSessionRef.current = completeFocusSession;
+  }, [completeFocusSession]);
 
   const toggleManaOvercharge = () => {
     setFocusSession(prev => ({ ...prev, isOvercharged: !prev.isOvercharged }));
@@ -481,28 +675,82 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const setSoundscapeTrack = (track: FocusSessionState['soundscapeTrack']) => {
     setFocusSession(prev => ({ ...prev, soundscapeTrack: track }));
-    if (focusSession.isActive && !focusSession.isPaused) {
-      soundEngine.startSoundscape(track);
-    }
+    // use functional state check to avoid stale closure
+    setFocusSession(prev => {
+      if (prev.isActive && !prev.isPaused) {
+        soundEngine.startSoundscape(track);
+      }
+      return prev;
+    });
   };
 
-  // Focus Timer countdown tick
+  // Focus Timer countdown tick — leak-free with cleanup + Page Visibility handling
   useEffect(() => {
+    // Clear any existing interval before (re)starting
+    if (focusIntervalRef.current) {
+      clearInterval(focusIntervalRef.current);
+      focusIntervalRef.current = null;
+    }
+
     if (!focusSession.isActive || focusSession.isPaused) return;
 
-    const interval = setInterval(() => {
+    // Visibility handler: pause tick while hidden, resume when visible without losing time
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (focusIntervalRef.current) {
+          clearInterval(focusIntervalRef.current);
+          focusIntervalRef.current = null;
+        }
+      } else {
+        // re-arm interval if still active and not paused
+        if (!focusIntervalRef.current && focusSession.isActive && !focusSession.isPaused) {
+          focusIntervalRef.current = setInterval(() => {
+            setFocusSession(prev => {
+              if (!prev.isActive || prev.isPaused) return prev;
+              if (prev.remainingSeconds <= 1) {
+                // use ref to avoid stale closure leak
+                completeFocusSessionRef.current();
+                return prev;
+              }
+              return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+            });
+          }, 1000);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    focusIntervalRef.current = setInterval(() => {
       setFocusSession(prev => {
+        if (!prev.isActive || prev.isPaused) return prev;
         if (prev.remainingSeconds <= 1) {
-          clearInterval(interval);
-          completeFocusSession();
-          return { ...prev, remainingSeconds: 0, isActive: false };
+          completeFocusSessionRef.current();
+          return prev;
         }
         return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (focusIntervalRef.current) {
+        clearInterval(focusIntervalRef.current);
+        focusIntervalRef.current = null;
+      }
+    };
   }, [focusSession.isActive, focusSession.isPaused]);
+
+  // Ensure complete teardown on unmount
+  useEffect(() => {
+    return () => {
+      if (focusIntervalRef.current) {
+        clearInterval(focusIntervalRef.current);
+        focusIntervalRef.current = null;
+      }
+      soundEngine.stopSoundscape();
+    };
+  }, []);
 
   return (
     <GameStateContext.Provider
@@ -524,14 +772,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         completeQuest,
         createQuest,
         deleteQuest,
+        updateQuest,
         checkInHabit,
         createHabit,
         deleteHabit,
+        updateHabit,
         startChestUnlock,
         speedUpChest,
         claimChestLoot,
         redeemReward,
         createCustomReward,
+        editReward,
         ascendCitadel,
         toggleSound,
         openClaimModal,

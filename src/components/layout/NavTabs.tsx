@@ -46,6 +46,11 @@ export const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onSelectTab }) => {
       badge: readyChests > 0 ? 'LOOT!' : undefined,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: '📊',
+    },
+    {
       id: 'citadel',
       label: 'Citadel',
       icon: '🏰',
