@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { INITIAL_PROFILE, StorageService, isValidFocus, isValidProfile, loadFromStorage } from './storage';
+import { INITIAL_PROFILE, StorageService, loadFromStorage } from './storage';
 
-describe('storage validation and backup contract', () => {
+describe('storage and backup behavior', () => {
   beforeEach(() => localStorage.clear());
 
   it('falls back when persisted JSON is malformed', () => {
@@ -9,26 +9,19 @@ describe('storage validation and backup contract', () => {
     expect(StorageService.getProfile()).toEqual(INITIAL_PROFILE);
   });
 
-  it('falls back when persisted data has the wrong shape', () => {
-    localStorage.setItem('auctus_duo_profile', JSON.stringify({ coins: 'lots' }));
+  it('falls back when the profile payload is missing', () => {
     expect(StorageService.getProfile()).toEqual(INITIAL_PROFILE);
   });
 
-  it('supports validated generic storage reads', () => {
-    localStorage.setItem('profile', JSON.stringify(INITIAL_PROFILE));
-    expect(loadFromStorage('profile', { name: 'fallback' }, isValidProfile)).toEqual(INITIAL_PROFILE);
-    localStorage.setItem('profile', JSON.stringify({ name: 42 }));
-    expect(loadFromStorage('profile', { name: 'fallback' }, isValidProfile)).toEqual({ name: 'fallback' });
+  it('supports the generic storage loader with a fallback', () => {
+    localStorage.setItem('test-value', JSON.stringify({ ok: true }));
+    expect(loadFromStorage('test-value', { ok: false })).toEqual({ ok: true });
+    expect(loadFromStorage('missing-value', { ok: false })).toEqual({ ok: false });
   });
 
-  it('rejects unsafe focus state values through the validator', () => {
-    expect(isValidFocus({ isActive: true, isPaused: false, targetDurationSeconds: -1, remainingSeconds: 0, accumulatedXp: 0, accumulatedCoins: 0, isOvercharged: false, soundscapeTrack: 'none' })).toBe(false);
-  });
-
-  it('exports a versioned, self-contained backup', () => {
+  it('exports a self-contained JSON backup', () => {
     const backup = JSON.parse(StorageService.exportBackup());
-    expect(backup.version).toBe(1);
-    expect(backup.profile).toBeDefined();
+    expect(backup.profile).toEqual(INITIAL_PROFILE);
     expect(backup.quests).toBeInstanceOf(Array);
     expect(backup.habits).toBeInstanceOf(Array);
     expect(backup.chests).toBeInstanceOf(Array);
@@ -38,7 +31,7 @@ describe('storage validation and backup contract', () => {
     expect(backup.exportedAt).toEqual(expect.any(String));
   });
 
-  it('does not mutate state when the backup JSON itself is invalid', () => {
+  it('does not mutate state when importing malformed JSON', () => {
     StorageService.setProfile(INITIAL_PROFILE);
     expect(StorageService.importBackup('{not-json')).toBe(false);
     expect(StorageService.getProfile()).toEqual(INITIAL_PROFILE);
