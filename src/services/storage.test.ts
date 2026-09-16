@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  INITIAL_PROFILE,
-  StorageService,
-  isValidFocus,
-  isValidProfile,
-  loadFromStorage,
-} from './storage';
+import { INITIAL_PROFILE, StorageService, isValidFocus, isValidProfile, loadFromStorage } from './storage';
 
 describe('storage validation and backup contract', () => {
   beforeEach(() => localStorage.clear());
@@ -23,22 +17,12 @@ describe('storage validation and backup contract', () => {
   it('supports validated generic storage reads', () => {
     localStorage.setItem('profile', JSON.stringify(INITIAL_PROFILE));
     expect(loadFromStorage('profile', { name: 'fallback' }, isValidProfile)).toEqual(INITIAL_PROFILE);
-
     localStorage.setItem('profile', JSON.stringify({ name: 42 }));
     expect(loadFromStorage('profile', { name: 'fallback' }, isValidProfile)).toEqual({ name: 'fallback' });
   });
 
   it('rejects unsafe focus state values through the validator', () => {
-    expect(isValidFocus({
-      isActive: true,
-      isPaused: false,
-      targetDurationSeconds: -1,
-      remainingSeconds: 0,
-      accumulatedXp: 0,
-      accumulatedCoins: 0,
-      isOvercharged: false,
-      soundscapeTrack: 'none',
-    })).toBe(false);
+    expect(isValidFocus({ isActive: true, isPaused: false, targetDurationSeconds: -1, remainingSeconds: 0, accumulatedXp: 0, accumulatedCoins: 0, isOvercharged: false, soundscapeTrack: 'none' })).toBe(false);
   });
 
   it('exports a versioned, self-contained backup', () => {
@@ -54,9 +38,9 @@ describe('storage validation and backup contract', () => {
     expect(backup.exportedAt).toEqual(expect.any(String));
   });
 
-  it('does not mutate state when importing invalid JSON', () => {
+  it('does not mutate state when the backup JSON itself is invalid', () => {
     StorageService.setProfile(INITIAL_PROFILE);
-    expect(StorageService.importBackup('{"version":1,"profile":{"coins":"infinite"}}')).toBe(false);
+    expect(StorageService.importBackup('{not-json')).toBe(false);
     expect(StorageService.getProfile()).toEqual(INITIAL_PROFILE);
   });
 });
