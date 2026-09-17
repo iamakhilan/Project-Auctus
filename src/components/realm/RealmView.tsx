@@ -8,7 +8,6 @@ export const RealmView: React.FC = () => {
     quests,
     habits,
     chests,
-    completeQuest,
     setActiveTab,
     startFocusSession,
   } = useGameState();
@@ -17,7 +16,6 @@ export const RealmView: React.FC = () => {
 
   const dailyQuests = useMemo(() => quests.filter((q) => q.category === 'daily'), [quests]);
   const completedDailyCount = dailyQuests.filter((q) => q.isCompleted).length;
-  const pendingQuests = useMemo(() => quests.filter((q) => !q.isCompleted).slice(0, 3), [quests]);
 
   const habitsCheckedToday = useMemo(() => habits.filter((h) => h.lastCompletedDate === today).length, [habits, today]);
   const chestReadyCount = useMemo(() => chests.filter((c) => c.status === 'ready').length, [chests]);
@@ -25,9 +23,6 @@ export const RealmView: React.FC = () => {
 
   // Dynamic stages derived from live game state and calendar
   const stages = useMemo(() => {
-    const bountyQuests = quests.filter((q) => q.category === 'bounty');
-    const bountyCompleted = bountyQuests.filter((q) => q.isCompleted).length;
-    const habitsTotal = habits.length;
 
     const raw: Array<{ id: number; name: string; icon: string; xp: number; desc: string; isCompleted: boolean }> = [
       {
@@ -81,16 +76,12 @@ export const RealmView: React.FC = () => {
       }
       return { ...s, status: 'locked' as const };
     });
-  }, [quests, completedDailyCount, habitsCheckedToday, chestReadyCount, citadelPowerPct]);
+  }, [completedDailyCount, habitsCheckedToday, chestReadyCount, citadelPowerPct]);
 
   const handleStartQuickFocus = () => {
     soundEngine.playClick();
     startFocusSession(25, undefined, 'Realm Quick Focus Sprint');
     setActiveTab('focus');
-  };
-
-  const handleCompleteQuickQuest = (id: string) => {
-    completeQuest(id);
   };
 
   return (
