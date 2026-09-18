@@ -3,6 +3,7 @@ import { QuestCategory, QuestTag } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { sanitize } from '../../utils/validators';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -85,8 +86,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     setQuestError(null);
     soundEngine.playSuccess();
     createQuest({
-      title: questTitle.trim(),
-      description: questDesc.trim() || undefined,
+      title: sanitize(questTitle.trim()),
+      description: questDesc.trim() ? sanitize(questDesc.trim()) : undefined,
       category,
       tag,
       xpReward,
@@ -109,11 +110,12 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     setHabitError(null);
     soundEngine.playSuccess();
     createHabit({
-      title: habitTitle.trim(),
+      title: sanitize(habitTitle.trim()),
       category: habitCategory,
       icon: habitIcon,
       xpYield: habitXpYield,
       coinYield: habitCoinYield,
+      completedDates: [],
     });
 
     setHabitTitle('');

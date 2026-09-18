@@ -3,6 +3,7 @@ import { QuestTag } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { MissionForgeModal } from './MissionForgeModal';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { sanitize } from '../../utils/validators';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -72,7 +73,7 @@ export const QuestsView: React.FC = () => {
   };
   const saveEditQuest = () => {
     if (!editingQuestId || !editQuestTitle.trim()) return;
-    updateQuest(editingQuestId, { title: editQuestTitle.trim(), description: editQuestDesc.trim() || undefined });
+    updateQuest(editingQuestId, { title: sanitize(editQuestTitle.trim()), description: editQuestDesc.trim() ? sanitize(editQuestDesc.trim()) : undefined });
     setEditingQuestId(null);
   };
   const startEditHabit = (id: string, title: string) => {
@@ -81,7 +82,7 @@ export const QuestsView: React.FC = () => {
   };
   const saveEditHabit = () => {
     if (!editingHabitId || !editHabitTitle.trim()) return;
-    updateHabit(editingHabitId, { title: editHabitTitle.trim() });
+    updateHabit(editingHabitId, { title: sanitize(editHabitTitle.trim()) });
     setEditingHabitId(null);
   };
 
@@ -474,7 +475,7 @@ export const QuestsView: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {habits.map((habit) => {
-                const isCheckedInToday = habit.lastCompletedDate === todayStr;
+                const isCheckedInToday = (habit.completedDates || []).includes(todayStr);
                 const nextMilestone =
                   habit.streakCount < 3 ? 3 : habit.streakCount < 7 ? 7 : habit.streakCount < 14 ? 14 : habit.streakCount < 21 ? 21 : 30;
                 const milestonePercent = Math.min(100, Math.round((habit.streakCount / nextMilestone) * 100));

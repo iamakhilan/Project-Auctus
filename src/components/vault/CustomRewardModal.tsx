@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { sanitize } from '../../utils/validators';
 
 interface CustomRewardModalProps {
   isOpen: boolean;
@@ -33,11 +34,11 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
 
     soundEngine.playSuccess();
     createCustomReward(
-      title.trim(),
+      sanitize(title.trim()),
       cost,
       category,
       icon,
-      description.trim() || 'Custom personal reward'
+      sanitize(description.trim() || 'Custom personal reward')
     );
 
     setTitle('');
@@ -97,7 +98,7 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
               id="custom-reward-cost"
               type="number"
               min="10"
-              max="10000"
+              max="5000"
               step="10"
               required
               value={cost}

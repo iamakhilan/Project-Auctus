@@ -24,6 +24,7 @@ export interface Habit {
   streakCount: number;
   bestStreak: number;
   lastCompletedDate?: string; // YYYY-MM-DD
+  completedDates: string[]; // YYYY-MM-DD strings for accurate streak calendar
   xpYield: number;
   coinYield: number;
   icon?: string;

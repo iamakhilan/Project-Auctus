@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { TabType } from '../../types';
+import { sanitize } from '../../utils/validators';
 
 export interface CommandPaletteProps {
   isOpen: boolean;
@@ -84,8 +85,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     if (item.action === 'new-quest') {
       // Create a placeholder quest and jump to quests
       createQuest({
-        title: 'New Quest',
-        description: 'Created via Command Palette — edit me!',
+        title: sanitize('New Quest'),
+        description: sanitize('Created via Command Palette — edit me!'),
         category: 'daily',
         tag: 'Personal',
         xpReward: 60,
@@ -99,11 +100,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     }
     if (item.action === 'new-habit') {
       createHabit({
-        title: 'New Habit',
+        title: sanitize('New Habit'),
         category: 'routine',
         icon: '⚡',
         xpYield: 40,
         coinYield: 20,
+        completedDates: [],
       });
       setActiveTab('quests');
       onClose();

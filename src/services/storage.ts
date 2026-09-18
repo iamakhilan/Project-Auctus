@@ -9,7 +9,7 @@ import {
   FocusSessionState,
 } from '../types';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
   QUESTS: 'auctus_duo_quests',
   HABITS: 'auctus_duo_habits',
@@ -98,6 +98,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 14,
     bestStreak: 21,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 14 }, (_, i) => new Date(Date.now() - (13 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 30,
     coinYield: 15,
   },
@@ -107,6 +109,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'vitality',
     streakCount: 8,
     bestStreak: 12,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 8 }, (_, i) => new Date(Date.now() - (7 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 20,
     coinYield: 10,
   },
@@ -116,6 +120,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'mind',
     streakCount: 5,
     bestStreak: 9,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 5 }, (_, i) => new Date(Date.now() - (4 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 25,
     coinYield: 12,
   },
@@ -125,6 +131,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 11,
     bestStreak: 14,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 11 }, (_, i) => new Date(Date.now() - (10 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 40,
     coinYield: 20,
   },
@@ -380,9 +388,70 @@ export const StorageService = {
       if (data.version && data.version !== '2.0' && data.version !== '1.0') {
         // unknown future version — still attempt to import known keys
       }
-      if (data.profile) StorageService.setProfile(data.profile);
-      if (data.quests) StorageService.setQuests(data.quests);
-      if (data.habits) StorageService.setHabits(data.habits);
+      
+      // Validate imported data structure
+      if (data.profile) {
+        // Ensure required profile fields exist with safe defaults
+        const validatedProfile = {
+          name: typeof data.profile.name === 'string' ? data.profile.name : INITIAL_PROFILE.name,
+          title: typeof data.profile.title === 'string' ? data.profile.title : INITIAL_PROFILE.title,
+          level: Number.isInteger(data.profile.level) && data.profile.level > 0 ? data.profile.level : INITIAL_PROFILE.level,
+          xp: Number.isInteger(data.profile.xp) && data.profile.xp >= 0 ? data.profile.xp : INITIAL_PROFILE.xp,
+          xpToNextLevel: Number.isInteger(data.profile.xpToNextLevel) && data.profile.xpToNextLevel > 0 ? data.profile.xpToNextLevel : INITIAL_PROFILE.xpToNextLevel,
+          coins: Number.isInteger(data.profile.coins) && data.profile.coins >= 0 ? data.profile.coins : INITIAL_PROFILE.coins,
+          gems: Number.isInteger(data.profile.gems) && data.profile.gems >= 0 ? data.profile.gems : INITIAL_PROFILE.gems,
+          energy: Number.isInteger(data.profile.energy) && data.profile.energy >= 0 ? data.profile.energy : INITIAL_PROFILE.energy,
+          maxEnergy: Number.isInteger(data.profile.maxEnergy) && data.profile.maxEnergy > 0 ? data.profile.maxEnergy : INITIAL_PROFILE.maxEnergy,
+          streakDays: Number.isInteger(data.profile.streakDays) && data.profile.streakDays >= 0 ? data.profile.streakDays : INITIAL_PROFILE.streakDays,
+          citadelTier: Number.isInteger(data.profile.citadelTier) && data.profile.citadelTier >= 0 ? data.profile.citadelTier : INITIAL_PROFILE.citadelTier,
+          citadelPower: Number.isInteger(data.profile.citadelPower) && data.profile.citadelPower >= 0 ? data.profile.citadelPower : INITIAL_PROFILE.citadelPower,
+          citadelMaxPower: Number.isInteger(data.profile.citadelMaxPower) && data.profile.citadelMaxPower > 0 ? data.profile.citadelMaxPower : INITIAL_PROFILE.citadelMaxPower,
+          totalFocusMinutes: Number.isInteger(data.profile.totalFocusMinutes) && data.profile.totalFocusMinutes >= 0 ? data.profile.totalFocusMinutes : INITIAL_PROFILE.totalFocusMinutes,
+          completedQuestsCount: Number.isInteger(data.profile.completedQuestsCount) && data.profile.completedQuestsCount >= 0 ? data.profile.completedQuestsCount : INITIAL_PROFILE.completedQuestsCount,
+          soundEnabled: typeof data.profile.soundEnabled === 'boolean' ? data.profile.soundEnabled : INITIAL_PROFILE.soundEnabled,
+        };
+        StorageService.setProfile(validatedProfile);
+      }
+      
+      // Validate quests
+      if (Array.isArray(data.quests)) {
+        const validatedQuests = data.quests
+          .filter((q: unknown): q is Record<string, unknown> => q !== null && typeof q === 'object' && typeof (q as Record<string, unknown>).id === 'string' && typeof (q as Record<string, unknown>).title === 'string')
+          .map((q: Record<string, unknown>) => ({
+            id: q.id as string,
+            title: q.title as string,
+            description: typeof q.description === 'string' ? q.description : undefined,
+            category: ['daily', 'bounty', 'epic', 'habit'].includes(q.category as string) ? (q.category as 'daily' | 'bounty' | 'epic' | 'habit') : 'daily',
+            tag: ['Study', 'Coding', 'Fitness', 'Personal', 'Work', 'Creative', 'Deep Work'].includes(q.tag as string) ? (q.tag as 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work') : 'Personal',
+            xpReward: Number.isInteger(q.xpReward) && typeof q.xpReward === 'number' && q.xpReward >= 0 ? q.xpReward : 0,
+            coinsReward: Number.isInteger(q.coinsReward) && typeof q.coinsReward === 'number' && q.coinsReward >= 0 ? q.coinsReward : 0,
+            isCompleted: Boolean(q.isCompleted),
+            completedAt: typeof q.completedAt === 'string' ? q.completedAt : undefined,
+            dueLabel: typeof q.dueLabel === 'string' ? q.dueLabel : undefined,
+            estimatedMinutes: Number.isInteger(q.estimatedMinutes) && typeof q.estimatedMinutes === 'number' && q.estimatedMinutes > 0 ? q.estimatedMinutes : undefined,
+          }));
+        StorageService.setQuests(validatedQuests);
+      }
+      
+      // Validate habits
+      if (Array.isArray(data.habits)) {
+        const validatedHabits = data.habits
+          .filter((h: unknown): h is Record<string, unknown> => h !== null && typeof h === 'object' && typeof (h as Record<string, unknown>).id === 'string' && typeof (h as Record<string, unknown>).title === 'string')
+          .map((h: Record<string, unknown>) => ({
+            id: h.id as string,
+            title: h.title as string,
+            category: ['focus', 'vitality', 'mind', 'routine'].includes(h.category as string) ? (h.category as 'focus' | 'vitality' | 'mind' | 'routine') : 'routine',
+            streakCount: Number.isInteger(h.streakCount) && typeof h.streakCount === 'number' && h.streakCount >= 0 ? h.streakCount : 0,
+            bestStreak: Number.isInteger(h.bestStreak) && typeof h.bestStreak === 'number' && h.bestStreak >= 0 ? h.bestStreak : 0,
+            lastCompletedDate: typeof h.lastCompletedDate === 'string' ? h.lastCompletedDate : undefined,
+            completedDates: Array.isArray(h.completedDates) ? h.completedDates.filter((d: unknown): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [],
+            xpYield: Number.isInteger(h.xpYield) && typeof h.xpYield === 'number' && h.xpYield >= 0 ? h.xpYield : 0,
+            coinYield: Number.isInteger(h.coinYield) && typeof h.coinYield === 'number' && h.coinYield >= 0 ? h.coinYield : 0,
+            icon: typeof h.icon === 'string' ? h.icon : undefined,
+          }));
+        StorageService.setHabits(validatedHabits);
+      }
+      
       if (data.chests) StorageService.setChests(data.chests);
       if (data.rewards) StorageService.setRewards(data.rewards);
       if (data.achievements) StorageService.setAchievements(data.achievements);

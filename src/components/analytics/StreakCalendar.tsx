@@ -17,21 +17,6 @@ function getLastNDates(n: number): string[] {
   return out;
 }
 
-function isHabitDoneOnDate(
-  lastCompletedDate: string | undefined,
-  streakCount: number,
-  dateStr: string
-): boolean {
-  if (!lastCompletedDate) return false;
-  if (lastCompletedDate === dateStr) return true;
-  // heuristic: infer streak window backwards from lastCompletedDate
-  if (streakCount <= 0) return false;
-  const last = new Date(lastCompletedDate + 'T00:00:00');
-  const cell = new Date(dateStr + 'T00:00:00');
-  const diff = Math.floor((last.getTime() - cell.getTime()) / 86400000);
-  return diff > 0 && diff < streakCount;
-}
-
 export interface StreakCalendarProps {
   days?: number;
 }
@@ -66,7 +51,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ days = 30 }) => 
               const isToday = dateStr === todayStr;
               const isFuture = d.getTime() > new Date(todayStr + 'T00:00:00').getTime();
               const completedHabits = habits.filter((h) =>
-                isHabitDoneOnDate(h.lastCompletedDate, h.streakCount, dateStr)
+                (h.completedDates || []).includes(dateStr)
               );
               const completeCount = completedHabits.length;
               const totalCount = habits.length;
@@ -100,7 +85,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ days = 30 }) => 
 
                   <div className="flex flex-wrap justify-center gap-1 mt-1">
                     {habits.map((h) => {
-                      const done = isHabitDoneOnDate(h.lastCompletedDate, h.streakCount, dateStr);
+                      const done = (h.completedDates || []).includes(dateStr);
                       return (
                         <span
                           key={`${dateStr}-${h.id}`}
