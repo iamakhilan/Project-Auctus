@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { QuestTag } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { MissionForgeModal } from './MissionForgeModal';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { sanitize } from '../../utils/validators';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -35,7 +36,14 @@ export const QuestsView: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmDeleteType, setConfirmDeleteType] = useState<'quest' | 'habit' | null>(null);
 
-  const filteredQuests = quests.filter((q) => {
+  // Debounced search for smoother filtering on large quest lists
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const filteredQuests = useMemo(() => quests.filter((q) => {
     const matchesCat =
       activeFilter === 'all'
         ? true
@@ -43,11 +51,11 @@ export const QuestsView: React.FC = () => {
         ? false
         : q.category === activeFilter;
     const matchesTag = selectedTag === 'all' || q.tag === selectedTag;
+    const qLower = debouncedSearch.toLowerCase();
     const matchesSearch =
-      q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (q.description && q.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      !qLower || q.title.toLowerCase().includes(qLower) || (q.description && q.description.toLowerCase().includes(qLower));
     return matchesCat && matchesTag && matchesSearch;
-  });
+  }), [quests, activeFilter, selectedTag, debouncedSearch]);
 
   const handleLaunchFocus = (questId: string, questTitle: string, minutes: number = 25) => {
     soundEngine.playClick();
@@ -65,7 +73,7 @@ export const QuestsView: React.FC = () => {
   };
   const saveEditQuest = () => {
     if (!editingQuestId || !editQuestTitle.trim()) return;
-    updateQuest(editingQuestId, { title: editQuestTitle.trim(), description: editQuestDesc.trim() || undefined });
+    updateQuest(editingQuestId, { title: sanitize(editQuestTitle.trim()), description: editQuestDesc.trim() ? sanitize(editQuestDesc.trim()) : undefined });
     setEditingQuestId(null);
   };
   const startEditHabit = (id: string, title: string) => {
@@ -74,7 +82,7 @@ export const QuestsView: React.FC = () => {
   };
   const saveEditHabit = () => {
     if (!editingHabitId || !editHabitTitle.trim()) return;
-    updateHabit(editingHabitId, { title: editHabitTitle.trim() });
+    updateHabit(editingHabitId, { title: sanitize(editHabitTitle.trim()) });
     setEditingHabitId(null);
   };
 
@@ -105,34 +113,38 @@ export const QuestsView: React.FC = () => {
   };
 
   const EmptyIllustration: React.FC<{ filter: string }> = ({ filter }) => (
-    <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-8 sm:p-10 text-center">
-      <div className="mx-auto w-20 h-20 rounded-3xl bg-[#f7f7f7] border-2 border-[#e5e5e5] flex items-center justify-center text-4xl mb-4">
+    <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-6 sm:p-8 text-center hover:border-[#b9e5fb] transition-colors">
+      <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#f7f7f7] border-2 border-[#e5e5e5] flex items-center justify-center text-3xl sm:text-4xl mb-4 transform hover:scale-105 transition-transform">
         {filter === 'habits' ? '🌱' : filter === 'daily' ? '📅' : filter === 'bounty' ? '🎯' : filter === 'epic' ? '👑' : '🗺️'}
       </div>
-      <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">No missions in this sector</h3>
-      <p className="text-xs font-bold text-[var(--gray-light)] mt-1 max-w-sm mx-auto">
+      <h3 className="font-['Feather_Bold'] text-base sm:text-lg text-[var(--dark-blue)]">
+        {filter === 'habits' ? 'No rituals found' : 'No missions in this sector'}
+      </h3>
+      <p className="text-xs font-bold text-[var(--gray-light)] mt-1 max-w-sm mx-auto leading-relaxed">
         {filter === 'habits'
           ? 'Forge your first daily habit and start building an unbreakable streak.'
-          : 'No missions match current filters. Try clearing search or forge a new one!'}
+          : 'The tactical map is clear. Forge a new mission or broaden your filter criteria to see more.'}
       </p>
-      <div className="flex items-center justify-center gap-2 mt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-6">
         <button
+              type="button"
           onClick={() => {
             setSearchQuery('');
             setSelectedTag('all');
             if (filter === 'habits') setActiveFilter('all');
           }}
-          className="px-4 py-2 rounded-2xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-xs font-black uppercase text-[var(--gray-text)] hover:bg-[#ececec] transition-colors cursor-pointer"
+          className="px-4 py-2 rounded-2xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-xs font-black uppercase text-[var(--gray-text)] hover:bg-[#ececec] transition-colors cursor-pointer touch-target"
         >
-          Clear Filters
+          Reset Filters
         </button>
         <button
+              type="button"
           onClick={() => {
             soundEngine.playClick();
             setModalDefaultTab(filter === 'habits' ? 'habit' : 'quest');
             setIsModalOpen(true);
           }}
-          className="px-4 py-2 rounded-2xl bg-[var(--green)] text-white font-black text-xs uppercase border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 shadow-xs cursor-pointer"
+          className="px-4 py-2 rounded-2xl bg-[var(--green)] text-white font-black text-xs uppercase border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 shadow-xs cursor-pointer hover:bg-[var(--green-hover)] transition-all touch-target"
         >
           + Forge {filter === 'habits' ? 'Habit' : 'Mission'}
         </button>
@@ -141,7 +153,7 @@ export const QuestsView: React.FC = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-8 animate-fadeIn select-none">
+    <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 animate-fadeIn select-none container-responsive">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -152,32 +164,34 @@ export const QuestsView: React.FC = () => {
             Execute tactical directives, forge daily disciplines, and collect gold bounties!
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
+              type="button"
             onClick={() => {
               soundEngine.playClick();
               setModalDefaultTab('quest');
               setIsModalOpen(true);
             }}
-            className="h-11 px-4 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+            className="h-11 px-4 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 touch-target"
           >
             <span>+ FORGE QUEST</span>
           </button>
           <button
+              type="button"
             onClick={() => {
               soundEngine.playClick();
               setModalDefaultTab('habit');
               setIsModalOpen(true);
             }}
-            className="h-11 px-4 bg-[var(--orange)] hover:bg-[#e08500] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[#c77700] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+            className="h-11 px-4 bg-[var(--orange)] hover:bg-[#e08500] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[#c77700] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 touch-target"
           >
             <span>+ FORGE HABIT</span>
           </button>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b-2 border-[#e5e5e5] pb-3">
+      {/* Filter Tabs - horizontal scroll on mobile */}
+      <div className="flex items-center gap-2 border-b-2 border-[#e5e5e5] pb-3 overflow-x-auto pb-4 -mx-4 px-4">
         {[
           { id: 'all', label: 'All Operations', icon: '⚡' },
           { id: 'daily', label: 'Daily Tasks', icon: '📅' },
@@ -186,12 +200,14 @@ export const QuestsView: React.FC = () => {
           { id: 'habits', label: 'Habits Forge', icon: '🔥' },
         ].map((f) => (
           <button
+              type="button"
             key={f.id}
+            aria-pressed={activeFilter === f.id}
             onClick={() => {
               soundEngine.playClick();
               setActiveFilter(f.id as typeof activeFilter);
             }}
-            className={`px-3.5 py-2 rounded-2xl font-['Feather_Bold'] text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-2xl font-['Feather_Bold'] text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap touch-target ${
               activeFilter === f.id
                 ? 'bg-[var(--dark-blue)] text-white shadow-xs'
                 : 'bg-[#f7f7f7] text-[var(--gray-text)] hover:bg-[#ececec]'
@@ -206,17 +222,26 @@ export const QuestsView: React.FC = () => {
       {/* Search & Tag Filter Bar */}
       {activeFilter !== 'habits' && (
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="🔍 Search missions by keyword..."
-            className="w-full sm:w-72 px-4 py-2 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-xs text-[var(--dark-blue)]"
-          />
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0">
+          <div className="relative flex-1 w-full sm:w-72">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-light)] text-xs">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 Search missions by keyword..."
+              autoComplete="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              aria-label="Search missions by keyword"
+              className="w-full pl-8 pr-4 py-2.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-xs text-[var(--dark-blue)] touch-target"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0 -mx-4 px-4">
             <button
+              type="button"
+              aria-pressed={selectedTag === 'all'}
               onClick={() => setSelectedTag('all')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer touch-target ${
                 selectedTag === 'all'
                   ? 'bg-[var(--blue)] text-white'
                   : 'bg-[#f0f0f0] text-[var(--gray-text)] hover:bg-[#e5e5e5]'
@@ -226,9 +251,11 @@ export const QuestsView: React.FC = () => {
             </button>
             {tags.map((t) => (
               <button
+              type="button"
                 key={t}
+                aria-pressed={selectedTag === t}
                 onClick={() => setSelectedTag(t)}
-                className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer touch-target ${
                   selectedTag === t
                     ? 'bg-[var(--blue)] text-white'
                     : 'bg-[#f0f0f0] text-[var(--gray-text)] hover:bg-[#e5e5e5]'
@@ -244,7 +271,7 @@ export const QuestsView: React.FC = () => {
       {/* Quests Section */}
       {activeFilter !== 'habits' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-['Feather_Bold'] text-lg text-[var(--dark-blue)]">
               ACTIVE MISSIONS ({filteredQuests.filter((q) => !q.isCompleted).length})
             </h2>
@@ -272,11 +299,12 @@ export const QuestsView: React.FC = () => {
                     {/* Left: Checkbox + Quest info */}
                     <div className="flex items-start gap-3.5 flex-1 min-w-0">
                       <button
+              type="button"
                         onClick={() => {
                           soundEngine.playClick();
                           completeQuest(quest.id);
                         }}
-                        className={`w-7 h-7 rounded-xl border-2 flex items-center justify-center font-black text-sm transition-all cursor-pointer shrink-0 mt-0.5 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl border-2 flex items-center justify-center font-black text-sm transition-all cursor-pointer shrink-0 mt-0.5 touch-target ${
                           isDone
                             ? 'bg-[var(--green)] border-[var(--green-shadow)] text-white shadow-xs'
                             : 'bg-white border-[#d9d9d9] hover:border-[var(--green)] text-transparent'
@@ -289,7 +317,7 @@ export const QuestsView: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <span
-                            className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md ${
+                            className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md shrink-0 ${
                               quest.category === 'daily'
                                 ? 'bg-[#eef8ff] text-[var(--blue)]'
                                 : quest.category === 'bounty'
@@ -299,41 +327,43 @@ export const QuestsView: React.FC = () => {
                           >
                             {quest.category}
                           </span>
-                          <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-[#f0f0f0] text-[var(--gray-text)]">
+                          <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-[#f0f0f0] text-[var(--gray-text)] shrink-0">
                             {quest.tag}
                           </span>
                           {quest.estimatedMinutes && (
-                            <span className="text-[11px] font-bold text-[var(--gray-light)]">
+                            <span className="text-[11px] font-bold text-[var(--gray-light)] shrink-0">
                               ⏱️ {quest.estimatedMinutes}m
                             </span>
                           )}
                         </div>
 
                         {isEditing ? (
-                          <div className="space-y-2 mt-1">
+                          <div className="space-y-2 mt-1 w-full">
                             <input
                               value={editQuestTitle}
                               onChange={(e) => setEditQuestTitle(e.target.value)}
-                              className="w-full px-3 py-2 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)]"
+                              className="w-full px-3 py-2.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] touch-target"
                               placeholder="Mission title"
                               autoFocus
                             />
                             <input
                               value={editQuestDesc}
                               onChange={(e) => setEditQuestDesc(e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-semibold text-xs text-[var(--gray-text)]"
+                              className="w-full px-3 py-2 rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden font-semibold text-xs text-[var(--gray-text)] touch-target"
                               placeholder="Description (optional)"
                             />
                             <div className="flex items-center gap-2">
                               <button
+              type="button"
                                 onClick={saveEditQuest}
-                                className="px-3 py-1 rounded-xl bg-[var(--green)] text-white text-xs font-black uppercase border-b-2 border-[var(--green-shadow)] cursor-pointer"
+                                className="px-3 py-1.5 rounded-xl bg-[var(--green)] text-white text-xs font-black uppercase border-b-2 border-[var(--green-shadow)] cursor-pointer touch-target"
                               >
                                 Save
                               </button>
                               <button
+              type="button"
                                 onClick={() => setEditingQuestId(null)}
-                                className="px-3 py-1 rounded-xl bg-[#f0f0f0] text-[var(--gray-text)] text-xs font-bold cursor-pointer"
+                                className="px-3 py-1.5 rounded-xl bg-[#f0f0f0] text-[var(--gray-text)] text-xs font-bold cursor-pointer touch-target"
                               >
                                 Cancel
                               </button>
@@ -342,7 +372,8 @@ export const QuestsView: React.FC = () => {
                         ) : (
                           <>
                             <h3
-                              className={`font-['Feather_Bold'] text-base text-[var(--dark-blue)] leading-snug ${
+                              title={quest.title}
+                              className={`font-['Feather_Bold'] text-base text-[var(--dark-blue)] leading-snug truncate ${
                                 isDone ? 'line-through text-[var(--gray-light)]' : ''
                               }`}
                             >
@@ -359,21 +390,22 @@ export const QuestsView: React.FC = () => {
                     </div>
 
                     {/* Right: Rewards & Actions */}
-                    <div className="flex items-center gap-2 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0f0f0]">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 rounded-xl bg-[#eef8ff] text-[var(--blue)] text-xs font-black">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0f0f0]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-1 rounded-xl bg-[#eef8ff] text-[var(--blue)] text-xs font-black shrink-0">
                           +{quest.xpReward} XP
                         </span>
-                        <span className="px-2 py-1 rounded-xl bg-[#fffbe6] text-[#d48806] text-xs font-black">
+                        <span className="px-2 py-1 rounded-xl bg-[#fffbe6] text-[#d48806] text-xs font-black shrink-0">
                           +{quest.coinsReward} 🟡
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-1.5 justify-end w-full sm:w-auto">
                         {!isDone && !isEditing && (
                           <button
+              type="button"
                             onClick={() => handleLaunchFocus(quest.id, quest.title, quest.estimatedMinutes || 25)}
-                            className="px-3 py-1.5 rounded-xl bg-[var(--orange)] hover:bg-[#e08500] text-white text-xs font-black uppercase border-b-3 border-[#c77700] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer shadow-xs whitespace-nowrap flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-xl bg-[var(--orange)] hover:bg-[#e08500] text-white text-xs font-black uppercase border-b-3 border-[#c77700] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer shadow-xs whitespace-nowrap flex items-center gap-1 touch-target"
                             title="Fight Procrastination Boss with this Quest"
                           >
                             <span>⚔️ FOCUS</span>
@@ -381,16 +413,18 @@ export const QuestsView: React.FC = () => {
                         )}
                         {!isEditing && (
                           <button
+              type="button"
                             onClick={() => startEditQuest(quest.id, quest.title, quest.description)}
-                            className="w-8 h-8 rounded-xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--blue)] hover:text-[var(--blue)] flex items-center justify-center text-xs transition-colors cursor-pointer"
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--blue)] hover:text-[var(--blue)] flex items-center justify-center text-xs transition-colors cursor-pointer touch-target"
                             title="Edit Quest"
                           >
                             ✎
                           </button>
                         )}
                         <button
+              type="button"
                           onClick={() => handleDelete(quest.id, 'quest')}
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition-colors cursor-pointer border-2 ${
+                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-colors cursor-pointer border-2 touch-target ${
                             confirmDeleteId === quest.id && confirmDeleteType === 'quest'
                               ? 'bg-[var(--red)] border-[var(--red)] text-white animate-pulse'
                               : 'bg-white border-[#e5e5e5] text-[var(--gray-light)] hover:text-[var(--red)] hover:bg-[#ffeef0] hover:border-[#ffc9cc]'
@@ -412,38 +446,39 @@ export const QuestsView: React.FC = () => {
       {/* Habit Forge Section */}
       {(activeFilter === 'all' || activeFilter === 'habits') && (
         <div className="space-y-4 pt-4">
-          <div className="flex items-center justify-between border-t-2 border-[#e5e5e5] pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t-2 border-[#e5e5e5] pt-6 gap-3">
             <div>
               <h2 className="font-['Feather_Bold'] text-xl text-[var(--dark-blue)] flex items-center gap-2">
                 <span>🔥</span> HABIT FORGE STREAKS
               </h2>
               <p className="text-xs font-bold text-[var(--gray-light)]">Streak milestones unlock bonus XP and coin yields!</p>
             </div>
-            <span className="text-xs font-black uppercase px-2.5 py-1 rounded-full bg-[#fff5ea] text-[var(--orange)] border border-[#ffd6a5]">
+            <span className="text-xs font-black uppercase px-2.5 py-1 rounded-full bg-[#fff5ea] text-[var(--orange)] border border-[#ffd6a5] shrink-0">
               {habits.length} Active Habits
             </span>
           </div>
 
           {habits.length === 0 ? (
-            <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-8 text-center">
-              <div className="mx-auto w-20 h-20 rounded-3xl bg-[#fff5ea] border-2 border-[#ffd6a5] flex items-center justify-center text-4xl mb-3">🌱</div>
-              <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">No habits forged yet</h3>
+            <div className="bg-white rounded-3xl border-2 border-dashed border-[#d9d9d9] p-6 sm:p-8 text-center">
+              <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#fff5ea] border-2 border-[#ffd6a5] flex items-center justify-center text-3xl sm:text-4xl mb-3">🌱</div>
+              <h3 className="font-['Feather_Bold'] text-base sm:text-lg text-[var(--dark-blue)]">No habits forged yet</h3>
               <p className="text-xs font-bold text-[var(--gray-light)] mt-1">Forge daily rituals to build unbreakable streaks and earn multipliers.</p>
               <button
+              type="button"
                 onClick={() => {
                   soundEngine.playClick();
                   setModalDefaultTab('habit');
                   setIsModalOpen(true);
                 }}
-                className="mt-4 px-4 py-2 rounded-2xl bg-[var(--orange)] text-white font-black text-xs uppercase border-b-4 border-[#c77700] active:translate-y-0.5 active:border-b-0 cursor-pointer"
+                className="mt-4 px-4 py-2 rounded-2xl bg-[var(--orange)] text-white font-black text-xs uppercase border-b-4 border-[#c77700] active:translate-y-0.5 active:border-b-0 cursor-pointer touch-target"
               >
                 + Forge First Habit
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {habits.map((habit) => {
-                const isCheckedInToday = habit.lastCompletedDate === todayStr;
+                const isCheckedInToday = (habit.completedDates || []).includes(todayStr);
                 const nextMilestone =
                   habit.streakCount < 3 ? 3 : habit.streakCount < 7 ? 7 : habit.streakCount < 14 ? 14 : habit.streakCount < 21 ? 21 : 30;
                 const milestonePercent = Math.min(100, Math.round((habit.streakCount / nextMilestone) * 100));
@@ -458,45 +493,51 @@ export const QuestsView: React.FC = () => {
                     <div>
                       {/* Top: Icon & Category */}
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-3xl">{habit.icon || '🔥'}</span>
-                          <div>
-                            <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-[#fff5ea] text-[var(--orange)]">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-2xl sm:text-3xl shrink-0">{habit.icon || '🔥'}</span>
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-[#fff5ea] text-[var(--orange)] shrink-0">
                               {habit.category}
                             </span>
                             {isEditingHabit ? (
-                              <div className="flex items-center gap-1 mt-1">
+                              <div className="flex items-center gap-1 mt-1 flex-wrap">
                                 <input
                                   value={editHabitTitle}
                                   onChange={(e) => setEditHabitTitle(e.target.value)}
-                                  className="px-2 py-1 rounded-xl border-2 border-[#e5e5e5] focus:border-[var(--orange)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] w-36"
+                                  className="px-2 py-1.5 rounded-xl border-2 border-[#e5e5e5] focus:border-[var(--orange)] focus:outline-hidden font-bold text-sm text-[var(--dark-blue)] w-48 sm:w-56 touch-target"
                                   autoFocus
                                 />
-                                <button onClick={saveEditHabit} className="px-2 py-1 rounded-lg bg-[var(--green)] text-white text-[11px] font-black cursor-pointer">
+                                <button
+              onClick={saveEditHabit} className="px-2 py-1.5 rounded-lg bg-[var(--green)] text-white text-[11px] font-black cursor-pointer touch-target"
+                                >
                                   Save
                                 </button>
-                                <button onClick={() => setEditingHabitId(null)} className="px-2 py-1 rounded-lg bg-[#f0f0f0] text-xs cursor-pointer">
+                                <button
+              onClick={() => setEditingHabitId(null)} className="px-2 py-1.5 rounded-lg bg-[#f0f0f0] text-xs cursor-pointer touch-target"
+                                >
                                   ✕
                                 </button>
                               </div>
                             ) : (
-                              <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)] mt-0.5 leading-tight">{habit.title}</h3>
+                              <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)] mt-0.5 leading-tight truncate">{habit.title}</h3>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
                           {!isEditingHabit && (
                             <button
+              type="button"
                               onClick={() => startEditHabit(habit.id, habit.title)}
-                              className="w-7 h-7 rounded-lg bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--orange)] hover:text-[var(--orange)] flex items-center justify-center text-xs transition-colors cursor-pointer"
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#f7f7f7] border-2 border-[#e5e5e5] text-[var(--gray-text)] hover:border-[var(--orange)] hover:text-[var(--orange)] flex items-center justify-center text-xs transition-colors cursor-pointer touch-target"
                               title="Edit Habit"
                             >
                               ✎
                             </button>
                           )}
                           <button
+              type="button"
                             onClick={() => handleDelete(habit.id, 'habit')}
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs transition-colors cursor-pointer border-2 ${
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs transition-colors cursor-pointer border-2 touch-target ${
                               confirmDeleteId === habit.id && confirmDeleteType === 'habit'
                                 ? 'bg-[var(--red)] border-[var(--red)] text-white'
                                 : 'bg-white border-[#e5e5e5] text-[var(--gray-light)] hover:text-[var(--red)] hover:bg-[#ffeef0]'
@@ -509,9 +550,9 @@ export const QuestsView: React.FC = () => {
                       </div>
 
                       {/* Inline habit streak steps */}
-                      <div className="flex items-center gap-1.5 mt-3">
+                      <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 -mx-2 px-2">
                         {steps.map((s) => (
-                          <div key={s.milestone} className="flex-1 flex flex-col items-center gap-1">
+                          <div key={s.milestone} className="flex-1 flex flex-col items-center gap-1 shrink-0 w-16">
                             <div
                               className={`w-full h-2.5 rounded-full border-2 transition-all ${
                                 s.reached
@@ -534,14 +575,14 @@ export const QuestsView: React.FC = () => {
                       </div>
 
                       {/* 7-day dot strip */}
-                      <div className="flex items-center gap-1 mt-2">
+                      <div className="flex items-center gap-1 mt-2 overflow-x-auto pb-1 -mx-2 px-2">
                         {Array.from({ length: 7 }).map((_, i) => {
                           const filled = i < Math.min(7, habit.streakCount % 7 === 0 && habit.streakCount > 0 ? 7 : habit.streakCount % 7);
                           const isToday = i === 0 && isCheckedInToday;
                           return (
                             <div
                               key={i}
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all ${
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all shrink-0 ${
                                 filled || isToday
                                   ? 'bg-[var(--orange)] border-[#c77700] text-white shadow-xs'
                                   : 'bg-white border-[#e5e5e5] text-transparent'
@@ -552,7 +593,7 @@ export const QuestsView: React.FC = () => {
                             </div>
                           );
                         })}
-                        <span className="ml-2 text-[11px] font-bold text-[var(--gray-light)]">{habit.streakCount} total</span>
+                        <span className="ml-2 text-[11px] font-bold text-[var(--gray-light)] shrink-0">{habit.streakCount} total</span>
                       </div>
 
                       {/* Streak stats & Milestone Bar */}
@@ -574,18 +615,19 @@ export const QuestsView: React.FC = () => {
                     </div>
 
                     {/* Bottom: Yields & Check-in Button */}
-                    <div className="flex items-center justify-between gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                       <div className="flex items-center gap-2 text-xs font-bold">
                         <span className="text-[var(--blue)]">+{habit.xpYield} XP</span>
                         <span className="text-[#d48806]">+{habit.coinYield} 🟡</span>
                       </div>
                       <button
+              type="button"
                         onClick={() => {
                           soundEngine.playClick();
                           checkInHabit(habit.id);
                         }}
                         disabled={isCheckedInToday}
-                        className={`px-4 py-2 rounded-2xl font-['Feather_Bold'] text-xs font-black uppercase transition-all cursor-pointer ${
+                        className={`px-4 py-2.5 rounded-2xl font-['Feather_Bold'] text-xs font-black uppercase transition-all cursor-pointer w-full sm:w-auto touch-target ${
                           isCheckedInToday
                             ? 'bg-[#f0f0f0] text-[var(--gray-light)] cursor-not-allowed border-2 border-transparent'
                             : 'bg-[var(--green)] hover:bg-[var(--green-hover)] text-white border-b-3 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 shadow-xs'

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
 
 interface DailySummaryModalProps {
@@ -49,68 +50,69 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
     };
   }, [quests, habits, transactions, todayStr]);
 
+  const panelRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
   if (!isOpen) return null;
 
   const completionPct =
     quests.length > 0 ? Math.round((stats.completedCount / Math.max(1, quests.filter((q) => q.category === 'daily').length)) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl border-2 border-[#e5e5e5] shadow-2xl overflow-hidden animate-scaleUp">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Daily Summary" className="relative w-full max-w-lg max-h-[90vh] sm:max-h-[80vh] bg-white rounded-3xl border-2 border-[#e5e5e5] shadow-2xl overflow-hidden animate-scaleUp modal-mobile-full" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-[var(--dark-blue)] to-[#1a237e] p-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[var(--dark-blue)] to-[#1a237e] p-5 sm:p-6 text-white relative overflow-hidden">
           <div className="absolute -right-6 -top-6 text-7xl opacity-10 pointer-events-none">📊</div>
           <div className="relative z-10">
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/60 mb-1">
               {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
-            <h2 className="font-['Feather_Bold'] text-2xl tracking-wide">DAILY SUMMARY</h2>
-            <p className="text-sm font-bold text-white/80 mt-1">Today&apos;s progress at a glance</p>
+            <h2 className="font-['Feather_Bold'] text-xl sm:text-2xl tracking-wide">DAILY SUMMARY</h2>
+            <p className="text-sm font-bold text-white/80 mt-1">Today's progress at a glance</p>
           </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center font-black transition-colors"
+            className="absolute top-3 right-3 w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center font-black transition-colors touch-target"
             aria-label="Close"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-5 max-h-[65vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 md:p-6 space-y-5 max-h-[65vh] overflow-y-auto">
           {/* Hero stats row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div className="rounded-2xl bg-[#eef8ff] border-2 border-[#b9e5fb] p-3 text-center">
               <span className="text-xl block">✅</span>
-              <span className="font-['Feather_Bold'] text-xl font-black text-[var(--blue)] block">{stats.completedCount}</span>
-              <span className="text-[11px] font-extrabold uppercase text-[var(--gray-light)]">Quests done</span>
+              <span className="font-['Feather_Bold'] text-lg sm:text-xl font-black text-[var(--blue)] block">{stats.completedCount}</span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[var(--gray-light)]">Quests done</span>
             </div>
             <div className="rounded-2xl bg-[#fffbe6] border-2 border-[#ffe58f] p-3 text-center">
               <span className="text-xl block">⚡</span>
-              <span className="font-['Feather_Bold'] text-xl font-black text-[#d48806] block">+{stats.xpEarnedToday}</span>
-              <span className="text-[11px] font-extrabold uppercase text-[var(--gray-light)]">XP earned</span>
+              <span className="font-['Feather_Bold'] text-lg sm:text-xl font-black text-[#d48806] block">+{stats.xpEarnedToday}</span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[var(--gray-light)]">XP earned</span>
             </div>
             <div className="rounded-2xl bg-[#fff5ea] border-2 border-[#ffd6a5] p-3 text-center">
               <span className="text-xl block">🔥</span>
-              <span className="font-['Feather_Bold'] text-xl font-black text-[var(--orange)] block">
+              <span className="font-['Feather_Bold'] text-lg sm:text-xl font-black text-[var(--orange)] block">
                 {stats.habitsDoneToday}/{stats.habitsTotal}
               </span>
-              <span className="text-[11px] font-extrabold uppercase text-[var(--gray-light)]">Habits</span>
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase text-[var(--gray-light)]">Habits</span>
             </div>
           </div>
 
           {/* XP + coins rows */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-3.5 flex items-center justify-between">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-3 sm:p-3.5 flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-widest text-[var(--gray-light)]">Coins</div>
-                <div className="font-['Feather_Bold'] text-lg font-black text-[#d48806]">{stats.coinsDeltaToday >= 0 ? '+' : ''}{stats.coinsDeltaToday} 🟡</div>
+                <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-[var(--gray-light)]">Coins</div>
+                <div className="font-['Feather_Bold'] text-base sm:text-lg font-black text-[#d48806]">{stats.coinsDeltaToday >= 0 ? '+' : ''}{stats.coinsDeltaToday} 🟡</div>
               </div>
               <span className="text-2xl opacity-60">🪙</span>
             </div>
-            <div className="rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-3.5 flex items-center justify-between">
+            <div className="rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-3 sm:p-3.5 flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-widest text-[var(--gray-light)]">Gems</div>
-                <div className="font-['Feather_Bold'] text-lg font-black text-[#db2777]">{stats.gemsDeltaToday >= 0 ? '+' : ''}{stats.gemsDeltaToday} 💎</div>
+                <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-[var(--gray-light)]">Gems</div>
+                <div className="font-['Feather_Bold'] text-base sm:text-lg font-black text-[#db2777]">{stats.gemsDeltaToday >= 0 ? '+' : ''}{stats.gemsDeltaToday} 💎</div>
               </div>
               <span className="text-2xl opacity-60">💎</span>
             </div>
@@ -128,9 +130,9 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
                 style={{ width: `${Math.min(100, Math.max(0, completionPct))}%` }}
               />
             </div>
-            <div className="flex items-center justify-between mt-3 text-xs font-bold">
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-3 text-xs font-bold gap-2">
               <span className="text-[var(--gray-light)]">Level {profile.level} • {profile.xp}/{profile.xpToNextLevel} XP</span>
-              <span className="px-2.5 py-1 rounded-full bg-[#fff5ea] border border-[#ffd6a5] text-[var(--orange)] font-black">
+              <span className="px-2.5 py-1 rounded-full bg-[#fff5ea] border border-[#ffd6a5] text-[var(--orange)] font-black shrink-0">
                 🔥 {profile.streakDays} day streak
               </span>
             </div>
@@ -163,7 +165,7 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
 
           {/* Recent transactions */}
           <div>
-            <div className="section-label-light">Today&apos;s ledger (latest)</div>
+            <div className="section-label-light">Today's ledger (latest)</div>
             {stats.txToday.length === 0 ? (
               <p className="text-xs font-semibold text-[var(--gray-light)] rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-4 text-center">
                 No transactions today. Earn or spend to populate your ledger.
@@ -178,7 +180,7 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
                         {new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {t.currency} • {t.type}
                       </div>
                     </div>
-                    <span className={`text-sm font-black ${t.type === 'earn' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                    <span className={`text-sm font-black ${t.type === 'earn' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`} shrink-0>
                       {t.type === 'earn' ? '+' : '-'}{t.amount}
                     </span>
                   </div>
@@ -188,16 +190,16 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 border-t-2 border-[#e5e5e5] bg-[#fafafa] flex gap-3">
+        <div className="p-3 sm:p-4 md:p-5 border-t-2 border-[#e5e5e5] bg-[#fafafa] flex flex-col sm:flex-row gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-12 bg-white border-2 border-[#e5e5e5] hover:border-[#d9d9d9] text-[var(--dark-blue)] font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl transition-colors"
+            className="h-12 bg-white border-2 border-[#e5e5e5] hover:border-[#d9d9d9] text-[var(--dark-blue)] font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl transition-colors touch-target"
           >
             Close
           </button>
           <button
             onClick={onClose}
-            className="flex-1 h-12 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 transition-all shadow-md"
+            className="h-12 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-0.5 active:border-b-0 transition-all shadow-md touch-target"
           >
             Keep pushing →
           </button>

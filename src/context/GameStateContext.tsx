@@ -12,7 +12,7 @@ import {
   FocusSessionState,
   ClaimModalData,
 } from '../types';
-import { StorageService } from '../services/storage';
+import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
 
@@ -136,6 +136,47 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => { StorageService.setTransactions(transactions); }, [transactions]);
   useEffect(() => { StorageService.setFocusState(focusSession); }, [focusSession]);
 
+  // Multi-tab sync: listen for storage events from other tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || !Object.values(STORAGE_KEYS).includes(e.key)) return;
+      try {
+        if (e.newValue === null) return; // cleared elsewhere, ignore
+        const data = JSON.parse(e.newValue);
+        switch (e.key) {
+          case STORAGE_KEYS.PROFILE:
+            setProfile(data);
+            break;
+          case STORAGE_KEYS.QUESTS:
+            setQuests(data);
+            break;
+          case STORAGE_KEYS.HABITS:
+            setHabits(data);
+            break;
+          case STORAGE_KEYS.CHESTS:
+            setChests(data);
+            break;
+          case STORAGE_KEYS.REWARDS:
+            setRewards(data);
+            break;
+          case STORAGE_KEYS.ACHIEVEMENTS:
+            setAchievements(data);
+            break;
+          case STORAGE_KEYS.TRANSACTIONS:
+            setTransactions(data);
+            break;
+          case STORAGE_KEYS.FOCUS:
+            setFocusSession(data);
+            break;
+        }
+      } catch {
+        // ignore malformed JSON
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   // Sync sound engine state
   useEffect(() => {
     soundEngine.isMuted = !profile.soundEnabled;
@@ -188,11 +229,15 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, []);
 
+  // Refs for achievement evaluator to avoid infinite loops
+  const addXpRef = useRef(addXp);
+  addXpRef.current = addXp;
+
   const addCoins = useCallback((amount: number, reason: string) => {
     setProfile(p => ({ ...p, coins: p.coins + amount }));
     setTransactions(t => [
       {
-        id: `tx-${Date.now()}-${Math.random()}`,
+        id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         timestamp: Date.now(),
         amount,
         currency: 'coins',
@@ -204,11 +249,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (amount > 0) soundEngine.playCoinCollect();
   }, []);
 
+  const addCoinsRef = useRef(addCoins);
+  addCoinsRef.current = addCoins;
+
   const addGems = useCallback((amount: number, reason: string) => {
     setProfile(p => ({ ...p, gems: p.gems + amount }));
     setTransactions(t => [
       {
-        id: `tx-${Date.now()}-${Math.random()}`,
+        id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         timestamp: Date.now(),
         amount,
         currency: 'gems',
@@ -219,6 +267,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     ]);
     if (amount > 0) soundEngine.playSuccess();
   }, []);
+
+  const addGemsRef = useRef(addGems);
+  addGemsRef.current = addGems;
 
   // Achievement auto-evaluator — watches profile + habits, auto-unlocks matching entries once
   useEffect(() => {
@@ -268,9 +319,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     toUnlock.forEach(ach => {
       const prog = getProgress(ach);
       // keep currentValue consistent even before state flush
-      if (ach.rewards.xp) addXp(ach.rewards.xp);
-      if (ach.rewards.coins) addCoins(ach.rewards.coins, `Achievement: ${ach.title}`);
-      if (ach.rewards.gems) addGems(ach.rewards.gems, `Achievement: ${ach.title}`);
+      if (ach.rewards.xp) addXpRef.current(ach.rewards.xp);
+      if (ach.rewards.coins) addCoinsRef.current(ach.rewards.coins, `Achievement: ${ach.title}`);
+      if (ach.rewards.gems) addGemsRef.current(ach.rewards.gems, `Achievement: ${ach.title}`);
       openClaimModal({
         title: ach.title,
         subtitle: 'ACHIEVEMENT UNLOCKED',
@@ -283,7 +334,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // ensure visible currentValue sync even if async
       void prog;
     });
-  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, addXp, addCoins, addGems, openClaimModal]);
+  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, openClaimModal]);
 
   // Keep achievement currentValue synced even when not unlocking (e.g., progress bar UI)
   useEffect(() => {
@@ -307,7 +358,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits]);
 
   // Quest Actions
-  const completeQuest = (questId: string) => {
+  const completeQuest = useCallback((questId: string) => {
     const quest = quests.find(q => q.id === questId);
     if (!quest || quest.isCompleted) return;
 
@@ -327,7 +378,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       coins: quest.coinsReward,
       icon: '🎯',
     });
-  };
+  }, [quests, addXp, addCoins, openClaimModal]);
 
   const createQuest = (data: Omit<Quest, 'id' | 'isCompleted'>) => {
     const newQuest: Quest = {
@@ -352,13 +403,23 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const checkInHabit = (habitId: string) => {
     const today = new Date().toISOString().split('T')[0];
     const habit = habits.find(h => h.id === habitId);
-    if (!habit || habit.lastCompletedDate === today) return;
+    if (!habit) return;
 
-    const newStreak = habit.streakCount + 1;
+    // Check if already completed today
+    const completedDates = habit.completedDates || [];
+    if (completedDates.includes(today)) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const newCompletedDates = [...completedDates, today];
+    const wasConsecutive = completedDates.includes(yesterdayStr);
+    const newStreak = wasConsecutive ? habit.streakCount + 1 : 1;
     const bestStreak = Math.max(newStreak, habit.bestStreak);
 
     setHabits(prev =>
-      prev.map(h => (h.id === habitId ? { ...h, streakCount: newStreak, bestStreak, lastCompletedDate: today } : h))
+      prev.map(h => (h.id === habitId ? { ...h, streakCount: newStreak, bestStreak, lastCompletedDate: today, completedDates: newCompletedDates } : h))
     );
 
     // Multiplier for streak milestones
@@ -384,12 +445,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  const createHabit = (data: Omit<Habit, 'id' | 'streakCount' | 'bestStreak'>) => {
+  const createHabit = (data: Omit<Habit, 'id' | 'streakCount' | 'bestStreak' | 'completedDates'>) => {
     const newHabit: Habit = {
       ...data,
       id: `h-${Date.now()}`,
       streakCount: 0,
       bestStreak: 0,
+      completedDates: [],
     };
     setHabits(prev => [...prev, newHabit]);
     soundEngine.playClick();
@@ -496,8 +558,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Cleanup chest auto-fill timeouts on unmount
   useEffect(() => {
+    const timeouts = chestTimeoutRefs.current;
     return () => {
-      chestTimeoutRefs.current.forEach(clearTimeout);
+      timeouts.forEach(clearTimeout);
     };
   }, []);
 
@@ -661,7 +724,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return { ...prev, isActive: false, isPaused: false, remainingSeconds: 0 };
     });
-  }, [addXp, addCoins, openClaimModal]);
+  }, [addXp, addCoins, openClaimModal, completeQuest]);
 
   // Keep ref in sync for interval closure
   useEffect(() => {
@@ -684,7 +747,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  // Focus Timer countdown tick — leak-free with cleanup + Page Visibility handling
+  // Focus Timer countdown tick — consolidated single effect with visibility handling
   useEffect(() => {
     // Clear any existing interval before (re)starting
     if (focusIntervalRef.current) {
@@ -692,36 +755,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       focusIntervalRef.current = null;
     }
 
-    if (!focusSession.isActive || focusSession.isPaused) return;
+    if (!focusSession.isActive || focusSession.isPaused) {
+      soundEngine.stopSoundscape();
+      return;
+    }
 
-    // Visibility handler: pause tick while hidden, resume when visible without losing time
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (focusIntervalRef.current) {
-          clearInterval(focusIntervalRef.current);
-          focusIntervalRef.current = null;
-        }
-      } else {
-        // re-arm interval if still active and not paused
-        if (!focusIntervalRef.current && focusSession.isActive && !focusSession.isPaused) {
-          focusIntervalRef.current = setInterval(() => {
-            setFocusSession(prev => {
-              if (!prev.isActive || prev.isPaused) return prev;
-              if (prev.remainingSeconds <= 1) {
-                // use ref to avoid stale closure leak
-                completeFocusSessionRef.current();
-                return prev;
-              }
-              return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
-            });
-          }, 1000);
-        }
-      }
-    };
+    // Start soundscape when session becomes active
+    soundEngine.startSoundscape(focusSession.soundscapeTrack);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    focusIntervalRef.current = setInterval(() => {
+    // Single interval handler
+    const tick = () => {
       setFocusSession(prev => {
         if (!prev.isActive || prev.isPaused) return prev;
         if (prev.remainingSeconds <= 1) {
@@ -730,7 +773,28 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
       });
-    }, 1000);
+    };
+
+    focusIntervalRef.current = setInterval(tick, 1000);
+
+    // Visibility handler: pause tick while hidden, resume when visible without losing time
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (focusIntervalRef.current) {
+          clearInterval(focusIntervalRef.current);
+          focusIntervalRef.current = null;
+        }
+        soundEngine.stopSoundscape();
+      } else {
+        // re-arm interval if still active and not paused
+        if (!focusIntervalRef.current && focusSession.isActive && !focusSession.isPaused) {
+          soundEngine.startSoundscape(focusSession.soundscapeTrack);
+          focusIntervalRef.current = setInterval(tick, 1000);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -738,8 +802,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         clearInterval(focusIntervalRef.current);
         focusIntervalRef.current = null;
       }
+      soundEngine.stopSoundscape();
     };
-  }, [focusSession.isActive, focusSession.isPaused]);
+  }, [focusSession.isActive, focusSession.isPaused, focusSession.soundscapeTrack]);
 
   // Ensure complete teardown on unmount
   useEffect(() => {

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 
+type LangId = 'es' | 'fr' | 'de' | 'ja';
+
 export const DarkThemeComponentsPanel: React.FC = () => {
-  const [activeLanguage, setActiveLanguage] = useState<'es' | 'fr' | 'de' | 'ja'>('es');
+  const [activeLanguage, setActiveLanguage] = useState<LangId>('es');
 
   return (
     <section className="duo-panel duo-panel-even bg-[var(--dark-blue)]">
@@ -40,7 +42,7 @@ export const DarkThemeComponentsPanel: React.FC = () => {
               return (
                 <button
                   key={lang.id}
-                  onClick={() => setActiveLanguage(lang.id as any)}
+                  onClick={() => setActiveLanguage(lang.id as LangId)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] border-2 cursor-pointer transition-all duration-150 ${
                     isActive
                       ? 'border-[var(--green)] bg-[rgba(88,204,2,0.08)] text-white shadow-sm'

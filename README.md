@@ -30,10 +30,12 @@ Auctus is a browser-based **gamified productivity RPG** that turns real-world wo
 
 ```bash
 npm install
-npm run dev
+npm run dev    # http://localhost:5173
+npm run lint
+npm run type-check
+npm test       # 32 tests
+npm run build  # tsc + vite, code-split Citadel/Analytics
 ```
-
-The development server runs on `http://localhost:5173` by default.
 
 ## Verification
 
@@ -45,6 +47,16 @@ npm run build
 ```
 
 `npm test` runs the Vitest suite once. `npm run build` performs TypeScript checking before the production Vite build.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|-----|--------|
+| `?` | Toggle help overlay (when not typing) |
+| `Esc` | Close palette / help / onboarding |
+| `Ctrl+K` / `Cmd+K` | Command palette (jump to tab or forge quest/habit/focus) |
+
+All shortcuts are guarded to avoid firing while typing in inputs/textareas.
 
 ## Data and privacy
 
@@ -81,3 +93,48 @@ git switch upgrade
 ```
 
 Do not merge, rebase, reset, force-push, or otherwise modify `main` as part of upgrade work.
+
+## Upgrade changelog (since `2ca8d29`)
+
+- Focus traps + `Esc`/overlay close on all modals (forge, vault, onboarding, reward, daily summary) + skip-link + `aria-current` nav + `progressbar`/`timer` live regions
+- Inline validation (forge modals) replacing `alert()`, file-based backup import, clipboard fallback to download
+- Route-level code splitting: Citadel + Analytics lazy (~46k split, main 273k)
+- Debounced search + `button type="button"` safety + label `htmlFor` + `aria-label` on ledger/import
+- Storage emoji fix (?? → 🎮🏆), vault a11y, analytics empty-state copy, header semantic button
+- Tooling: eslint + vitest + deduped suites (32 tests), type/lint/build green
+
+## Data flow
+
+`GameStateContext` is single source of truth → `StorageService` (`auctus_duo_*` + `version:2.0`) syncs on every state slice via `useEffect`. `validateImportJson` guards restores before `importBackup`. Focus timer uses `focusIntervalRef` + `completeFocusSessionRef` to avoid stale closures. `useKeyboardShortcuts` is global (`?`/`Esc`/`Ctrl+K`).
+
+## Testing
+
+- `src/utils/__tests__/validators.test.ts` — `isNonEmpty` / `isCostValid` / `clamp` / `sanitize`
+- `src/services/__tests__/storage.test.ts` — `loadFromStorage`/`saveToStorage` roundtrip, corrupt JSON, quota errors, backup version 2.0
+- `src/hooks/useKeyboardShortcuts.test.ts` — help/palette/escape with typing guard
+
+## Performance
+
+- Route-level code splitting: `CitadelView` (21k) + `AnalyticsDashboard` (26k) lazy — main bundle ~276k gzip 80k
+- Debounced quest search (200ms) + `useMemo` for filtered lists
+- `focus-visible` ring + `prefers-reduced-motion` support
+
+## Deployment
+
+```bash
+npm run build    # outputs to dist/
+npm run preview  # serves dist on :4173 for smoke check
+```
+
+`dist/` is static — deploy to Vercel/Netlify/Cloudflare Pages. No env vars, no backend. Ensure `_headers` or `vercel.json` caches `assets/*` immutable if needed.
+
+## Troubleshooting
+
+- **Clipboard blocked:** Export falls back to file download (`auctus-backup-YYYY-MM-DD.json`).
+- **Quota exceeded:** `saveToStorage` is quota-safe; failed writes are ignored, previous save remains. Consider exporting and clearing old data.
+- **Import rejected:** Malformed JSON or missing `profile/quests` keys shows inline error; existing save is untouched.
+
+
+
+
+
