@@ -23,6 +23,28 @@ class AudioSynthesizer {
   public isMuted: boolean = false;
   private masterVolume: number = 0.8;
 
+  constructor() {
+    this.loadPreferences();
+  }
+
+  public loadPreferences(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('auctus_duo_audio_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed.soundEnabled === 'boolean') {
+          this.isMuted = !parsed.soundEnabled;
+        }
+        if (typeof parsed.masterVolume === 'number') {
+          this.setMasterVolume(parsed.masterVolume);
+        }
+      }
+    } catch {
+      // fallback
+    }
+  }
+
   public setMasterVolume(vol: number): void {
     this.masterVolume = Math.max(0, Math.min(1, vol));
   }
