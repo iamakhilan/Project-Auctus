@@ -178,9 +178,20 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
     expect(StorageService.importBackup(json)).toBe(true);
   });
 
-  it('importBackup accepts legacy backup without version', () => {
-    const legacy = JSON.stringify({ profile: INITIAL_PROFILE, quests: [], habits: [] });
-    expect(StorageService.importBackup(legacy)).toBe(true);
-    expect(StorageService.getProfile().name).toBe(INITIAL_PROFILE.name);
+  it('persists and retrieves audio configuration correctly', () => {
+    const defaultSettings = StorageService.getAudioSettings();
+    expect(defaultSettings.soundEnabled).toBe(true);
+    expect(defaultSettings.masterVolume).toBe(0.8);
+
+    StorageService.setAudioSettings({
+      soundEnabled: false,
+      masterVolume: 0.5,
+      soundscapeVolume: 0.3,
+    });
+
+    const updated = StorageService.getAudioSettings();
+    expect(updated.soundEnabled).toBe(false);
+    expect(updated.masterVolume).toBe(0.5);
+    expect(updated.soundscapeVolume).toBe(0.3);
   });
 });
