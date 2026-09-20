@@ -247,7 +247,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [profile.soundEnabled]);
 
   const toggleSound = () => {
-    setProfile(p => ({ ...p, soundEnabled: !p.soundEnabled }));
+    setProfile(p => {
+      const nextSound = !p.soundEnabled;
+      StorageService.setAudioSettings({
+        ...StorageService.getAudioSettings(),
+        soundEnabled: nextSound,
+      });
+      return { ...p, soundEnabled: nextSound };
+    });
   };
 
   const openClaimModal = useCallback((data: Partial<ClaimModalData>) => {
