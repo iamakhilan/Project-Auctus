@@ -7,6 +7,7 @@ import {
   Achievement,
   EconomyTransaction,
   FocusSessionState,
+  AudioSettings,
 } from '../types';
 import { validateBackupPayload } from '../utils/validators';
 
@@ -20,6 +21,13 @@ export const STORAGE_KEYS = {
   ACHIEVEMENT_LOCKS: 'auctus_duo_achievement_locks',
   TRANSACTIONS: 'auctus_duo_transactions',
   FOCUS: 'auctus_duo_focus',
+  AUDIO_SETTINGS: 'auctus_duo_audio_settings',
+};
+
+export const INITIAL_AUDIO_SETTINGS: AudioSettings = {
+  soundEnabled: true,
+  masterVolume: 0.8,
+  soundscapeVolume: 0.7,
 };
 
 export const INITIAL_PROFILE: PlayerProfile = {
@@ -372,6 +380,9 @@ export const StorageService = {
 
   getFocusState: () => loadFromStorage<FocusSessionState | null>(STORAGE_KEYS.FOCUS, null),
   setFocusState: (f: FocusSessionState | null) => saveToStorage(STORAGE_KEYS.FOCUS, f),
+
+  getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
+  setAudioSettings: (a: AudioSettings) => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
 
   exportBackup: (): string => {
     const backup = {

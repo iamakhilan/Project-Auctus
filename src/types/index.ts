@@ -124,6 +124,12 @@ export interface FocusSessionState {
   pausedAt?: number;
 }
 
+export interface AudioSettings {
+  soundEnabled: boolean;
+  masterVolume: number;
+  soundscapeVolume: number;
+}
+
 export interface ClaimModalData {
   isOpen: boolean;
   title: string;
