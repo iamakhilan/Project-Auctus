@@ -216,12 +216,23 @@ class AudioSynthesizer {
   }
 
   public stopSoundscape(): void {
+    const ctx = this.ctx;
     this.currentSoundscapeNodes.forEach(({ source, gain }) => {
       try {
-        if ('stop' in source && typeof (source as AudioScheduledSourceNode).stop === 'function') {
-          (source as AudioScheduledSourceNode).stop();
+        if (ctx && gain.gain) {
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.05);
         }
-        gain.disconnect();
+        setTimeout(() => {
+          try {
+            if ('stop' in source && typeof (source as AudioScheduledSourceNode).stop === 'function') {
+              (source as AudioScheduledSourceNode).stop();
+            }
+            gain.disconnect();
+          } catch {
+            // ignore
+          }
+        }, 60);
       } catch {
         // ignore
       }
