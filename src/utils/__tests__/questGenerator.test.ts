@@ -1,5 +1,6 @@
-﻿import { describe, it, expect } from 'vitest';
-import { generateDailyMissions, getQuestDifficultyMultiplier, QUEST_TEMPLATES } from '../questGenerator';
+import { describe, it, expect } from 'vitest';
+import { generateDailyMissions, getQuestDifficultyMultiplier, QUEST_TEMPLATES, calculateDailyQuestCompletionBonus } from '../questGenerator';
+import { Quest } from '../../types';
 
 describe('Quest Generator & Template Engine', () => {
   it('computes correct difficulty multipliers', () => {
@@ -32,5 +33,31 @@ describe('Quest Generator & Template Engine', () => {
       expect(tmpl.baseCoins).toBeGreaterThan(0);
       expect(tmpl.estimatedMinutes).toBeGreaterThan(0);
     });
+  });
+
+  it('calculates completion bonus when all daily quests are finished', () => {
+    const dailyQuests: Quest[] = [
+      { id: '1', title: 'Task 1', category: 'daily', tag: 'Coding', xpReward: 100, coinsReward: 50, isCompleted: true },
+      { id: '2', title: 'Task 2', category: 'daily', tag: 'Study', xpReward: 100, coinsReward: 50, isCompleted: true },
+    ];
+
+    const result = calculateDailyQuestCompletionBonus(dailyQuests);
+    expect(result.allCompleted).toBe(true);
+    expect(result.totalXp).toBe(200);
+    expect(result.bonusXp).toBe(50);
+    expect(result.bonusCoins).toBe(25);
+  });
+
+  it('returns zero bonus when daily quests remain incomplete', () => {
+    const mixedQuests: Quest[] = [
+      { id: '1', title: 'Task 1', category: 'daily', tag: 'Coding', xpReward: 100, coinsReward: 50, isCompleted: true },
+      { id: '2', title: 'Task 2', category: 'daily', tag: 'Study', xpReward: 100, coinsReward: 50, isCompleted: false },
+    ];
+
+    const result = calculateDailyQuestCompletionBonus(mixedQuests);
+    expect(result.allCompleted).toBe(false);
+    expect(result.totalXp).toBe(100);
+    expect(result.bonusXp).toBe(0);
+    expect(result.bonusCoins).toBe(0);
   });
 });
