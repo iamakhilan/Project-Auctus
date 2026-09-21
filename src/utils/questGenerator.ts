@@ -1,4 +1,4 @@
-﻿import { Quest, QuestCategory, QuestDifficulty, QuestTag } from '../types';
+import { Quest, QuestCategory, QuestDifficulty, QuestTag } from '../types';
 
 export interface QuestTemplate {
   title: string;
@@ -96,4 +96,36 @@ export const generateDailyMissions = (count: number = 3): Quest[] => {
       estimatedMinutes: template.estimatedMinutes,
     };
   });
+};
+
+export interface DailyCompletionBonus {
+  totalXp: number;
+  totalCoins: number;
+  bonusXp: number;
+  bonusCoins: number;
+  allCompleted: boolean;
+}
+
+export const calculateDailyQuestCompletionBonus = (quests: Quest[]): DailyCompletionBonus => {
+  const dailyQuests = quests.filter(q => q.category === 'daily');
+  if (dailyQuests.length === 0) {
+    return { totalXp: 0, totalCoins: 0, bonusXp: 0, bonusCoins: 0, allCompleted: false };
+  }
+
+  const completed = dailyQuests.filter(q => q.isCompleted);
+  const allCompleted = completed.length === dailyQuests.length;
+
+  const totalXp = completed.reduce((sum, q) => sum + q.xpReward, 0);
+  const totalCoins = completed.reduce((sum, q) => sum + q.coinsReward, 0);
+
+  const bonusXp = allCompleted ? Math.round(totalXp * 0.25) : 0;
+  const bonusCoins = allCompleted ? Math.round(totalCoins * 0.25) : 0;
+
+  return {
+    totalXp,
+    totalCoins,
+    bonusXp,
+    bonusCoins,
+    allCompleted,
+  };
 };
