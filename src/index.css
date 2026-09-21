@@ -200,6 +200,15 @@ body {
 .animate-pulse-glow {
   animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+.quest-tag-chip {
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.quest-tag-chip:hover {
+  transform: translateY(-1px);
+}
+.quest-tag-chip:active {
+  transform: translateY(1px);
+}
 * { scrollbar-width: thin; scrollbar-color: #d9d9d9 transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 9999px; }
