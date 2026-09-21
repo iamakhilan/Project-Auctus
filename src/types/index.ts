@@ -3,12 +3,15 @@ export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'anal
 export type QuestCategory = 'daily' | 'bounty' | 'epic' | 'habit';
 export type QuestTag = 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work';
 
+export type QuestDifficulty = 'normal' | 'hard' | 'elite';
+
 export interface Quest {
   id: string;
   title: string;
   description?: string;
   category: QuestCategory;
   tag: QuestTag;
+  difficulty?: QuestDifficulty;
   xpReward: number;
   coinsReward: number;
   isCompleted: boolean;
