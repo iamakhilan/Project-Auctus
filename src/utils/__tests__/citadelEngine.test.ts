@@ -1,5 +1,11 @@
-﻿import { describe, it, expect } from 'vitest';
-import { calculateCitadelPower, calculateCitadelLevelThreshold, getCitadelMultiplier } from '../citadelEngine';
+import { describe, it, expect } from 'vitest';
+import {
+  calculateCitadelPower,
+  calculateCitadelLevelThreshold,
+  getCitadelMultiplier,
+  getCitadelTierConfig,
+  CITADEL_TIER_CONFIGS,
+} from '../citadelEngine';
 
 describe('Citadel Engine', () => {
   it('calculates aggregate citadel power from quests, focus, and streak', () => {
@@ -26,5 +32,23 @@ describe('Citadel Engine', () => {
     expect(getCitadelMultiplier(2)).toBe(1.2);
     expect(getCitadelMultiplier(3)).toBe(1.4);
     expect(getCitadelMultiplier(4)).toBe(1.6);
+  });
+
+  it('returns valid tier configuration and perks', () => {
+    const tier2 = getCitadelTierConfig(2);
+    expect(tier2.name).toBe('Bastion Outpost');
+    expect(tier2.energyCap).toBe(6);
+    expect(tier2.bonusMultiplier).toBe(1.2);
+
+    const tier5 = getCitadelTierConfig(5);
+    expect(tier5.name).toBe('Apex Sovereign');
+    expect(tier5.energyCap).toBe(10);
+  });
+
+  it('provides sensible fallback for dynamic high tiers', () => {
+    const highTier = getCitadelTierConfig(9);
+    expect(highTier.tier).toBe(9);
+    expect(highTier.energyCap).toBe(10);
+    expect(highTier.bonusMultiplier).toBeGreaterThan(2.0);
   });
 });
