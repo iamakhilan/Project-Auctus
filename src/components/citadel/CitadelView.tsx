@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { validateBackupPayload } from '../../utils/validators';
+import { getCitadelTierConfig, calculateCitadelPower } from '../../utils/citadelEngine';
 
 const TIER_DEFS = [
   { tier: 1, name: 'Pathfinder Outpost', icon: '🏕️', perk: '+5% XP Boost', detail: 'Starter discipline multiplier', minPower: 200 },
@@ -47,8 +48,14 @@ export const CitadelView: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
-  const currentTierInfo = TIER_DEFS.find((t) => t.tier === profile.citadelTier) || TIER_DEFS[0];
-  const nextTierInfo = TIER_DEFS.find((t) => t.tier === profile.citadelTier + 1);
+  const tierConfig = useMemo(() => getCitadelTierConfig(profile.citadelTier), [profile.citadelTier]);
+  const estimatedPower = useMemo(
+    () => calculateCitadelPower(profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays),
+    [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays]
+  );
+
+  const currentTierInfo = useMemo(() => TIER_DEFS.find((t) => t.tier === profile.citadelTier) || TIER_DEFS[0], [profile.citadelTier]);
+  const nextTierInfo = useMemo(() => TIER_DEFS.find((t) => t.tier === profile.citadelTier + 1), [profile.citadelTier]);
   const canAscend = profile.citadelPower >= profile.citadelMaxPower && !!nextTierInfo;
   const powerPercent = Math.min(100, Math.round((profile.citadelPower / profile.citadelMaxPower) * 100));
 
