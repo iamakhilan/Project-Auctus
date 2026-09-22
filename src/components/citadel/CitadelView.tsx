@@ -181,6 +181,14 @@ export const CitadelView: React.FC = () => {
               Active Perks: <span className="text-[#fde047]">{currentTierInfo.perk}</span>
             </p>
             <p className="text-white/50 font-bold text-[11px]">{currentTierInfo.detail}</p>
+            <div className="flex items-center gap-2 pt-1 flex-wrap">
+              <span className="px-2.5 py-1 rounded-xl bg-white/10 text-xs font-black text-[#67e8f9] border border-white/10 flex items-center gap-1">
+                <span>⚡</span> Energy Cap: {tierConfig.energyCap} Hearts
+              </span>
+              <span className="px-2.5 py-1 rounded-xl bg-white/10 text-xs font-black text-[#fde047] border border-white/10 flex items-center gap-1">
+                <span>🚀</span> XP Rate: {tierConfig.bonusMultiplier.toFixed(1)}x
+              </span>
+            </div>
           </div>
 
           {/* Power Battery Gauge & Ascend Button */}
