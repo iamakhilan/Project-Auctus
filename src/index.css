@@ -209,6 +209,14 @@ body {
 .quest-tag-chip:active {
   transform: translateY(1px);
 }
+.citadel-tier-glow {
+  box-shadow: 0 0 15px -3px rgba(168, 85, 247, 0.3), 0 4px 6px -4px rgba(168, 85, 247, 0.2);
+}
+.citadel-stat-pill {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 * { scrollbar-width: thin; scrollbar-color: #d9d9d9 transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 9999px; }
