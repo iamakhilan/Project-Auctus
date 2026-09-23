@@ -147,3 +147,12 @@ export const isHabitScheduledForDay = (
   if (frequency === 'weekends') return isWeekend;
   return true;
 };
+
+export const calculateDayHeatIntensity = (completedCount: number, totalHabits: number): number => {
+  if (completedCount <= 0 || totalHabits <= 0) return 0;
+  const ratio = completedCount / totalHabits;
+  if (ratio >= 1.0) return 4;
+  if (ratio >= 0.75) return 3;
+  if (ratio >= 0.5) return 2;
+  return 1;
+};
