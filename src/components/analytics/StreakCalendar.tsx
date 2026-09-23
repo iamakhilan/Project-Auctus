@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
-import { getLocalDateString } from '../../utils/dateUtils';
+import { getLocalDateString, calculateDayHeatIntensity } from '../../utils/dateUtils';
 
 function getLastNDates(n: number): string[] {
   const out: string[] = [];
@@ -52,14 +52,18 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ days = 30 }) => 
               );
               const completeCount = completedHabits.length;
               const totalCount = habits.length;
+              const intensity = calculateDayHeatIntensity(completeCount, totalCount);
               const completionRatio = totalCount > 0 ? completeCount / totalCount : 0;
 
               let bg = 'bg-white';
               let border = 'border-[#e5e5e5]';
-              if (completeCount === totalCount && totalCount > 0) {
+              if (intensity === 4) {
                 bg = 'bg-[#e8f8d8]';
                 border = 'border-[#b7e986]';
-              } else if (completeCount > 0) {
+              } else if (intensity === 3) {
+                bg = 'bg-[#f0fdf4]';
+                border = 'border-[#dcfce7]';
+              } else if (intensity >= 1) {
                 bg = 'bg-[#fffbe6]';
                 border = 'border-[#ffe58f]';
               } else if (isToday) {
