@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   getLocalDateString,
   getPreviousLocalDateString,
@@ -6,6 +6,7 @@ import {
   calculateUpdatedStreak,
   recalculateFullStreakFromDates,
   getLocalISOStringWithOffset,
+  isHabitScheduledForDay,
 } from '../dateUtils';
 
 describe('dateUtils', () => {
@@ -56,5 +57,17 @@ describe('dateUtils', () => {
   it('generates localized ISO string with timezone offset', () => {
     const iso = getLocalISOStringWithOffset(new Date(2026, 8, 30, 12, 0, 0));
     expect(iso).toMatch(/^2026-09-30T12:00:00[+-]\d{2}:\d{2}$/);
+  });
+
+  it('validates habit frequency scheduling for daily, weekdays, and weekends', () => {
+    // 2026-09-23 was Wednesday (weekday)
+    expect(isHabitScheduledForDay('daily', '2026-09-23')).toBe(true);
+    expect(isHabitScheduledForDay('weekdays', '2026-09-23')).toBe(true);
+    expect(isHabitScheduledForDay('weekends', '2026-09-23')).toBe(false);
+
+    // 2026-09-26 was Saturday (weekend)
+    expect(isHabitScheduledForDay('daily', '2026-09-26')).toBe(true);
+    expect(isHabitScheduledForDay('weekdays', '2026-09-26')).toBe(false);
+    expect(isHabitScheduledForDay('weekends', '2026-09-26')).toBe(true);
   });
 });
