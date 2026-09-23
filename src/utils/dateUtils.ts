@@ -156,3 +156,8 @@ export const calculateDayHeatIntensity = (completedCount: number, totalHabits: n
   if (ratio >= 0.5) return 2;
   return 1;
 };
+
+export const isMilestoneStreak = (streak: number): boolean => {
+  const milestones = [3, 7, 14, 21, 30, 60, 90, 100];
+  return milestones.includes(streak);
+};
