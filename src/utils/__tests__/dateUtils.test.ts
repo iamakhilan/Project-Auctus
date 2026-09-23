@@ -7,6 +7,7 @@ import {
   recalculateFullStreakFromDates,
   getLocalISOStringWithOffset,
   isHabitScheduledForDay,
+  calculateDayHeatIntensity,
 } from '../dateUtils';
 
 describe('dateUtils', () => {
@@ -69,5 +70,13 @@ describe('dateUtils', () => {
     expect(isHabitScheduledForDay('daily', '2026-09-26')).toBe(true);
     expect(isHabitScheduledForDay('weekdays', '2026-09-26')).toBe(false);
     expect(isHabitScheduledForDay('weekends', '2026-09-26')).toBe(true);
+  });
+
+  it('calculates heatmap intensity tiers based on completion ratios', () => {
+    expect(calculateDayHeatIntensity(0, 4)).toBe(0);
+    expect(calculateDayHeatIntensity(1, 4)).toBe(1); // 25%
+    expect(calculateDayHeatIntensity(2, 4)).toBe(2); // 50%
+    expect(calculateDayHeatIntensity(3, 4)).toBe(3); // 75%
+    expect(calculateDayHeatIntensity(4, 4)).toBe(4); // 100%
   });
 });
