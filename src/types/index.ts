@@ -20,10 +20,13 @@ export interface Quest {
   estimatedMinutes?: number;
 }
 
+export type HabitFrequency = 'daily' | 'weekdays' | 'weekends';
+
 export interface Habit {
   id: string;
   title: string;
   category: 'focus' | 'vitality' | 'mind' | 'routine';
+  frequency?: HabitFrequency;
   streakCount: number;
   bestStreak: number;
   lastCompletedDate?: string; // YYYY-MM-DD
