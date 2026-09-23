@@ -8,6 +8,7 @@ import {
   getLocalISOStringWithOffset,
   isHabitScheduledForDay,
   calculateDayHeatIntensity,
+  isMilestoneStreak,
 } from '../dateUtils';
 
 describe('dateUtils', () => {
@@ -78,5 +79,16 @@ describe('dateUtils', () => {
     expect(calculateDayHeatIntensity(2, 4)).toBe(2); // 50%
     expect(calculateDayHeatIntensity(3, 4)).toBe(3); // 75%
     expect(calculateDayHeatIntensity(4, 4)).toBe(4); // 100%
+  });
+
+  it('detects landmark milestone streak days accurately', () => {
+    expect(isMilestoneStreak(3)).toBe(true);
+    expect(isMilestoneStreak(7)).toBe(true);
+    expect(isMilestoneStreak(14)).toBe(true);
+    expect(isMilestoneStreak(21)).toBe(true);
+    expect(isMilestoneStreak(30)).toBe(true);
+    expect(isMilestoneStreak(100)).toBe(true);
+    expect(isMilestoneStreak(5)).toBe(false);
+    expect(isMilestoneStreak(12)).toBe(false);
   });
 });
