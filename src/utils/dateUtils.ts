@@ -133,3 +133,17 @@ export const recalculateFullStreakFromDates = (
     bestStreak: maxStreak,
   };
 };
+
+export const isHabitScheduledForDay = (
+  frequency: 'daily' | 'weekdays' | 'weekends' = 'daily',
+  dateStr: string = getLocalDateString()
+): boolean => {
+  if (frequency === 'daily') return true;
+  const { year, month, day } = parseLocalDateParts(dateStr);
+  const dayOfWeek = new Date(year, month - 1, day).getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  if (frequency === 'weekdays') return !isWeekend;
+  if (frequency === 'weekends') return isWeekend;
+  return true;
+};
