@@ -115,6 +115,7 @@ export interface PlayerProfile {
   totalFocusMinutes: number;
   completedQuestsCount: number;
   soundEnabled: boolean;
+  streakFreezeCount?: number;
 }
 
 export interface FocusSessionState {
