@@ -53,6 +53,8 @@ export interface ChestSlot {
   gemsReward: number;
 }
 
+export type RewardRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 export interface RewardItem {
   id: string;
   title: string;
@@ -61,6 +63,7 @@ export interface RewardItem {
   icon: string;
   description: string;
   isCustom?: boolean;
+  rarity?: RewardRarity;
 }
 
 export interface EconomyTransaction {
