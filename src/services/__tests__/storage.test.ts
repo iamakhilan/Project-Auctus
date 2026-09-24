@@ -194,4 +194,11 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
     expect(updated.masterVolume).toBe(0.5);
     expect(updated.soundscapeVolume).toBe(0.3);
   });
+
+  it('persists streak freeze consumable inventory on profile', () => {
+    const profile = { ...INITIAL_PROFILE, streakFreezeCount: 2 };
+    StorageService.setProfile(profile);
+    const loaded = StorageService.getProfile();
+    expect(loaded.streakFreezeCount).toBe(2);
+  });
 });
