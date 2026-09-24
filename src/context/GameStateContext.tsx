@@ -7,6 +7,7 @@ import {
   ChestSlot,
   ChestTier,
   RewardItem,
+  RewardRarity,
   Achievement,
   EconomyTransaction,
   FocusSessionState,
@@ -48,7 +49,7 @@ interface GameStateContextType {
   speedUpChest: (slotIndex: number) => boolean;
   claimChestLoot: (slotIndex: number) => void;
   redeemReward: (rewardId: string) => boolean;
-  createCustomReward: (title: string, cost: number, category: string, icon: string, description: string) => void;
+  createCustomReward: (title: string, cost: number, category: string, icon: string, description: string, rarity?: RewardRarity) => void;
   editReward: (rewardId: string, patch: Partial<RewardItem>) => void;
   ascendCitadel: () => boolean;
   toggleSound: () => void;
@@ -670,7 +671,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return true;
   };
 
-  const createCustomReward = (title: string, cost: number, category: string, icon: string, description: string) => {
+  const createCustomReward = (title: string, cost: number, category: string, icon: string, description: string, rarity?: RewardRarity) => {
     const newReward: RewardItem = {
       id: `r-${Date.now()}`,
       title,
@@ -679,6 +680,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       icon: icon || '🎁',
       description,
       isCustom: true,
+      rarity: rarity || 'common',
     };
     setRewards(prev => [newReward, ...prev]);
     soundEngine.playSuccess();
