@@ -217,6 +217,14 @@ body {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+.loot-shimmer {
+  background: linear-gradient(110deg, #fffbeb 8%, #fef3c7 18%, #fffbeb 33%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+.rarity-legendary-glow {
+  box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.4);
+}
 * { scrollbar-width: thin; scrollbar-color: #d9d9d9 transparent; }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 9999px; }
