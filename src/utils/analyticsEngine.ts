@@ -1,4 +1,4 @@
-﻿import { FocusSessionRecord, Quest } from '../types';
+import { FocusSessionRecord, Quest } from '../types';
 
 export interface FocusVelocityMetrics {
   totalMinutes: number;
@@ -127,3 +127,24 @@ export function calculateConsistencyScore(
 
   return Math.round((activeCount / lookbackDays) * 100);
 }
+
+export function detectPeakFocusHour(
+  distribution: HourlyDistribution[]
+): { hour: number; label: string; minutes: number } | null {
+  const activeHours = distribution.filter((d) => d.minutes > 0);
+  if (activeHours.length === 0) return null;
+
+  return activeHours.reduce((peak, current) =>
+    current.minutes > peak.minutes ? current : peak
+  );
+}
+
+export function formatMinutesToHoursAndMins(totalMinutes: number): string {
+  if (totalMinutes <= 0) return '0m';
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
