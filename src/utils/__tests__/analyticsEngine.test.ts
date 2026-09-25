@@ -1,9 +1,11 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   calculateFocusVelocity,
   calculateCategoryBreakdown,
   calculateHourlyFocusDistribution,
   calculateConsistencyScore,
+  detectPeakFocusHour,
+  formatMinutesToHoursAndMins,
 } from '../analyticsEngine';
 import { FocusSessionRecord, Quest } from '../../types';
 
@@ -116,4 +118,63 @@ describe('analyticsEngine', () => {
       expect(score).toBe(40);
     });
   });
+
+  describe('calculateHourlyFocusDistribution', () => {
+    it('initializes 24 hour buckets and aggregates minutes into correct hour', () => {
+      const targetTime = new Date('2026-09-25T14:30:00');
+      const hour = targetTime.getHours();
+      const mockSessions: FocusSessionRecord[] = [
+        {
+          id: 'h1',
+          durationMinutes: 45,
+          completedAt: targetTime.getTime(),
+          actualSeconds: 2700,
+          xpEarned: 50,
+          coinsEarned: 25,
+        },
+      ];
+
+      const distribution = calculateHourlyFocusDistribution(mockSessions);
+      expect(distribution).toHaveLength(24);
+      expect(distribution[hour].count).toBe(1);
+      expect(distribution[hour].minutes).toBe(45);
+    });
+  });
+
+  describe('detectPeakFocusHour', () => {
+    it('identifies the hour with the maximum focus minutes', () => {
+      const distribution = Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        label: `${i.toString().padStart(2, '0')}:00`,
+        count: i === 10 ? 2 : 0,
+        minutes: i === 10 ? 90 : 0,
+      }));
+
+      const peak = detectPeakFocusHour(distribution);
+      expect(peak).not.toBeNull();
+      expect(peak?.hour).toBe(10);
+      expect(peak?.minutes).toBe(90);
+    });
+
+    it('returns null when no focus activity exists', () => {
+      const distribution = Array.from({ length: 24 }, (_, i) => ({
+        hour: i,
+        label: `${i.toString().padStart(2, '0')}:00`,
+        count: 0,
+        minutes: 0,
+      }));
+
+      expect(detectPeakFocusHour(distribution)).toBeNull();
+    });
+  });
+
+  describe('formatMinutesToHoursAndMins', () => {
+    it('formats minutes into concise human-readable strings', () => {
+      expect(formatMinutesToHoursAndMins(0)).toBe('0m');
+      expect(formatMinutesToHoursAndMins(45)).toBe('45m');
+      expect(formatMinutesToHoursAndMins(60)).toBe('1h');
+      expect(formatMinutesToHoursAndMins(125)).toBe('2h 5m');
+    });
+  });
 });
+
