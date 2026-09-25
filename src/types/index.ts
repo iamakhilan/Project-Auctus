@@ -134,6 +134,17 @@ export interface FocusSessionState {
   pausedAt?: number;
 }
 
+export interface FocusSessionRecord {
+  id: string;
+  questId?: string;
+  questTitle?: string;
+  durationMinutes: number;
+  completedAt: number;
+  actualSeconds: number;
+  xpEarned: number;
+  coinsEarned: number;
+}
+
 export interface AudioSettings {
   soundEnabled: boolean;
   masterVolume: number;
