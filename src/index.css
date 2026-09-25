@@ -458,3 +458,32 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Analytics telemetry styling */
+.velocity-pulse {
+  animation: velocityPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes velocityPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+}
+
+.export-pill-btn {
+  transition: all 0.15s ease-in-out;
+}
+
+.export-pill-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.export-pill-btn:active {
+  transform: translateY(1px);
+}
