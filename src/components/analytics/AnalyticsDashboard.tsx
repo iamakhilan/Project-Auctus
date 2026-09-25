@@ -2,6 +2,20 @@ import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { StreakCalendar } from './StreakCalendar';
 import { DailySummaryModal } from './DailySummaryModal';
+import {
+  calculateFocusVelocity,
+  calculateCategoryBreakdown,
+  calculateHourlyFocusDistribution,
+  detectPeakFocusHour,
+  formatMinutesToHoursAndMins,
+} from '../../utils/analyticsEngine';
+import {
+  exportTransactionsToCSV,
+  exportQuestsToCSV,
+  exportHabitsToCSV,
+} from '../../utils/exportHelpers';
+import { FocusSessionRecord } from '../../types';
+import { soundEngine } from '../../utils/audioSynthesizer';
 
 // ---------- helpers ----------
 function toISODateLocal(d: Date): string {
@@ -350,6 +364,59 @@ export const AnalyticsDashboard: React.FC = () => {
 
   const netCoinsWeek = useMemo(() => dailyNetCoins.slice(-7).reduce((a, b) => a + b, 0), [dailyNetCoins]);
 
+  const sessions: FocusSessionRecord[] = useMemo(() => {
+    const focusRe = /Focus.*?\( *(\d+)\s*m/i;
+    return transactions
+      .filter((t) => focusRe.test(t.reason))
+      .map((t) => {
+        const m = t.reason.match(focusRe);
+        const mins = m ? parseInt(m[1], 10) : 25;
+        return {
+          id: t.id,
+          durationMinutes: mins,
+          completedAt: t.timestamp,
+          actualSeconds: mins * 60,
+          xpEarned: t.amount,
+          coinsEarned: Math.round(t.amount / 2),
+        };
+      });
+  }, [transactions]);
+
+  const velocity = useMemo(() => calculateFocusVelocity(sessions, 7), [sessions]);
+  const categoryBreakdown = useMemo(() => calculateCategoryBreakdown(quests), [quests]);
+  const hourlyDistribution = useMemo(() => calculateHourlyFocusDistribution(sessions), [sessions]);
+  const peakHour = useMemo(() => detectPeakFocusHour(hourlyDistribution), [hourlyDistribution]);
+
+  const handleExportTransactions = () => {
+    soundEngine.playClick();
+    const csv = exportTransactionsToCSV(transactions);
+    downloadCSV(csv, `auctus-transactions-${todayIso}.csv`);
+  };
+
+  const handleExportQuests = () => {
+    soundEngine.playClick();
+    const csv = exportQuestsToCSV(quests);
+    downloadCSV(csv, `auctus-quests-${todayIso}.csv`);
+  };
+
+  const handleExportHabits = () => {
+    soundEngine.playClick();
+    const csv = exportHabitsToCSV(habits);
+    downloadCSV(csv, `auctus-habits-${todayIso}.csv`);
+  };
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 animate-fadeIn">
       {/* Header */}
@@ -358,12 +425,14 @@ export const AnalyticsDashboard: React.FC = () => {
           <h1 className="font-['Feather_Bold'] text-2xl sm:text-3xl text-[var(--dark-blue)] tracking-wide">ANALYTICS</h1>
           <p className="text-sm font-bold text-[var(--gray-light)]">Weekly trends, focus depth, streaks & treasury — all from your local save.</p>
         </div>
-        <button
-          onClick={() => setShowDailySummary(true)}
-          className="h-11 px-5 bg-[var(--dark-blue)] hover:bg-[#1a237e] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl shadow-md active:translate-y-0.5 transition-all"
-        >
-          📊 Daily Summary →
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowDailySummary(true)}
+            className="h-11 px-5 bg-[var(--dark-blue)] hover:bg-[#1a237e] text-white font-['Feather_Bold'] text-sm font-black uppercase rounded-2xl shadow-md active:translate-y-0.5 transition-all"
+          >
+            📊 Daily Summary →
+          </button>
+        </div>
       </div>
 
       {/* Top KPI row */}
@@ -391,6 +460,37 @@ export const AnalyticsDashboard: React.FC = () => {
             {netCoinsWeek >= 0 ? '+' : ''}{netCoinsWeek} 🟡
           </span>
           <span className="text-xs font-bold text-[var(--gray-light)]">Balance {profile.coins} 🟡 • {profile.gems} 💎</span>
+        </div>
+      </div>
+
+      {/* Focus Velocity & Productivity Trend Banner */}
+      <div className="bg-gradient-to-r from-[#1cb0f6]/10 via-[#58cc02]/10 to-[#ffd6a5]/20 rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🚀</span>
+            <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">PRODUCTIVITY VELOCITY</h3>
+            <span
+              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                velocity.trend === 'rising'
+                  ? 'bg-[#e8f8d8] text-[#3a6b00] border-[#b7e986]'
+                  : velocity.trend === 'declining'
+                  ? 'bg-[#ffeef0] text-[var(--red)] border-[#ffccd2]'
+                  : 'bg-[#f7f7f7] text-[var(--gray-text)] border-[#e5e5e5]'
+              }`}
+            >
+              {velocity.trend === 'rising' ? '▲ RISING' : velocity.trend === 'declining' ? '▼ COOLING' : '▶ STEADY'}
+            </span>
+          </div>
+          <p className="text-xs font-bold text-[var(--gray-light)]">
+            Velocity Score: <strong className="text-[var(--dark-blue)]">{velocity.velocityScore}/100</strong> • Daily Average: <strong className="text-[var(--dark-blue)]">{velocity.dailyAverage} min/day</strong>
+            {peakHour ? ` • Peak Flow: ${peakHour.label} (${formatMinutesToHoursAndMins(peakHour.minutes)})` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-right">
+            <div className="text-[10px] font-black uppercase tracking-wider text-[var(--gray-light)]">7-Day Focus</div>
+            <div className="font-['Feather_Bold'] text-lg font-black text-[var(--dark-blue)]">{formatMinutesToHoursAndMins(velocity.totalMinutes)}</div>
+          </div>
         </div>
       </div>
 
@@ -433,6 +533,33 @@ export const AnalyticsDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Quest Category Breakdown */}
+      {categoryBreakdown.length > 0 && (
+        <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Feather_Bold'] text-base sm:text-lg text-[var(--dark-blue)]">COMPLETED QUEST BREAKDOWN</h3>
+            <span className="text-xs font-bold text-[var(--gray-light)]">By Category</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {categoryBreakdown.map((cat) => (
+              <div key={cat.category} className="p-3 bg-[#f7f7f7] rounded-2xl border border-[#e5e5e5] space-y-1">
+                <div className="flex items-center justify-between text-xs font-black uppercase text-[var(--dark-blue)]">
+                  <span>{cat.category}</span>
+                  <span>{cat.percentage}%</span>
+                </div>
+                <div className="w-full bg-[#e5e5e5] h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-[var(--blue)] h-full rounded-full transition-all"
+                    style={{ width: `${cat.percentage}%` }}
+                  />
+                </div>
+                <div className="text-[10px] font-bold text-[var(--gray-light)]">{cat.count} completed</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Streak Calendar */}
       <StreakCalendar days={30} />
 
@@ -461,6 +588,34 @@ export const AnalyticsDashboard: React.FC = () => {
         {transactions.length === 0 && (
           <p className="text-xs font-semibold text-[var(--gray-light)] mt-2">No transactions yet — earn coins by completing quests to see your wealth grow.</p>
         )}
+      </div>
+
+      {/* CSV Export Bar */}
+      <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+        <div>
+          <h4 className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)]">EXPORT LOCAL TELEMETRY</h4>
+          <p className="text-xs font-bold text-[var(--gray-light)]">Download your data as clean CSV files for spreadsheet analysis.</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleExportQuests}
+            className="px-3 py-2 bg-[#f7f7f7] hover:bg-[#ececec] text-[var(--dark-blue)] font-['Feather_Bold'] text-xs font-bold rounded-xl border border-[#e5e5e5] active:translate-y-0.5 transition-all cursor-pointer"
+          >
+            📋 Quests CSV
+          </button>
+          <button
+            onClick={handleExportHabits}
+            className="px-3 py-2 bg-[#f7f7f7] hover:bg-[#ececec] text-[var(--dark-blue)] font-['Feather_Bold'] text-xs font-bold rounded-xl border border-[#e5e5e5] active:translate-y-0.5 transition-all cursor-pointer"
+          >
+            🔥 Habits CSV
+          </button>
+          <button
+            onClick={handleExportTransactions}
+            className="px-3 py-2 bg-[#f7f7f7] hover:bg-[#ececec] text-[var(--dark-blue)] font-['Feather_Bold'] text-xs font-bold rounded-xl border border-[#e5e5e5] active:translate-y-0.5 transition-all cursor-pointer"
+          >
+            🪙 Ledger CSV
+          </button>
+        </div>
       </div>
 
       {/* Footer hint */}
