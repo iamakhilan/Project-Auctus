@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { ariaAnnouncer } from '../../utils/ariaAnnouncer';
 
 export type ToastKind = 'success' | 'info' | 'error';
 
@@ -37,6 +38,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     (kind: ToastKind, message: string) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setToasts((prev) => [...prev, { id, kind, message }]);
+      ariaAnnouncer.announce(message, kind === 'error' ? 'assertive' : 'polite');
       const handle = window.setTimeout(() => dismiss(id), AUTO_DISMISS_MS);
       timers.current.set(id, handle);
     },
