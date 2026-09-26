@@ -1,11 +1,11 @@
-﻿export type AnnouncementPriority = 'polite' | 'assertive';
+export type AnnouncementPriority = 'polite' | 'assertive';
 
 class AriaAnnouncer {
   private liveRegion: HTMLDivElement | null = null;
 
   public init(): void {
     if (typeof document === 'undefined') return;
-    if (this.liveRegion) return;
+    if (this.liveRegion && document.body.contains(this.liveRegion)) return;
 
     const existing = document.getElementById('a11y-live-region') as HTMLDivElement | null;
     if (existing) {
@@ -34,7 +34,7 @@ class AriaAnnouncer {
 
   public announce(message: string, priority: AnnouncementPriority = 'polite'): void {
     if (typeof document === 'undefined') return;
-    if (!this.liveRegion) {
+    if (!this.liveRegion || !document.body.contains(this.liveRegion)) {
       this.init();
     }
 
