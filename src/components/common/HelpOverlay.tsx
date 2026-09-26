@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export interface HelpOverlayProps {
