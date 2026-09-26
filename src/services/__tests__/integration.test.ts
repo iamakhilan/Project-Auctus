@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StorageService, INITIAL_PROFILE } from '../storage';
 import { applyAtomicTransaction } from '../../utils/transactionRunner';
 import { calculateUpdatedStreak } from '../../utils/dateUtils';
@@ -50,5 +50,15 @@ describe('Integration: Multi-module State & Persistence Safety', () => {
     expect(imported).toBe(true);
     expect(StorageService.getProfile().coins).toBe(INITIAL_PROFILE.coins + 250);
     expect(StorageService.getAchievementLocks()).toContain('a5');
+  });
+
+  it('verifies safe empty state fallbacks for telemetry exports', () => {
+    const backupJson = StorageService.exportBackup();
+    expect(backupJson).toBeTypeOf('string');
+    const parsed = JSON.parse(backupJson);
+    expect(parsed.version).toBe('2.0');
+    expect(Array.isArray(parsed.quests)).toBe(true);
+    expect(Array.isArray(parsed.habits)).toBe(true);
+    expect(Array.isArray(parsed.transactions)).toBe(true);
   });
 });
