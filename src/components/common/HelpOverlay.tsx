@@ -26,9 +26,11 @@ const TAB_HINTS: { key: string; label: string; icon: string }[] = [
 
 export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => {
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
+    setSearchQuery('');
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -37,6 +39,14 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => 
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const q = searchQuery.toLowerCase().trim();
+  const filteredShortcuts = SHORTCUTS.filter(
+    (s) => !q || s.label.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q) || s.keys.toLowerCase().includes(q)
+  );
+  const filteredTabs = TAB_HINTS.filter(
+    (t) => !q || t.label.toLowerCase().includes(q) || t.key.includes(q)
+  );
 
   return (
     <div
@@ -54,7 +64,7 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => 
         className="relative w-full max-w-2xl bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 outline-none max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <span className="w-12 h-12 rounded-2xl bg-[var(--green)] border-b-4 border-[var(--green-shadow)] flex items-center justify-center text-xl shadow-sm">
               ⌨️
@@ -75,9 +85,22 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
 
+        {/* Search input */}
+        <div className="mb-4 relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gray-light)]">🔍</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search shortcuts (e.g. tabs, palette, esc)..."
+            aria-label="Filter keyboard shortcuts"
+            className="w-full pl-8 pr-3 py-2 text-xs font-bold rounded-2xl border-2 border-[#e5e5e5] focus:border-[var(--blue)] focus:outline-hidden"
+          />
+        </div>
+
         {/* Shortcut cards — Duolingo style */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5">
-          {SHORTCUTS.map((s) => (
+          {filteredShortcuts.map((s) => (
             <div
               key={s.keys}
               className="p-4 rounded-2xl border-2 bg-white border-[#e5e5e5] flex items-start gap-3 shadow-sm text-left"
@@ -105,7 +128,7 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => 
             <span className="text-[11px] font-extrabold text-[var(--gray-light)] hidden sm:inline">Works outside inputs</span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {TAB_HINTS.map((t) => (
+            {filteredTabs.map((t) => (
               <div
                 key={t.key}
                 className="flex flex-col items-center gap-1 py-2.5 rounded-2xl bg-white border-2 border-[#e5e5e5] shadow-xs"
