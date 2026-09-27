@@ -98,6 +98,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [chests, setChests] = useState<ChestSlot[]>(StorageService.getChests);
   const [rewards, setRewards] = useState<RewardItem[]>(StorageService.getRewards);
   const [achievements, setAchievements] = useState<Achievement[]>(StorageService.getAchievements);
+  const [achievementLocks, setAchievementLocks] = useState<string[]>(StorageService.getAchievementLocks);
   const [transactions, setTransactions] = useState<EconomyTransaction[]>(StorageService.getTransactions);
 
   const [focusSession, setFocusSession] = useState<FocusSessionState>(() => {
@@ -137,6 +138,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => { StorageService.setChests(chests); }, [chests]);
   useEffect(() => { StorageService.setRewards(rewards); }, [rewards]);
   useEffect(() => { StorageService.setAchievements(achievements); }, [achievements]);
+  useEffect(() => { StorageService.setAchievementLocks(achievementLocks); }, [achievementLocks]);
   useEffect(() => { StorageService.setTransactions(transactions); }, [transactions]);
   useEffect(() => { StorageService.setFocusState(focusSession); }, [focusSession]);
 
@@ -165,6 +167,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             break;
           case STORAGE_KEYS.ACHIEVEMENTS:
             setAchievements(data);
+            break;
+          case STORAGE_KEYS.ACHIEVEMENT_LOCKS:
+            setAchievementLocks(data);
             break;
           case STORAGE_KEYS.TRANSACTIONS:
             setTransactions(data);
@@ -296,15 +301,20 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    const toUnlock = achievements.filter(a => !a.isUnlocked && getProgress(a) >= a.targetValue);
+    const toUnlock = achievements.filter(
+      a => !a.isUnlocked && !achievementLocks.includes(a.id) && getProgress(a) >= a.targetValue
+    );
     if (toUnlock.length === 0) return;
+
+    const unlockedIds = toUnlock.map(a => a.id);
+    setAchievementLocks(prev => Array.from(new Set([...prev, ...unlockedIds])));
 
     // Update achievements state only once per entry
     setAchievements(prev =>
       prev.map(a => {
-        if (a.isUnlocked) return a;
+        if (a.isUnlocked || achievementLocks.includes(a.id)) return a;
         const prog = getProgress(a);
-        const shouldUnlock = prog >= a.targetValue;
+        const shouldUnlock = unlockedIds.includes(a.id);
         if (!shouldUnlock) {
           // keep currentValue in sync for UI even if not yet unlocked
           if (a.currentValue !== prog) return { ...a, currentValue: prog };
@@ -319,10 +329,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       })
     );
 
-    // Fire rewards + modal for each newly unlocked achievement (only once because we filtered isUnlocked)
+    // Fire rewards + modal for each newly unlocked achievement
     toUnlock.forEach(ach => {
-      const prog = getProgress(ach);
-      // keep currentValue consistent even before state flush
+      if (achievementLocks.includes(ach.id)) return;
       if (ach.rewards.xp) addXpRef.current(ach.rewards.xp);
       if (ach.rewards.coins) addCoinsRef.current(ach.rewards.coins, `Achievement: ${ach.title}`);
       if (ach.rewards.gems) addGemsRef.current(ach.rewards.gems, `Achievement: ${ach.title}`);
@@ -335,10 +344,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         gems: ach.rewards.gems,
         icon: ach.icon,
       });
-      // ensure visible currentValue sync even if async
-      void prog;
     });
-  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, openClaimModal]);
+  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, achievementLocks, openClaimModal]);
 
   // Keep achievement currentValue synced even when not unlocking (e.g., progress bar UI)
   useEffect(() => {
@@ -881,6 +888,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setChests(StorageService.getChests());
             setRewards(StorageService.getRewards());
             setAchievements(StorageService.getAchievements());
+            setAchievementLocks(StorageService.getAchievementLocks());
             setTransactions(StorageService.getTransactions());
           }
           return ok;
