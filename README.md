@@ -6,24 +6,24 @@ Auctus is a browser-based **gamified productivity RPG** that turns real-world wo
 
 ## What is implemented
 
-- **Realm** — player overview, progression, habits, and daily momentum.
-- **Quests** — daily/bounty/epic missions, search/filtering, editing, deletion, and focus-session launch.
-- **Focus Arena** — timed focus sessions with pause/resume, rewards, overcharge, and soundscapes.
-- **Vault** — chest unlocks, loot claiming, reward redemption, and custom rewards.
-- **Citadel** — progression/ascension, profile management, and data backup/restore.
-- **Analytics** — productivity summaries, streak calendar, and progress insights.
-- **Achievements** — automatic progress tracking and unlock rewards.
-- **Offline persistence** — game state is stored locally in the browser.
-- **Accessibility basics** — semantic buttons, labels, keyboard shortcuts, live toast notifications, and an application error boundary.
+- **Realm** — player overview, progression, habits, streak calendar heat intensity, and daily momentum.
+- **Quests** — daily/bounty/epic missions, difficulty tiers (normal/hard/elite), search/filtering, procedural quest generation, and focus-session launch.
+- **Focus Arena** — timed focus sessions with pause/resume, rewards, overcharge, and web audio soundscapes (binaural, cyber-rain, forest, white-noise).
+- **Vault** — chest unlocks, dynamic loot tables, rarity tiers (common, rare, epic, legendary), reward redemption, and treasury ledger.
+- **Citadel** — progression/ascension, citadel engine mechanics, profile management, and schema-validated backup/restore.
+- **Analytics** — focus velocity score, 7-day productivity trends, hourly distribution histogram, quest category breakdown, and CSV data export.
+- **Achievements** — criteria evaluation engine, unlock fanfares, and persistent achievement locks.
+- **Offline persistence** — multi-tab state broadcast channel, atomic transaction runner, and local storage safety.
+- **Accessibility** — ARIA live regions, useFocusTrap modal isolation, semantic skip navigation, high-contrast focus rings, and shortcut search.
 
 ## Tech stack
 
 - React 18 + TypeScript
 - Vite 5
 - Tailwind CSS 3
-- Vitest + Testing Library tooling
-- Browser `localStorage` persistence
-- Web Audio API sound effects
+- Vitest + Testing Library tooling (99 tests across 16 test suites)
+- Browser `localStorage` + BroadcastChannel persistence
+- Web Audio API synthesizer
 - Canvas Confetti for reward feedback
 
 ## Development
