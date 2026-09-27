@@ -397,6 +397,9 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
 
     // Fire rewards + modal for each newly unlocked achievement
+    if (toUnlock.length > 0) {
+      soundEngine.playAchievement();
+    }
     toUnlock.forEach(ach => {
       if (achievementLocks.includes(ach.id)) return;
       if (ach.rewards.xp) addXpRef.current(ach.rewards.xp);

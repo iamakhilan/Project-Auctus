@@ -138,6 +138,39 @@ class AudioSynthesizer {
     });
   }
 
+  public playAchievement(): void {
+    if (this.isMuted) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const chords = [
+      [523.25, 659.25, 783.99],
+      [587.33, 739.99, 880.00],
+      [659.25, 830.61, 987.77],
+      [1046.50, 1318.51, 1567.98],
+    ];
+
+    chords.forEach((chord, step) => {
+      chord.forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + step * 0.12);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime + step * 0.12);
+        gain.gain.linearRampToValueAtTime(0.15 * this.masterVolume, ctx.currentTime + step * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + step * 0.12 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + step * 0.12);
+        osc.stop(ctx.currentTime + step * 0.12 + 0.35);
+      });
+    });
+  }
+
   public playCoinCollect(): void {
     if (this.isMuted) return;
     const ctx = this.getContext();
