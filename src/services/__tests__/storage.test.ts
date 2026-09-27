@@ -84,6 +84,12 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
     expect(StorageService.getHabits()).toEqual(customHabits);
   });
 
+  it('setAchievementLocks / getAchievementLocks roundtrip', () => {
+    const locks = ['a1', 'a2', 'a3'];
+    StorageService.setAchievementLocks(locks);
+    expect(StorageService.getAchievementLocks()).toEqual(locks);
+  });
+
   it('setTransactions / getTransactions roundtrip including FocusState null', () => {
     StorageService.setFocusState(null);
     expect(StorageService.getFocusState()).toBeNull();

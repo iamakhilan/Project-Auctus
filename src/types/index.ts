@@ -84,6 +84,11 @@ export interface Achievement {
   };
 }
 
+export interface AchievementLock {
+  achievementId: string;
+  unlockedAt: string;
+}
+
 export interface PlayerProfile {
   name: string;
   title: string;

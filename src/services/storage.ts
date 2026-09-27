@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   CHESTS: 'auctus_duo_chests',
   REWARDS: 'auctus_duo_rewards',
   ACHIEVEMENTS: 'auctus_duo_achievements',
+  ACHIEVEMENT_LOCKS: 'auctus_duo_achievement_locks',
   TRANSACTIONS: 'auctus_duo_transactions',
   FOCUS: 'auctus_duo_focus',
 };
@@ -295,6 +296,8 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+export const INITIAL_ACHIEVEMENT_LOCKS: string[] = ['a1', 'a2', 'a3', 'a4'];
+
 export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   {
     id: 't1',
@@ -360,6 +363,9 @@ export const StorageService = {
   getAchievements: () => loadFromStorage<Achievement[]>(STORAGE_KEYS.ACHIEVEMENTS, INITIAL_ACHIEVEMENTS),
   setAchievements: (a: Achievement[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
 
+  getAchievementLocks: () => loadFromStorage<string[]>(STORAGE_KEYS.ACHIEVEMENT_LOCKS, INITIAL_ACHIEVEMENT_LOCKS),
+  setAchievementLocks: (locks: string[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
+
   getTransactions: () => loadFromStorage<EconomyTransaction[]>(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS),
   setTransactions: (t: EconomyTransaction[]) => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
 
@@ -374,6 +380,7 @@ export const StorageService = {
       chests: StorageService.getChests(),
       rewards: StorageService.getRewards(),
       achievements: StorageService.getAchievements(),
+      achievementLocks: StorageService.getAchievementLocks(),
       transactions: StorageService.getTransactions(),
       version: "2.0",
       exportedAt: new Date().toISOString(),
@@ -455,6 +462,9 @@ export const StorageService = {
       if (data.chests) StorageService.setChests(data.chests);
       if (data.rewards) StorageService.setRewards(data.rewards);
       if (data.achievements) StorageService.setAchievements(data.achievements);
+      if (Array.isArray(data.achievementLocks)) {
+        StorageService.setAchievementLocks(data.achievementLocks.filter((id: unknown): id is string => typeof id === 'string'));
+      }
       if (data.transactions) StorageService.setTransactions(data.transactions);
       return true;
     } catch {
