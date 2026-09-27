@@ -127,6 +127,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const chestTimeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   const focusSessionRef = useRef(focusSession);
   focusSessionRef.current = focusSession;
+  const processedFocusSessionsRef = useRef<Set<string>>(new Set());
+  const isCompletingFocusRef = useRef(false);
 
   // Sync profile & state to storage
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
@@ -697,33 +699,43 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.stopSoundscape();
 
     const session = focusSessionRef.current;
-    if (!session || !session.isActive) return;
+    if (!session || !session.isActive || isCompletingFocusRef.current) return;
 
-    const multiplier = session.isOvercharged ? 1.5 : 1.0;
-    const finalXp = Math.round(session.accumulatedXp * multiplier);
-    const finalCoins = Math.round(session.accumulatedCoins * multiplier);
-    const mins = Math.round(session.targetDurationSeconds / 60);
-    const questId = session.selectedQuestId;
-    const questTitle = session.selectedQuestTitle;
+    const sessionToken = `${session.startedAt || 0}-${session.targetDurationSeconds}`;
+    if (processedFocusSessionsRef.current.has(sessionToken)) return;
 
-    setFocusSession(prev => ({ ...prev, isActive: false, isPaused: false, remainingSeconds: 0 }));
+    isCompletingFocusRef.current = true;
+    processedFocusSessionsRef.current.add(sessionToken);
 
-    addXp(finalXp);
-    addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
-    setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
+    try {
+      const multiplier = session.isOvercharged ? 1.5 : 1.0;
+      const finalXp = Math.round(session.accumulatedXp * multiplier);
+      const finalCoins = Math.round(session.accumulatedCoins * multiplier);
+      const mins = Math.round(session.targetDurationSeconds / 60);
+      const questId = session.selectedQuestId;
+      const questTitle = session.selectedQuestTitle;
 
-    if (questId) {
-      completeQuest(questId);
+      setFocusSession(prev => ({ ...prev, isActive: false, isPaused: false, remainingSeconds: 0 }));
+
+      addXp(finalXp);
+      addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
+      setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
+
+      if (questId) {
+        completeQuest(questId);
+      }
+
+      openClaimModal({
+        title: 'Combat Arena Victory!',
+        subtitle: `${mins} MINUTE FOCUS COMPLETED`,
+        description: questTitle ? `Objective: ${questTitle}` : 'Deep work sprint successfully concluded.',
+        xp: finalXp,
+        coins: finalCoins,
+        icon: '⚔️',
+      });
+    } finally {
+      isCompletingFocusRef.current = false;
     }
-
-    openClaimModal({
-      title: 'Combat Arena Victory!',
-      subtitle: `${mins} MINUTE FOCUS COMPLETED`,
-      description: questTitle ? `Objective: ${questTitle}` : 'Deep work sprint successfully concluded.',
-      xp: finalXp,
-      coins: finalCoins,
-      icon: '⚔️',
-    });
   }, [addXp, addCoins, completeQuest, openClaimModal]);
 
   // Keep ref in sync for interval closure
