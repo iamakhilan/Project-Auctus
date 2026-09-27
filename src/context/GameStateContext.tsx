@@ -125,6 +125,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const focusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const completeFocusSessionRef = useRef<() => void>(() => {});
   const chestTimeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const focusSessionRef = useRef(focusSession);
+  focusSessionRef.current = focusSession;
 
   // Sync profile & state to storage
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
@@ -688,43 +690,41 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const completeFocusSession = useCallback(() => {
-    // teardown interval first to prevent leak
     if (focusIntervalRef.current) {
       clearInterval(focusIntervalRef.current);
       focusIntervalRef.current = null;
     }
     soundEngine.stopSoundscape();
 
-    setFocusSession(prev => {
-      if (!prev.isActive) return prev;
-      const multiplier = prev.isOvercharged ? 1.5 : 1.0;
-      const finalXp = Math.round(prev.accumulatedXp * multiplier);
-      const finalCoins = Math.round(prev.accumulatedCoins * multiplier);
-      const mins = Math.round(prev.targetDurationSeconds / 60);
+    const session = focusSessionRef.current;
+    if (!session || !session.isActive) return;
 
-      // side-effects via setters (safe inside updater via queue)
-      addXp(finalXp);
-      addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
-      setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
+    const multiplier = session.isOvercharged ? 1.5 : 1.0;
+    const finalXp = Math.round(session.accumulatedXp * multiplier);
+    const finalCoins = Math.round(session.accumulatedCoins * multiplier);
+    const mins = Math.round(session.targetDurationSeconds / 60);
+    const questId = session.selectedQuestId;
+    const questTitle = session.selectedQuestTitle;
 
-      if (prev.selectedQuestId) {
-        // defer quest completion to next tick to avoid nested state batch issues
-        const qid = prev.selectedQuestId;
-        setTimeout(() => completeQuest(qid), 0);
-      }
+    setFocusSession(prev => ({ ...prev, isActive: false, isPaused: false, remainingSeconds: 0 }));
 
-      openClaimModal({
-        title: 'Combat Arena Victory!',
-        subtitle: `${mins} MINUTE FOCUS COMPLETED`,
-        description: prev.selectedQuestTitle ? `Objective: ${prev.selectedQuestTitle}` : 'Deep work sprint successfully concluded.',
-        xp: finalXp,
-        coins: finalCoins,
-        icon: '⚔️',
-      });
+    addXp(finalXp);
+    addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
+    setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
 
-      return { ...prev, isActive: false, isPaused: false, remainingSeconds: 0 };
+    if (questId) {
+      completeQuest(questId);
+    }
+
+    openClaimModal({
+      title: 'Combat Arena Victory!',
+      subtitle: `${mins} MINUTE FOCUS COMPLETED`,
+      description: questTitle ? `Objective: ${questTitle}` : 'Deep work sprint successfully concluded.',
+      xp: finalXp,
+      coins: finalCoins,
+      icon: '⚔️',
     });
-  }, [addXp, addCoins, openClaimModal, completeQuest]);
+  }, [addXp, addCoins, completeQuest, openClaimModal]);
 
   // Keep ref in sync for interval closure
   useEffect(() => {
