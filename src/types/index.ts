@@ -120,6 +120,8 @@ export interface FocusSessionState {
   isOvercharged: boolean;
   soundscapeTrack: 'none' | 'cyber-rain' | 'binaural' | 'forest' | 'white-noise';
   startedAt?: number;
+  targetEndsAt?: number;
+  pausedAt?: number;
 }
 
 export interface ClaimModalData {

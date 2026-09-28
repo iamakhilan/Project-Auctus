@@ -674,6 +674,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Focus Arena Engine
   const startFocusSession = (durationMinutes: number, questId?: string, questTitle?: string) => {
     const totalSecs = durationMinutes * 60;
+    const now = Date.now();
+    const targetEndsAt = now + totalSecs * 1000;
     setFocusSession({
       isActive: true,
       isPaused: false,
@@ -685,14 +687,24 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       selectedQuestTitle: questTitle,
       isOvercharged: false,
       soundscapeTrack: 'cyber-rain',
-      startedAt: Date.now(),
+      startedAt: now,
+      targetEndsAt,
     });
     soundEngine.playSuccess();
     soundEngine.startSoundscape('cyber-rain');
   };
 
   const pauseFocusSession = useCallback(() => {
-    setFocusSession(prev => ({ ...prev, isPaused: true }));
+    const now = Date.now();
+    setFocusSession(prev => {
+      const remainingSecs = prev.targetEndsAt ? Math.max(0, Math.ceil((prev.targetEndsAt - now) / 1000)) : prev.remainingSeconds;
+      return {
+        ...prev,
+        isPaused: true,
+        remainingSeconds: remainingSecs,
+        pausedAt: now,
+      };
+    });
     soundEngine.stopSoundscape();
     if (focusIntervalRef.current) {
       clearInterval(focusIntervalRef.current);
@@ -701,11 +713,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const resumeFocusSession = useCallback(() => {
-    setFocusSession(prev => ({ ...prev, isPaused: false }));
-    // soundscape restarts in effect / direct
+    const now = Date.now();
     setFocusSession(prev => {
+      const newEndsAt = now + prev.remainingSeconds * 1000;
       soundEngine.startSoundscape(prev.soundscapeTrack);
-      return prev;
+      return {
+        ...prev,
+        isPaused: false,
+        targetEndsAt: newEndsAt,
+        pausedAt: undefined,
+      };
     });
   }, []);
 
