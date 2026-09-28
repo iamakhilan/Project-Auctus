@@ -504,7 +504,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const cost = 10;
     if (profile.gems < cost) return false;
 
-    setProfile(p => ({ ...p, gems: p.gems - cost }));
+    const ok = executeTransaction({
+      amount: -cost,
+      currency: 'gems',
+      type: 'spend',
+      reason: 'Speed up chest unlock',
+    });
+    if (!ok) return false;
+
     setChests(prev =>
       prev.map(c => (c.slotIndex === slotIndex ? { ...c, status: 'ready', unlockEndsAt: Date.now() } : c))
     );
@@ -602,7 +609,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const reward = rewards.find(r => r.id === rewardId);
     if (!reward || profile.coins < reward.cost) return false;
 
-    addCoins(-reward.cost, `Redeemed: ${reward.title}`);
+    const ok = executeTransaction({
+      amount: -reward.cost,
+      currency: 'coins',
+      type: 'spend',
+      reason: `Redeemed: ${reward.title}`,
+    });
+    if (!ok) return false;
+
     openClaimModal({
       title: reward.title,
       subtitle: 'REWARD CLAIMED',

@@ -1,4 +1,4 @@
-﻿import { PlayerProfile, EconomyTransaction } from '../types';
+import { PlayerProfile, EconomyTransaction } from '../types';
 
 export interface TransactionPayload {
   amount: number;
@@ -37,11 +37,19 @@ export const applyAtomicTransaction = (
   payload: TransactionPayload
 ): TransactionResult => {
   const transactionType = payload.type || (payload.amount >= 0 ? 'earn' : 'spend');
-  const delta = payload.amount;
+  const delta = payload.type === 'spend' && payload.amount > 0 ? -payload.amount : payload.amount;
   const targetCurrency = payload.currency;
 
-  const currentBalance = profile[targetCurrency];
+  const currentBalance = profile[targetCurrency] ?? 0;
   const newBalance = currentBalance + delta;
+
+  if (newBalance < 0) {
+    return {
+      success: false,
+      error: `Insufficient ${targetCurrency} balance (available: ${currentBalance}, required: ${Math.abs(delta)})`,
+      newProfile: profile,
+    };
+  }
 
   const newProfile: PlayerProfile = {
     ...profile,
