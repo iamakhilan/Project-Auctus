@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 
 interface HeaderHUDProps {
@@ -9,7 +9,9 @@ interface HeaderHUDProps {
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp }) => {
   const { profile, toggleSound } = useGameState();
 
-  const xpPercentage = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
+  const xpPercentage = useMemo(() => {
+    return Math.min(100, Math.round((profile.xp / Math.max(1, profile.xpToNextLevel)) * 100));
+  }, [profile.xp, profile.xpToNextLevel]);
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b-2 border-[#e5e5e5] shadow-xs select-none pt-safe">
