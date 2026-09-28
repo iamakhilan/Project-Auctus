@@ -498,4 +498,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline: 3px solid #1cb0f6;
   outline-offset: 2px;
 }
+
+/* Tactile Button Feedback */
+.btn-tactile {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.btn-tactile:active {
+  transform: translateY(2px);
+}
+
 
