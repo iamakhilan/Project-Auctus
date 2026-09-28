@@ -1,4 +1,4 @@
-﻿import { EconomyTransaction, PlayerProfile } from '../types';
+import { EconomyTransaction, PlayerProfile } from '../types';
 import { applyAtomicTransaction, TransactionInput } from './transactionRunner';
 
 export interface QueuedTransaction {
@@ -42,7 +42,7 @@ export class TransactionQueue {
       if (!item) break;
 
       const result = applyAtomicTransaction(currentProfile, item.input);
-      if (result.success) {
+      if (result.success && result.transaction) {
         currentProfile = result.newProfile;
         applied.push(result.transaction);
       } else {

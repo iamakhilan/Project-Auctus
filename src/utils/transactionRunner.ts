@@ -71,3 +71,28 @@ export const applyAtomicTransaction = (
     transaction,
   };
 };
+
+export type TransactionInput = TransactionPayload;
+
+export function isTransactionDuplicate(
+  existingTransactions: EconomyTransaction[],
+  transactionId: string
+): boolean {
+  return existingTransactions.some((t) => t.id === transactionId);
+}
+
+export function rollbackTransaction(
+  profile: PlayerProfile,
+  transaction: EconomyTransaction
+): PlayerProfile {
+  const currency = transaction.currency;
+  const currentVal = profile[currency] ?? 0;
+  // Invert the delta applied by the transaction
+  const restoredVal = Math.max(0, currentVal - transaction.amount);
+
+  return {
+    ...profile,
+    [currency]: restoredVal,
+  };
+}
+
