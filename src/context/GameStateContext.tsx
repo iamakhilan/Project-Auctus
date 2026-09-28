@@ -15,6 +15,7 @@ import {
 import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
+import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -130,6 +131,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   focusSessionRef.current = focusSession;
   const processedFocusSessionsRef = useRef<Set<string>>(new Set());
   const isCompletingFocusRef = useRef(false);
+  const transactionQueueRef = useRef(new AtomicTransactionQueue());
 
   // Sync profile & state to storage
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
@@ -242,40 +244,44 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addXpRef = useRef(addXp);
   addXpRef.current = addXp;
 
-  const addCoins = useCallback((amount: number, reason: string) => {
-    setProfile(p => ({ ...p, coins: p.coins + amount }));
-    setTransactions(t => [
-      {
-        id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        timestamp: Date.now(),
-        amount,
-        currency: 'coins',
-        type: amount >= 0 ? 'earn' : 'spend',
-        reason,
-      },
-      ...t,
-    ]);
-    if (amount > 0) soundEngine.playCoinCollect();
+  const executeTransaction = useCallback((payload: TransactionPayload): boolean => {
+    let succeeded = false;
+    transactionQueueRef.current.run(() => {
+      setProfile(prevProfile => {
+        const result = applyAtomicTransaction(prevProfile, payload);
+        if (!result.success || !result.transaction) {
+          return prevProfile;
+        }
+        setTransactions(prevTx => [result.transaction!, ...prevTx]);
+        succeeded = true;
+        return result.newProfile;
+      });
+    });
+    return succeeded;
   }, []);
+
+  const addCoins = useCallback((amount: number, reason: string) => {
+    executeTransaction({
+      amount,
+      currency: 'coins',
+      type: amount >= 0 ? 'earn' : 'spend',
+      reason,
+    });
+    if (amount > 0) soundEngine.playCoinCollect();
+  }, [executeTransaction]);
 
   const addCoinsRef = useRef(addCoins);
   addCoinsRef.current = addCoins;
 
   const addGems = useCallback((amount: number, reason: string) => {
-    setProfile(p => ({ ...p, gems: p.gems + amount }));
-    setTransactions(t => [
-      {
-        id: `tx-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        timestamp: Date.now(),
-        amount,
-        currency: 'gems',
-        type: amount >= 0 ? 'earn' : 'spend',
-        reason,
-      },
-      ...t,
-    ]);
+    executeTransaction({
+      amount,
+      currency: 'gems',
+      type: amount >= 0 ? 'earn' : 'spend',
+      reason,
+    });
     if (amount > 0) soundEngine.playSuccess();
-  }, []);
+  }, [executeTransaction]);
 
   const addGemsRef = useRef(addGems);
   addGemsRef.current = addGems;
