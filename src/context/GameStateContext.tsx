@@ -601,22 +601,6 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
-  // Chest Timer Tick
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setChests(prev =>
-        prev.map(c => {
-          if (c.status === 'unlocking' && c.unlockEndsAt && now >= c.unlockEndsAt) {
-            return { ...c, status: 'ready' };
-          }
-          return c;
-        })
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Rewards
   const redeemReward = (rewardId: string): boolean => {
     const reward = rewards.find(r => r.id === rewardId);
