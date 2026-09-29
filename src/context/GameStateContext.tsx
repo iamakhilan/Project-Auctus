@@ -104,16 +104,26 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [focusSession, setFocusSession] = useState<FocusSessionState>(() => {
     const saved = StorageService.getFocusState();
-    return saved || {
-      isActive: false,
-      isPaused: false,
-      targetDurationSeconds: 1500,
-      remainingSeconds: 1500,
-      accumulatedXp: 0,
-      accumulatedCoins: 0,
-      isOvercharged: false,
-      soundscapeTrack: 'none',
-    };
+    if (!saved) {
+      return {
+        isActive: false,
+        isPaused: false,
+        targetDurationSeconds: 1500,
+        remainingSeconds: 1500,
+        accumulatedXp: 0,
+        accumulatedCoins: 0,
+        isOvercharged: false,
+        soundscapeTrack: 'none',
+      };
+    }
+    if (saved.isActive && !saved.isPaused && saved.targetEndsAt) {
+      const remainingSecs = Math.max(0, Math.ceil((saved.targetEndsAt - Date.now()) / 1000));
+      return {
+        ...saved,
+        remainingSeconds: remainingSecs,
+      };
+    }
+    return saved;
   });
 
   const [claimModal, setClaimModal] = useState<ClaimModalData>({
@@ -803,6 +813,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
+  // Check crash/background elapsed time on mount
+  useEffect(() => {
+    const current = focusSessionRef.current;
+    if (current && current.isActive && !current.isPaused && current.targetEndsAt) {
+      if (Date.now() >= current.targetEndsAt) {
+        completeFocusSessionRef.current();
+      }
+    }
+  }, []);
+
   // Focus Timer countdown tick — consolidated single effect with visibility handling
   useEffect(() => {
     // Clear any existing interval before (re)starting
@@ -821,8 +841,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Single interval handler
     const tick = () => {
+      const now = Date.now();
       setFocusSession(prev => {
         if (!prev.isActive || prev.isPaused) return prev;
+        if (prev.targetEndsAt) {
+          const remaining = Math.max(0, Math.ceil((prev.targetEndsAt - now) / 1000));
+          if (remaining <= 0) {
+            completeFocusSessionRef.current();
+            return prev;
+          }
+          return { ...prev, remainingSeconds: remaining };
+        }
         if (prev.remainingSeconds <= 1) {
           completeFocusSessionRef.current();
           return prev;
@@ -835,6 +864,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Visibility handler: pause tick while hidden, resume when visible without losing time
     const handleVisibilityChange = () => {
+      const now = Date.now();
+      const current = focusSessionRef.current;
       if (document.hidden) {
         if (focusIntervalRef.current) {
           clearInterval(focusIntervalRef.current);
@@ -842,10 +873,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         soundEngine.stopSoundscape();
       } else {
-        // re-arm interval if still active and not paused
-        if (!focusIntervalRef.current && focusSession.isActive && !focusSession.isPaused) {
-          soundEngine.startSoundscape(focusSession.soundscapeTrack);
-          focusIntervalRef.current = setInterval(tick, 1000);
+        if (current && current.isActive && !current.isPaused && current.targetEndsAt) {
+          if (now >= current.targetEndsAt) {
+            completeFocusSessionRef.current();
+            return;
+          }
+          const recalculatedRemaining = Math.max(0, Math.ceil((current.targetEndsAt - now) / 1000));
+          setFocusSession(prev => ({ ...prev, remainingSeconds: recalculatedRemaining }));
+          if (!focusIntervalRef.current) {
+            soundEngine.startSoundscape(current.soundscapeTrack);
+            focusIntervalRef.current = setInterval(tick, 1000);
+          }
         }
       }
     };
