@@ -531,7 +531,10 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const claimChestLoot = (slotIndex: number) => {
     const chest = chests.find(c => c.slotIndex === slotIndex);
-    if (!chest || chest.status !== 'ready') return;
+    if (!chest) return;
+
+    const isReady = chest.status === 'ready' || (chest.status === 'unlocking' && !!chest.unlockEndsAt && Date.now() >= chest.unlockEndsAt);
+    if (!isReady) return;
 
     addCoins(chest.coinsReward, `Opened ${chest.name}`);
     addXp(chest.xpReward);

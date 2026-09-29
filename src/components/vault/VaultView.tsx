@@ -140,8 +140,8 @@ export const VaultView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {chests.map((chest) => {
                 const details = getTierDetails(chest.tier);
-                const isUnlocking = chest.status === 'unlocking';
-                const isReady = chest.status === 'ready' || (isUnlocking && chest.unlockEndsAt && Date.now() >= chest.unlockEndsAt);
+                const isReady = chest.status === 'ready' || (chest.status === 'unlocking' && Boolean(chest.unlockEndsAt && Date.now() >= chest.unlockEndsAt));
+                const isUnlocking = chest.status === 'unlocking' && !isReady;
                 const isEmpty = chest.status === 'empty';
                 return (
                   <div
