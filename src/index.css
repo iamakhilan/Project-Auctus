@@ -510,4 +510,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   transform: translateY(2px);
 }
 
+/* Focus Ring Glow Animation */
+.focus-timer-glow {
+  filter: drop-shadow(0 0 12px rgba(28, 176, 246, 0.4));
+  transition: filter 0.3s ease;
+}
+
+.focus-timer-glow-overcharged {
+  filter: drop-shadow(0 0 16px rgba(255, 150, 0, 0.6));
+  animation: overchargePulse 1.8s infinite alternate;
+}
+
+@keyframes overchargePulse {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(255, 150, 0, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 0 22px rgba(255, 180, 0, 0.8));
+  }
+}
+
+
 
