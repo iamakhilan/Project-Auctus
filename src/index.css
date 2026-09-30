@@ -530,5 +530,38 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   }
 }
 
+/* Streak Multiplier Ribbon Glow */
+.streak-ribbon-sparkle {
+  position: relative;
+  overflow: hidden;
+}
+
+.streak-ribbon-sparkle::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 80%
+  );
+  transform: rotate(30deg);
+  animation: ribbonSparkle 4s infinite linear;
+}
+
+@keyframes ribbonSparkle {
+  0% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(30deg);
+  }
+}
+
+
 
 
