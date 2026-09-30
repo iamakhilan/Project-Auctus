@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { getStreakMultiplier, getNextStreakMilestone } from '../../utils/streakBonus';
 
 export const RealmView: React.FC = () => {
   const {
@@ -13,6 +14,9 @@ export const RealmView: React.FC = () => {
   } = useGameState();
 
   const today = new Date().toISOString().split('T')[0];
+
+  const streakMultiplier = useMemo(() => getStreakMultiplier(profile.streakDays), [profile.streakDays]);
+  const nextMilestone = useMemo(() => getNextStreakMilestone(profile.streakDays), [profile.streakDays]);
 
   const dailyQuests = useMemo(() => quests.filter((q) => q.category === 'daily'), [quests]);
   const completedDailyCount = dailyQuests.filter((q) => q.isCompleted).length;
@@ -97,9 +101,9 @@ export const RealmView: React.FC = () => {
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-xs font-black uppercase tracking-wider mb-3 shadow-xs flex-wrap">
               <span>🔥 {profile.streakDays} Day Streak</span>
               <span className="hidden sm:inline">•</span>
-              <span className="hidden sm:inline">Sem V Active</span>
+              <span>{streakMultiplier}x XP Multiplier</span>
               <span className="hidden sm:inline">•</span>
-              <span className="hidden sm:inline">1.2x XP Boost</span>
+              <span className="hidden sm:inline">Next: {nextMilestone.daysRemaining}d to {nextMilestone.multiplier}x</span>
             </div>
             <h1 className="font-['Feather_Bold'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-white drop-shadow-sm">
               REALM EXPEDITION
