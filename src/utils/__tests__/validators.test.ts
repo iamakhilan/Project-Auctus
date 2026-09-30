@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isNonEmpty, isCostValid, clamp, sanitize } from '../validators';
+import { isNonEmpty, isCostValid, clamp, sanitize, validateBackupPayload } from '../validators';
 
 describe('isNonEmpty', () => {
   it('returns true for non-empty strings', () => {
@@ -99,5 +99,76 @@ describe('sanitize', () => {
     // @ts-expect-error testing runtime guard
     expect(sanitize(undefined)).toBe('');
     expect(sanitize(123 as unknown as string)).toBe('');
+  });
+});
+
+describe('validateBackupPayload', () => {
+  it('validates a valid v2 backup payload', () => {
+    const backup = {
+      version: '2.0',
+      profile: {
+        name: 'Commander',
+        level: 5,
+        coins: 1000,
+        gems: 50,
+      },
+      quests: [{ id: 'q1', title: 'Test Quest' }],
+      habits: [{ id: 'h1', title: 'Test Habit' }],
+      achievementLocks: ['a1', 'a2'],
+    };
+
+    const res = validateBackupPayload(JSON.stringify(backup));
+    expect(res.isValid).toBe(true);
+    expect(res.version).toBe('2.0');
+    expect(res.errors).toHaveLength(0);
+  });
+
+  it('validates a legacy v1 backup payload without version key', () => {
+    const legacy = {
+      profile: {
+        name: 'Legacy Player',
+        level: 2,
+        coins: 500,
+        gems: 10,
+      },
+      quests: [{ id: 'q1', title: 'Legacy Quest' }],
+    };
+
+    const res = validateBackupPayload(JSON.stringify(legacy));
+    expect(res.isValid).toBe(true);
+    expect(res.version).toBe('1.0');
+    expect(res.errors).toHaveLength(0);
+  });
+
+  it('rejects malformed JSON strings', () => {
+    const res = validateBackupPayload('{ broken json:');
+    expect(res.isValid).toBe(false);
+    expect(res.errors[0]).toContain('Invalid JSON format');
+  });
+
+  it('rejects invalid profile structures', () => {
+    const invalid = {
+      version: '2.0',
+      profile: {
+        name: '',
+        level: -1,
+        coins: 'lots',
+      },
+    };
+
+    const res = validateBackupPayload(invalid);
+    expect(res.isValid).toBe(false);
+    expect(res.errors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects invalid achievementLocks type in v2 schema', () => {
+    const invalid = {
+      version: '2.0',
+      achievementLocks: 'not-an-array',
+    };
+
+    const res = validateBackupPayload(invalid);
+    expect(res.isValid).toBe(false);
+    expect(res.errors[0]).toContain('achievementLocks');
   });
 });
