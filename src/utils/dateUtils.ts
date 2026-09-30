@@ -1,4 +1,4 @@
-﻿export const getLocalDateString = (date: Date = new Date()): string => {
+export const getLocalDateString = (date: Date = new Date()): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -46,4 +46,90 @@ export const getCalendarDayDifference = (earlierDateStr: string, laterDateStr: s
 
   const msPerDay = 1000 * 60 * 60 * 24;
   return Math.floor((utc2 - utc1) / msPerDay);
+};
+
+export interface StreakCalculationResult {
+  streakCount: number;
+  bestStreak: number;
+  completedDates: string[];
+  lastCompletedDate: string;
+}
+
+export const calculateUpdatedStreak = (
+  currentCompletedDates: string[],
+  currentStreak: number,
+  bestStreak: number,
+  checkInDate: string = getLocalDateString()
+): StreakCalculationResult => {
+  const datesSet = new Set(currentCompletedDates || []);
+  if (datesSet.has(checkInDate)) {
+    return {
+      streakCount: currentStreak,
+      bestStreak,
+      completedDates: currentCompletedDates,
+      lastCompletedDate: checkInDate,
+    };
+  }
+
+  const updatedDates = [...(currentCompletedDates || []), checkInDate].sort();
+  const yesterdayStr = getPreviousLocalDateString(checkInDate);
+  const wasConsecutive = datesSet.has(yesterdayStr);
+  const newStreak = wasConsecutive ? currentStreak + 1 : 1;
+  const newBestStreak = Math.max(newStreak, bestStreak);
+
+  return {
+    streakCount: newStreak,
+    bestStreak: newBestStreak,
+    completedDates: updatedDates,
+    lastCompletedDate: checkInDate,
+  };
+};
+
+export const recalculateFullStreakFromDates = (
+  completedDates: string[],
+  referenceDate: string = getLocalDateString()
+): { currentStreak: number; bestStreak: number } => {
+  if (!completedDates || completedDates.length === 0) {
+    return { currentStreak: 0, bestStreak: 0 };
+  }
+
+  const sortedUnique = Array.from(new Set(completedDates)).sort();
+  let maxStreak = 0;
+  let runningStreak = 0;
+  let prevDate: string | null = null;
+
+  for (const d of sortedUnique) {
+    if (!prevDate) {
+      runningStreak = 1;
+    } else {
+      const diff = getCalendarDayDifference(prevDate, d);
+      if (diff === 1) {
+        runningStreak += 1;
+      } else if (diff > 1) {
+        runningStreak = 1;
+      }
+    }
+    maxStreak = Math.max(maxStreak, runningStreak);
+    prevDate = d;
+  }
+
+  const lastDate = sortedUnique[sortedUnique.length - 1];
+  const daysSinceLast = getCalendarDayDifference(lastDate, referenceDate);
+  let activeStreak = 0;
+  if (daysSinceLast === 0 || daysSinceLast === 1) {
+    activeStreak = 1;
+    for (let i = sortedUnique.length - 1; i > 0; i--) {
+      const diff = getCalendarDayDifference(sortedUnique[i - 1], sortedUnique[i]);
+      if (diff === 1) {
+        activeStreak += 1;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return {
+    currentStreak: activeStreak,
+    bestStreak: maxStreak,
+  };
 };

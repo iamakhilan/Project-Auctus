@@ -16,7 +16,7 @@ import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
 import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
-import { getLocalDateString, getPreviousLocalDateString } from '../utils/dateUtils';
+import { getLocalDateString, getPreviousLocalDateString, calculateUpdatedStreak } from '../utils/dateUtils';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -437,15 +437,12 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const completedDates = habit.completedDates || [];
     if (completedDates.includes(today)) return;
 
-    const yesterdayStr = getPreviousLocalDateString(today);
-
-    const newCompletedDates = [...completedDates, today];
-    const wasConsecutive = completedDates.includes(yesterdayStr);
-    const newStreak = wasConsecutive ? habit.streakCount + 1 : 1;
-    const bestStreak = Math.max(newStreak, habit.bestStreak);
+    const result = calculateUpdatedStreak(completedDates, habit.streakCount, habit.bestStreak, today);
+    const newStreak = result.streakCount;
+    const bestStreak = result.bestStreak;
 
     setHabits(prev =>
-      prev.map(h => (h.id === habitId ? { ...h, streakCount: newStreak, bestStreak, lastCompletedDate: today, completedDates: newCompletedDates } : h))
+      prev.map(h => (h.id === habitId ? { ...h, streakCount: newStreak, bestStreak, lastCompletedDate: today, completedDates: result.completedDates } : h))
     );
 
     // Multiplier for streak milestones
