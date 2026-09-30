@@ -16,6 +16,7 @@ import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
 import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
+import { getLocalDateString, getPreviousLocalDateString } from '../utils/dateUtils';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -428,7 +429,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Habit Actions
   const checkInHabit = (habitId: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
@@ -436,9 +437,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const completedDates = habit.completedDates || [];
     if (completedDates.includes(today)) return;
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = getPreviousLocalDateString(today);
 
     const newCompletedDates = [...completedDates, today];
     const wasConsecutive = completedDates.includes(yesterdayStr);
