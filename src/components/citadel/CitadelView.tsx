@@ -3,6 +3,7 @@ import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { validateBackupPayload } from '../../utils/validators';
 import { getCitadelTierConfig, calculateCitadelPower } from '../../utils/citadelEngine';
+import { saveSnapshot } from '../../utils/snapshotManager';
 
 const TIER_DEFS = [
   { tier: 1, name: 'Pathfinder Outpost', icon: '🏕️', perk: '+5% XP Boost', detail: 'Starter discipline multiplier', minPower: 200 },
@@ -109,6 +110,8 @@ export const CitadelView: React.FC = () => {
       soundEngine.playClick();
       return;
     }
+    // Automatically capture state snapshot before applying import
+    saveSnapshot(exportData(), 'Pre-import automatic snapshot');
     const success = importData(importJsonText);
     if (success) {
       soundEngine.playSuccess();
