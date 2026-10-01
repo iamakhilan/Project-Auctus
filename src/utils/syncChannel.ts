@@ -1,4 +1,4 @@
-﻿export type SyncEventType =
+export type SyncEventType =
   | 'DELETE_QUEST'
   | 'DELETE_HABIT'
   | 'DELETE_REWARD'
@@ -59,6 +59,8 @@ class StateSyncChannel {
         // quota fallback
       }
     }
+
+    this.notifyListeners(message);
   }
 
   public subscribe(listener: SyncListener): () => void {

@@ -159,6 +159,27 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Multi-tab sync: listen for storage events from other tabs
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'auctus_sync_event_fallback' && e.newValue) {
+        try {
+          const msg = JSON.parse(e.newValue);
+          if (msg.type === 'DELETE_QUEST' && msg.entityId) {
+            setQuests(prev => prev.filter(q => q.id !== msg.entityId));
+            setFocusSession(prev =>
+              prev.selectedQuestId === msg.entityId
+                ? { ...prev, selectedQuestId: undefined, selectedQuestTitle: undefined }
+                : prev
+            );
+          } else if (msg.type === 'DELETE_HABIT' && msg.entityId) {
+            setHabits(prev => prev.filter(h => h.id !== msg.entityId));
+          } else if (msg.type === 'DELETE_REWARD' && msg.entityId) {
+            setRewards(prev => prev.filter(r => r.id !== msg.entityId));
+          }
+        } catch {
+          // ignore fallback parse error
+        }
+        return;
+      }
+
       if (!e.key || !Object.values(STORAGE_KEYS).includes(e.key)) return;
       try {
         if (e.newValue === null) return; // cleared elsewhere, ignore
@@ -198,6 +219,26 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Cross-tab broadcast eviction listener
+  useEffect(() => {
+    const unsubscribe = syncChannel.subscribe((message) => {
+      if (message.type === 'DELETE_QUEST' && message.entityId) {
+        setQuests(prev => prev.filter(q => q.id !== message.entityId));
+        setFocusSession(prev =>
+          prev.selectedQuestId === message.entityId
+            ? { ...prev, selectedQuestId: undefined, selectedQuestTitle: undefined }
+            : prev
+        );
+      } else if (message.type === 'DELETE_HABIT' && message.entityId) {
+        setHabits(prev => prev.filter(h => h.id !== message.entityId));
+      } else if (message.type === 'DELETE_REWARD' && message.entityId) {
+        setRewards(prev => prev.filter(r => r.id !== message.entityId));
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   // Sync sound engine state
