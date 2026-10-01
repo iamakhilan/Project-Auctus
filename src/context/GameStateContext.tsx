@@ -17,6 +17,7 @@ import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
 import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
 import { getLocalDateString, getPreviousLocalDateString, calculateUpdatedStreak } from '../utils/dateUtils';
+import { syncChannel } from '../utils/syncChannel';
 
 interface GameStateContextType {
   activeTab: TabType;
@@ -420,6 +421,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteQuest = (questId: string) => {
     setQuests(prev => prev.filter(q => q.id !== questId));
+    syncChannel.broadcast('DELETE_QUEST', questId);
   };
 
   const updateQuest = useCallback((questId: string, patch: Partial<Quest>) => {
@@ -482,6 +484,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteHabit = (habitId: string) => {
     setHabits(prev => prev.filter(h => h.id !== habitId));
+    syncChannel.broadcast('DELETE_HABIT', habitId);
   };
 
   const updateHabit = useCallback((habitId: string, patch: Partial<Habit>) => {
