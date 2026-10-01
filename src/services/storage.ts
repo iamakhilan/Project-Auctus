@@ -8,6 +8,7 @@ import {
   EconomyTransaction,
   FocusSessionState,
 } from '../types';
+import { validateBackupPayload } from '../utils/validators';
 
 export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
@@ -390,32 +391,32 @@ export const StorageService = {
 
   importBackup: (json: string): boolean => {
     try {
-      const data = JSON.parse(json);
-      // version-aware: accept 2.0 and legacy (no version) backups
-      if (data.version && data.version !== '2.0' && data.version !== '1.0') {
-        // unknown future version — still attempt to import known keys
+      const validation = validateBackupPayload(json);
+      if (!validation.isValid || !validation.data) {
+        return false;
       }
+      const data = validation.data;
       
       // Validate imported data structure
-      if (data.profile) {
-        // Ensure required profile fields exist with safe defaults
-        const validatedProfile = {
-          name: typeof data.profile.name === 'string' ? data.profile.name : INITIAL_PROFILE.name,
-          title: typeof data.profile.title === 'string' ? data.profile.title : INITIAL_PROFILE.title,
-          level: Number.isInteger(data.profile.level) && data.profile.level > 0 ? data.profile.level : INITIAL_PROFILE.level,
-          xp: Number.isInteger(data.profile.xp) && data.profile.xp >= 0 ? data.profile.xp : INITIAL_PROFILE.xp,
-          xpToNextLevel: Number.isInteger(data.profile.xpToNextLevel) && data.profile.xpToNextLevel > 0 ? data.profile.xpToNextLevel : INITIAL_PROFILE.xpToNextLevel,
-          coins: Number.isInteger(data.profile.coins) && data.profile.coins >= 0 ? data.profile.coins : INITIAL_PROFILE.coins,
-          gems: Number.isInteger(data.profile.gems) && data.profile.gems >= 0 ? data.profile.gems : INITIAL_PROFILE.gems,
-          energy: Number.isInteger(data.profile.energy) && data.profile.energy >= 0 ? data.profile.energy : INITIAL_PROFILE.energy,
-          maxEnergy: Number.isInteger(data.profile.maxEnergy) && data.profile.maxEnergy > 0 ? data.profile.maxEnergy : INITIAL_PROFILE.maxEnergy,
-          streakDays: Number.isInteger(data.profile.streakDays) && data.profile.streakDays >= 0 ? data.profile.streakDays : INITIAL_PROFILE.streakDays,
-          citadelTier: Number.isInteger(data.profile.citadelTier) && data.profile.citadelTier >= 0 ? data.profile.citadelTier : INITIAL_PROFILE.citadelTier,
-          citadelPower: Number.isInteger(data.profile.citadelPower) && data.profile.citadelPower >= 0 ? data.profile.citadelPower : INITIAL_PROFILE.citadelPower,
-          citadelMaxPower: Number.isInteger(data.profile.citadelMaxPower) && data.profile.citadelMaxPower > 0 ? data.profile.citadelMaxPower : INITIAL_PROFILE.citadelMaxPower,
-          totalFocusMinutes: Number.isInteger(data.profile.totalFocusMinutes) && data.profile.totalFocusMinutes >= 0 ? data.profile.totalFocusMinutes : INITIAL_PROFILE.totalFocusMinutes,
-          completedQuestsCount: Number.isInteger(data.profile.completedQuestsCount) && data.profile.completedQuestsCount >= 0 ? data.profile.completedQuestsCount : INITIAL_PROFILE.completedQuestsCount,
-          soundEnabled: typeof data.profile.soundEnabled === 'boolean' ? data.profile.soundEnabled : INITIAL_PROFILE.soundEnabled,
+      if (data.profile && typeof data.profile === 'object') {
+        const p = data.profile as Record<string, unknown>;
+        const validatedProfile: PlayerProfile = {
+          name: typeof p.name === 'string' ? p.name : INITIAL_PROFILE.name,
+          title: typeof p.title === 'string' ? p.title : INITIAL_PROFILE.title,
+          level: Number.isInteger(p.level) && (p.level as number) > 0 ? (p.level as number) : INITIAL_PROFILE.level,
+          xp: Number.isInteger(p.xp) && (p.xp as number) >= 0 ? (p.xp as number) : INITIAL_PROFILE.xp,
+          xpToNextLevel: Number.isInteger(p.xpToNextLevel) && (p.xpToNextLevel as number) > 0 ? (p.xpToNextLevel as number) : INITIAL_PROFILE.xpToNextLevel,
+          coins: Number.isInteger(p.coins) && (p.coins as number) >= 0 ? (p.coins as number) : INITIAL_PROFILE.coins,
+          gems: Number.isInteger(p.gems) && (p.gems as number) >= 0 ? (p.gems as number) : INITIAL_PROFILE.gems,
+          energy: Number.isInteger(p.energy) && (p.energy as number) >= 0 ? (p.energy as number) : INITIAL_PROFILE.energy,
+          maxEnergy: Number.isInteger(p.maxEnergy) && (p.maxEnergy as number) > 0 ? (p.maxEnergy as number) : INITIAL_PROFILE.maxEnergy,
+          streakDays: Number.isInteger(p.streakDays) && (p.streakDays as number) >= 0 ? (p.streakDays as number) : INITIAL_PROFILE.streakDays,
+          citadelTier: Number.isInteger(p.citadelTier) && (p.citadelTier as number) >= 0 ? (p.citadelTier as number) : INITIAL_PROFILE.citadelTier,
+          citadelPower: Number.isInteger(p.citadelPower) && (p.citadelPower as number) >= 0 ? (p.citadelPower as number) : INITIAL_PROFILE.citadelPower,
+          citadelMaxPower: Number.isInteger(p.citadelMaxPower) && (p.citadelMaxPower as number) > 0 ? (p.citadelMaxPower as number) : INITIAL_PROFILE.citadelMaxPower,
+          totalFocusMinutes: Number.isInteger(p.totalFocusMinutes) && (p.totalFocusMinutes as number) >= 0 ? (p.totalFocusMinutes as number) : INITIAL_PROFILE.totalFocusMinutes,
+          completedQuestsCount: Number.isInteger(p.completedQuestsCount) && (p.completedQuestsCount as number) >= 0 ? (p.completedQuestsCount as number) : INITIAL_PROFILE.completedQuestsCount,
+          soundEnabled: typeof p.soundEnabled === 'boolean' ? p.soundEnabled : INITIAL_PROFILE.soundEnabled,
         };
         StorageService.setProfile(validatedProfile);
       }
@@ -459,13 +460,13 @@ export const StorageService = {
         StorageService.setHabits(validatedHabits);
       }
       
-      if (data.chests) StorageService.setChests(data.chests);
-      if (data.rewards) StorageService.setRewards(data.rewards);
-      if (data.achievements) StorageService.setAchievements(data.achievements);
+      if (Array.isArray(data.chests)) StorageService.setChests(data.chests as ChestSlot[]);
+      if (Array.isArray(data.rewards)) StorageService.setRewards(data.rewards as RewardItem[]);
+      if (Array.isArray(data.achievements)) StorageService.setAchievements(data.achievements as Achievement[]);
       if (Array.isArray(data.achievementLocks)) {
         StorageService.setAchievementLocks(data.achievementLocks.filter((id: unknown): id is string => typeof id === 'string'));
       }
-      if (data.transactions) StorageService.setTransactions(data.transactions);
+      if (Array.isArray(data.transactions)) StorageService.setTransactions(data.transactions as EconomyTransaction[]);
       return true;
     } catch {
       return false;

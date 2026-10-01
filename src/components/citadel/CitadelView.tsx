@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { validateBackupPayload } from '../../utils/validators';
 
 const TIER_DEFS = [
   { tier: 1, name: 'Pathfinder Outpost', icon: '🏕️', perk: '+5% XP Boost', detail: 'Starter discipline multiplier', minPower: 200 },
@@ -12,37 +13,13 @@ const TIER_DEFS = [
 
 function validateImportJson(raw: string): { ok: boolean; error?: string; parsed?: unknown } {
   if (!raw.trim()) return { ok: false, error: 'Paste JSON backup first.' };
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Invalid JSON';
-    return { ok: false, error: `Malformed JSON: ${msg}` };
-  }
-  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-    return { ok: false, error: 'Root must be a JSON object (not array/null).' };
-  }
-  const obj = data as Record<string, unknown>;
-  const allowedKeys = ['profile', 'quests', 'habits', 'chests', 'rewards', 'achievements', 'transactions', 'exportedAt'];
-  const hasAny = allowedKeys.some((k) => k in obj);
-  if (!hasAny) return { ok: false, error: 'Missing backup keys. Expected one of: profile, quests, habits, chests, rewards, achievements, transactions.' };
-  // shallow shape checks
-  if ('profile' in obj && obj.profile !== null && typeof obj.profile !== 'object') return { ok: false, error: 'profile must be an object.' };
-  if ('quests' in obj && !Array.isArray(obj.quests)) return { ok: false, error: 'quests must be an array.' };
-  if ('habits' in obj && !Array.isArray(obj.habits)) return { ok: false, error: 'habits must be an array.' };
-  if ('chests' in obj && !Array.isArray(obj.chests)) return { ok: false, error: 'chests must be an array.' };
-  if ('rewards' in obj && !Array.isArray(obj.rewards)) return { ok: false, error: 'rewards must be an array.' };
-  if ('achievements' in obj && !Array.isArray(obj.achievements)) return { ok: false, error: 'achievements must be an array.' };
-  if ('transactions' in obj && !Array.isArray(obj.transactions)) return { ok: false, error: 'transactions must be an array.' };
-  if ('profile' in obj && obj.profile && typeof obj.profile === 'object') {
-    const p = obj.profile as Record<string, unknown>;
-    if ('citadelTier' in p && typeof p.citadelTier !== 'number') return { ok: false, error: 'profile.citadelTier must be a number.' };
-    if ('citadelPower' in p && typeof p.citadelPower !== 'number') return { ok: false, error: 'profile.citadelPower must be a number.' };
-    if ('level' in p && typeof p.level !== 'number') return { ok: false, error: 'profile.level must be a number.' };
-  }
-  // size guard
   if (raw.length > 2_000_000) return { ok: false, error: 'Backup too large (>2MB). File may be corrupted.' };
-  return { ok: true, parsed: data };
+
+  const result = validateBackupPayload(raw);
+  if (!result.isValid) {
+    return { ok: false, error: result.errors[0] || 'Invalid backup payload' };
+  }
+  return { ok: true, parsed: result.data };
 }
 
 export const CitadelView: React.FC = () => {
