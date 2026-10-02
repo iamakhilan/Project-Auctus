@@ -4,6 +4,7 @@ import { soundEngine } from '../../utils/audioSynthesizer';
 import { validateBackupPayload } from '../../utils/validators';
 import { getCitadelTierConfig, calculateCitadelPower } from '../../utils/citadelEngine';
 import { saveSnapshot } from '../../utils/snapshotManager';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 const TIER_DEFS = [
   { tier: 1, name: 'Pathfinder Outpost', icon: '🏕️', perk: '+5% XP Boost', detail: 'Starter discipline multiplier', minPower: 200 },
@@ -92,7 +93,7 @@ export const CitadelView: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `auctus-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `auctus-backup-${getLocalDateString(new Date())}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setCopySuccess(true);

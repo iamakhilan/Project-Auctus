@@ -10,6 +10,7 @@ import {
   AudioSettings,
 } from '../types';
 import { validateBackupPayload } from '../utils/validators';
+import { getLocalDateString } from '../utils/dateUtils';
 
 export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
@@ -108,8 +109,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 14,
     bestStreak: 21,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 14 }, (_, i) => new Date(Date.now() - (13 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 14 }, (_, i) => getLocalDateString(new Date(Date.now() - (13 - i) * 86400000))),
     xpYield: 30,
     coinYield: 15,
   },
@@ -119,8 +120,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'vitality',
     streakCount: 8,
     bestStreak: 12,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 8 }, (_, i) => new Date(Date.now() - (7 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 8 }, (_, i) => getLocalDateString(new Date(Date.now() - (7 - i) * 86400000))),
     xpYield: 20,
     coinYield: 10,
   },
@@ -130,8 +131,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'mind',
     streakCount: 5,
     bestStreak: 9,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 5 }, (_, i) => new Date(Date.now() - (4 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 5 }, (_, i) => getLocalDateString(new Date(Date.now() - (4 - i) * 86400000))),
     xpYield: 25,
     coinYield: 12,
   },
@@ -141,8 +142,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 11,
     bestStreak: 14,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 11 }, (_, i) => new Date(Date.now() - (10 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 11 }, (_, i) => getLocalDateString(new Date(Date.now() - (10 - i) * 86400000))),
     xpYield: 40,
     coinYield: 20,
   },

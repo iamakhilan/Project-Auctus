@@ -4,6 +4,7 @@ import { useGameState } from '../../context/GameStateContext';
 import { MissionForgeModal } from './MissionForgeModal';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { sanitize } from '../../utils/validators';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -64,7 +65,7 @@ export const QuestsView: React.FC = () => {
   };
 
   const tags: QuestTag[] = ['Coding', 'Study', 'Fitness', 'Work', 'Personal', 'Creative', 'Deep Work'];
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
 
   const startEditQuest = (id: string, title: string, desc?: string) => {
     setEditingQuestId(id);

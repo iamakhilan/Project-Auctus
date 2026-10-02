@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { getStreakMultiplier, getNextStreakMilestone } from '../../utils/streakBonus';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 export const RealmView: React.FC = () => {
   const {
@@ -13,7 +14,7 @@ export const RealmView: React.FC = () => {
     startFocusSession,
   } = useGameState();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
   const streakMultiplier = useMemo(() => getStreakMultiplier(profile.streakDays), [profile.streakDays]);
   const nextMilestone = useMemo(() => getNextStreakMilestone(profile.streakDays), [profile.streakDays]);
