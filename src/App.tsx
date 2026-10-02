@@ -11,6 +11,7 @@ import { OnboardingModal } from './components/common/OnboardingModal';
 import { CommandPalette } from './components/common/CommandPalette';
 import { HelpOverlay } from './components/common/HelpOverlay';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { PersistenceErrorBridge } from './components/common/PersistenceErrorBridge';
 
 const CitadelView = lazy(() => import('./components/citadel/CitadelView').then((m) => ({ default: m.CitadelView })));
 const AnalyticsDashboard = lazy(() => import('./components/analytics/AnalyticsDashboard').then((m) => ({ default: m.AnalyticsDashboard })));
@@ -51,6 +52,7 @@ const AppContent: React.FC = () => {
         onOpenHelp={() => setShowOnboarding(true)}
         onOpenProfile={() => setActiveTab('citadel')}
       />
+      <PersistenceErrorBridge />
 
       {/* Navigation Tabs - Desktop */}
       <DesktopNavTabs activeTab={activeTab} onSelectTab={setActiveTab} />

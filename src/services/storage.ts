@@ -335,55 +335,97 @@ export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   },
 ];
 
+export interface PersistenceError {
+  key: string;
+  message: string;
+  timestamp: number;
+}
+
+let lastPersistenceError: PersistenceError | null = null;
+const persistenceListeners = new Set<(e: PersistenceError) => void>();
+
+export const getLastPersistenceError = (): PersistenceError | null => lastPersistenceError;
+export const clearPersistenceError = (): void => {
+  lastPersistenceError = null;
+};
+export const subscribePersistenceError = (cb: (e: PersistenceError) => void): (() => void) => {
+  persistenceListeners.add(cb);
+  return () => {
+    persistenceListeners.delete(cb);
+  };
+};
+
+function emitPersistenceError(key: string, error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  const evt: PersistenceError = { key, message, timestamp: Date.now() };
+  lastPersistenceError = evt;
+  persistenceListeners.forEach((l) => {
+    try {
+      l(evt);
+    } catch {}
+  });
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('auctus:persistence-error', { detail: evt }));
+    } catch {}
+  }
+}
+
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
-  } catch {
+    return item ? (JSON.parse(item) as T) : fallback;
+  } catch (err) {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    void err;
     return fallback;
   }
 };
 
-export const saveToStorage = <T>(key: string, data: T): void => {
-  if (typeof window === 'undefined') return;
+export const saveToStorage = <T>(key: string, data: T): boolean => {
+  if (typeof window === 'undefined') return true;
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch {
-    // quota safe
+    return true;
+  } catch (err) {
+    emitPersistenceError(key, err);
+    return false;
   }
 };
 
 export const StorageService = {
   getProfile: () => loadFromStorage<PlayerProfile>(STORAGE_KEYS.PROFILE, INITIAL_PROFILE),
-  setProfile: (p: PlayerProfile) => saveToStorage(STORAGE_KEYS.PROFILE, p),
+  setProfile: (p: PlayerProfile): boolean => saveToStorage(STORAGE_KEYS.PROFILE, p),
 
   getQuests: () => loadFromStorage<Quest[]>(STORAGE_KEYS.QUESTS, INITIAL_QUESTS),
-  setQuests: (q: Quest[]) => saveToStorage(STORAGE_KEYS.QUESTS, q),
+  setQuests: (q: Quest[]): boolean => saveToStorage(STORAGE_KEYS.QUESTS, q),
 
   getHabits: () => loadFromStorage<Habit[]>(STORAGE_KEYS.HABITS, INITIAL_HABITS),
-  setHabits: (h: Habit[]) => saveToStorage(STORAGE_KEYS.HABITS, h),
+  setHabits: (h: Habit[]): boolean => saveToStorage(STORAGE_KEYS.HABITS, h),
 
   getChests: () => loadFromStorage<ChestSlot[]>(STORAGE_KEYS.CHESTS, INITIAL_CHESTS),
-  setChests: (c: ChestSlot[]) => saveToStorage(STORAGE_KEYS.CHESTS, c),
+  setChests: (c: ChestSlot[]): boolean => saveToStorage(STORAGE_KEYS.CHESTS, c),
 
   getRewards: () => loadFromStorage<RewardItem[]>(STORAGE_KEYS.REWARDS, INITIAL_REWARDS),
-  setRewards: (r: RewardItem[]) => saveToStorage(STORAGE_KEYS.REWARDS, r),
+  setRewards: (r: RewardItem[]): boolean => saveToStorage(STORAGE_KEYS.REWARDS, r),
 
   getAchievements: () => loadFromStorage<Achievement[]>(STORAGE_KEYS.ACHIEVEMENTS, INITIAL_ACHIEVEMENTS),
-  setAchievements: (a: Achievement[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
+  setAchievements: (a: Achievement[]): boolean => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
 
   getAchievementLocks: () => loadFromStorage<string[]>(STORAGE_KEYS.ACHIEVEMENT_LOCKS, INITIAL_ACHIEVEMENT_LOCKS),
-  setAchievementLocks: (locks: string[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
+  setAchievementLocks: (locks: string[]): boolean => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
 
   getTransactions: () => loadFromStorage<EconomyTransaction[]>(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS),
-  setTransactions: (t: EconomyTransaction[]) => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
+  setTransactions: (t: EconomyTransaction[]): boolean => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
 
   getFocusState: () => loadFromStorage<FocusSessionState | null>(STORAGE_KEYS.FOCUS, null),
-  setFocusState: (f: FocusSessionState | null) => saveToStorage(STORAGE_KEYS.FOCUS, f),
+  setFocusState: (f: FocusSessionState | null): boolean => saveToStorage(STORAGE_KEYS.FOCUS, f),
 
   getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
-  setAudioSettings: (a: AudioSettings) => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
+  setAudioSettings: (a: AudioSettings): boolean => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
 
   exportBackup: (): string => {
     const backup = {
