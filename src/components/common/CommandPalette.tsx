@@ -3,6 +3,7 @@ import { useGameState } from '../../context/GameStateContext';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { TabType } from '../../types';
 import { sanitize } from '../../utils/validators';
+import { fuzzyFilter } from '../../utils/fuzzySearch';
 
 export interface CommandPaletteProps {
   isOpen: boolean;
@@ -44,12 +45,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const trapRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return ALL_ITEMS;
-    return ALL_ITEMS.filter((it) => {
-      const hay = `${it.label} ${it.hint ?? ''} ${it.tab ?? ''} ${it.action ?? ''}`.toLowerCase();
-      return hay.includes(q);
-    });
+    return fuzzyFilter(ALL_ITEMS, query, (it) => `${it.label} ${it.hint ?? ''} ${it.tab ?? ''} ${it.action ?? ''}`);
   }, [query]);
 
   // Clamp activeIndex when filtered changes
