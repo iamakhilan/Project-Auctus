@@ -145,6 +145,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const processedFocusSessionsRef = useRef<Set<string>>(new Set());
   const isCompletingFocusRef = useRef(false);
   const transactionQueueRef = useRef(new AtomicTransactionQueue());
+  const fallbackDedupRef = useRef<Map<string, number>>(new Map());
 
   // Sync profile & state to storage
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
@@ -162,7 +163,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'auctus_sync_event_fallback' && e.newValue) {
         try {
-          const msg = JSON.parse(e.newValue);
+          const msg = JSON.parse(e.newValue) as { type?: string; entityId?: string; nonce?: string; timestamp?: number };
+          const dedupKey = msg.nonce || `${msg.type || ''}:${msg.entityId || ''}:${msg.timestamp || ''}`;
+          const now = Date.now();
+          const lastSeen = fallbackDedupRef.current.get(dedupKey);
+          if (lastSeen !== undefined && now - lastSeen < 30000) return;
+          fallbackDedupRef.current.set(dedupKey, now);
+          if (fallbackDedupRef.current.size > 100) {
+            for (const [k, ts] of Array.from(fallbackDedupRef.current.entries())) {
+              if (now - ts > 30000) fallbackDedupRef.current.delete(k);
+            }
+          }
           if (msg.type === 'DELETE_QUEST' && msg.entityId) {
             setQuests(prev => prev.filter(q => q.id !== msg.entityId));
             setFocusSession(prev =>
@@ -225,6 +236,17 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Cross-tab broadcast eviction listener
   useEffect(() => {
     const unsubscribe = syncChannel.subscribe((message) => {
+      const raw = message as unknown as { nonce?: string; timestamp?: number; type?: string; entityId?: string };
+      const dedupKey = raw.nonce || `${raw.type || ''}:${raw.entityId || ''}:${raw.timestamp || ''}`;
+      const now = Date.now();
+      const lastSeen = fallbackDedupRef.current.get(dedupKey);
+      if (lastSeen !== undefined && now - lastSeen < 30000) return;
+      fallbackDedupRef.current.set(dedupKey, now);
+      if (fallbackDedupRef.current.size > 100) {
+        for (const [k, ts] of Array.from(fallbackDedupRef.current.entries())) {
+          if (now - ts > 30000) fallbackDedupRef.current.delete(k);
+        }
+      }
       if (message.type === 'DELETE_QUEST' && message.entityId) {
         setQuests(prev => prev.filter(q => q.id !== message.entityId));
         setFocusSession(prev =>

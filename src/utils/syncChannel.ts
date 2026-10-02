@@ -9,6 +9,7 @@ export interface SyncMessage {
   entityId?: string;
   payload?: unknown;
   timestamp: number;
+  nonce?: string;
 }
 
 type SyncListener = (message: SyncMessage) => void;
@@ -17,6 +18,8 @@ class StateSyncChannel {
   private channel: BroadcastChannel | null = null;
   private listeners: Set<SyncListener> = new Set();
   private channelName = 'auctus_state_sync_channel';
+  private seenNonces = new Set<string>();
+  private seenTimestamps = new Map<string, number>();
 
   constructor() {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -24,7 +27,7 @@ class StateSyncChannel {
         this.channel = new BroadcastChannel(this.channelName);
         this.channel.onmessage = (event: MessageEvent<SyncMessage>) => {
           if (event.data && typeof event.data === 'object') {
-            this.notifyListeners(event.data);
+            this.deliverWithDedup(event.data);
           }
         };
       } catch {
@@ -39,6 +42,7 @@ class StateSyncChannel {
       entityId,
       payload,
       timestamp: Date.now(),
+      nonce: (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? (crypto as Crypto).randomUUID() : Math.random().toString(36).slice(2)) + '-' + Date.now(),
     };
 
     if (this.channel) {
@@ -53,14 +57,14 @@ class StateSyncChannel {
       try {
         localStorage.setItem(
           'auctus_sync_event_fallback',
-          JSON.stringify({ ...message, nonce: Math.random() })
+          JSON.stringify(message)
         );
       } catch {
         // quota fallback
       }
     }
 
-    this.notifyListeners(message);
+    this.deliverWithDedup(message, true);
   }
 
   public subscribe(listener: SyncListener): () => void {
@@ -68,6 +72,24 @@ class StateSyncChannel {
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  private deliverWithDedup(message: SyncMessage, isLocal = false): void {
+    const dedupKey = message.nonce || message.type + ':' + (message.entityId || '') + ':' + message.timestamp;
+    if (this.seenNonces.has(dedupKey)) return;
+    this.seenNonces.add(dedupKey);
+    this.seenTimestamps.set(dedupKey, Date.now());
+    if (this.seenNonces.size > 100) {
+      const now = Date.now();
+      for (const [k, t] of Array.from(this.seenTimestamps.entries())) {
+        if (now - t > 30000) {
+          this.seenNonces.delete(k);
+          this.seenTimestamps.delete(k);
+        }
+      }
+    }
+    void isLocal;
+    this.notifyListeners(message);
   }
 
   private notifyListeners(message: SyncMessage): void {
@@ -78,6 +100,16 @@ class StateSyncChannel {
         // ignore listener error
       }
     });
+  }
+
+  public close(): void {
+    if (this.channel) {
+      try {
+        this.channel.close();
+      } catch {}
+      this.channel = null;
+    }
+    this.listeners.clear();
   }
 }
 
