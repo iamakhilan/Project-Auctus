@@ -17,7 +17,7 @@ import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
 import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
-import { getLocalDateString, getPreviousLocalDateString, calculateUpdatedStreak } from '../utils/dateUtils';
+import { getLocalDateString, calculateUpdatedStreak } from '../utils/dateUtils';
 import { syncChannel } from '../utils/syncChannel';
 
 interface GameStateContextType {

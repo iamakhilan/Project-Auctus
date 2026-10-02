@@ -366,11 +366,6 @@ export const FocusArenaView: React.FC = () => {
                 <span className="text-[9px] font-black uppercase text-[var(--blue)] animate-pulse hidden sm:inline">
                   {isPlaying ? 'PLAYING' : ''}
                 </span>
-                {isPlaying && !isPlaying && (
-                  <span className="text-[9px] font-black uppercase text-[var(--blue)] animate-pulse">
-                    ▶
-                  </span>
-                )}
               </button>
             );
           })}
