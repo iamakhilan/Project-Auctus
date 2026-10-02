@@ -51,7 +51,7 @@ export const RealmView: React.FC = () => {
         name: 'Init Club Meeting',
         icon: '🤝',
         xp: 90,
-        desc: '16:30 • AB4 (LH6) Offline Meet',
+        desc: '16:30 • AB4 (LH6) Offline Meet — Demo',
         isCompleted: false,
       },
       {
@@ -59,7 +59,7 @@ export const RealmView: React.FC = () => {
         name: 'Evening Grind',
         icon: '💻',
         xp: 150,
-        desc: '19:00 • Py: Functions II, DSA, SQL Window',
+        desc: '19:00 • Py: Functions II, DSA, SQL — Demo Window',
         isCompleted: false,
       },
       {
@@ -82,6 +82,8 @@ export const RealmView: React.FC = () => {
       return { ...s, status: 'locked' as const };
     });
   }, [completedDailyCount, habitsCheckedToday, chestReadyCount, citadelPowerPct]);
+
+  const completedStageCount = stages.filter((s) => s.status === "completed").length;
 
   const handleStartQuickFocus = () => {
     soundEngine.playClick();
@@ -110,7 +112,7 @@ export const RealmView: React.FC = () => {
               REALM EXPEDITION
             </h1>
             <p className="text-white/95 font-bold text-xs sm:text-sm mt-2 max-w-xl leading-relaxed">
-              Today: Completing FLA, Probability, Deep Learning, Init Club at 16:30, and Py/DSA/SQL at 19:00. Let's conquer it!
+              Advance through today's 5-stage path — quests, habits, focus sprints, and Crown Chest. Schedule below is a demo template, not your real calendar.
             </p>
           </div>
 
@@ -120,22 +122,22 @@ export const RealmView: React.FC = () => {
               Today's Schedule Progress
             </div>
             <div className="font-['Feather_Bold'] text-2xl sm:text-3xl font-black text-[var(--dark-blue)]">
-              {completedDailyCount} / 4
+              {completedStageCount} / {stages.length}
             </div>
             <div className="w-full h-3 bg-[#f0f0f0] rounded-full overflow-hidden mt-2 p-0.5 border border-[#e5e5e5]">
               <div
                 className="h-full bg-[var(--green)] rounded-full transition-all duration-700 shadow-xs"
                 style={{
-                  width: `${Math.min(100, (completedDailyCount / 4) * 100)}%`,
+                  width: `${Math.min(100, (completedStageCount / stages.length) * 100)}%`,
                 }}
               />
             </div>
             <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] font-extrabold text-[var(--gray-light)] flex-wrap">
-              <span>📚 3 Subjects</span>
+              <span>📚 Quest Sprint</span>
               <span className="hidden sm:inline">•</span>
-              <span>🤝 Club Meet</span>
+              <span>⚡ Focus Blitz</span>
               <span className="hidden sm:inline">•</span>
-              <span>💻 19:00 Grind</span>
+              <span>👑 Crown Chest</span>
             </div>
           </div>
         </div>
@@ -242,10 +244,13 @@ export const RealmView: React.FC = () => {
           <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs">
             <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-[#f0f0f0] flex-wrap gap-2">
               <h3 className="font-['Feather_Bold'] text-lg text-[var(--dark-blue)]">
-                Today's Key Events
+                Today'''s Key Events <span className="text-[11px] font-black text-[#8c5a00]">(Example)</span>
               </h3>
               <span className="text-xs font-extrabold text-[var(--blue)] uppercase bg-[#eef8ff] px-2 py-0.5 rounded-lg">
-                Sep 17
+                {getLocalDateString()}
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#fff3e0] border border-[#ffd6a5] text-[#8c5a00]">
+                DEMO
               </span>
             </div>
 
@@ -258,7 +263,7 @@ export const RealmView: React.FC = () => {
                     </span>
                   </div>
                   <h4 className="font-bold text-xs text-[var(--dark-blue)] truncate">
-                    Init Club Offline Meet
+                    Init Club Offline Meet <span className="text-[9px] font-black text-[#8c5a00]">— DEMO</span>
                   </h4>
                 </div>
                 <span className="text-xl shrink-0">🤝</span>
@@ -272,12 +277,15 @@ export const RealmView: React.FC = () => {
                     </span>
                   </div>
                   <h4 className="font-bold text-xs text-[var(--dark-blue)] truncate">
-                    Py: Functions II | DSA | SQL
+                    Py: Functions II | DSA | SQL <span className="text-[9px] font-black text-[#8c5a00]">— DEMO</span>
                   </h4>
                 </div>
                 <span className="text-xl shrink-0">💻</span>
               </div>
             </div>
+            <p className="text-[11px] font-semibold text-[var(--gray-light)] text-center mt-3 leading-relaxed">
+              Demo schedule — example only, not linked to your calendar.
+            </p>
           </div>
 
           {/* Quick Habits Widget */}
