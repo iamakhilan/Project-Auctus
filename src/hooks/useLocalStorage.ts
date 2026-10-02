@@ -42,7 +42,7 @@ export function useLocalStorage<T>(
     const handleStorage = (e: StorageEvent) => {
       if (e.key !== key) return;
       try {
-        if (e.newValue === null) {
+        if (e.newValue === null || e.newValue === undefined) {
           setStoredValue(initialValue);
         } else {
           setStoredValue(JSON.parse(e.newValue) as T);
