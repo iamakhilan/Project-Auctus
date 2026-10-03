@@ -115,7 +115,27 @@ function chestConfigForTier(tier: ChestTier): { name: string; totalUnlockSeconds
     case 'mythic': return { name: 'Mythic Obsidian Chest', totalUnlockSeconds: 28800, coinsReward: 400, xpReward: 250, gemsReward: 25 };
   }
 }
+function hasDependencyCycle(quests: Quest[]): boolean {
+  const adj = new Map<string, string[]>();
+  for (const q of quests) adj.set(q.id, q.dependsOn ?? []);
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const dfs = (id: string): boolean => {
+    if (visiting.has(id)) return true;
+    if (visited.has(id)) return false;
+    visiting.add(id);
+    for (const dep of adj.get(id) ?? []) {
+      if (dfs(dep)) return true;
+    }
+    visiting.delete(id);
+    visited.add(id);
+    return false;
+  };
+  for (const q of quests) if (dfs(q.id)) return true;
+  return false;
+}
 function deriveDueLabel(dueDate?: string): string | undefined {
+
   if (!dueDate) return undefined;
   const today = new Date().toISOString().split('T')[0];
   if (dueDate === today) return 'Today';
@@ -337,6 +357,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const createQuest = (data: Omit<Quest, 'id' | 'isCompleted'>) => {
     const newQuest: Quest = { ...data, id: `q-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, isCompleted: false, createdAt: new Date().toISOString(), postponedCount: 0, source: data.source ?? 'manual', dueLabel: data.dueLabel ?? deriveDueLabel(data.dueDate), priority: data.priority ?? 'medium' };
+    if (newQuest.dependsOn && hasDependencyCycle([...quests, newQuest])) return;
     setQuests(prev => [newQuest, ...prev]);
     // if linked to campaign milestone, register questId in milestone
     if (newQuest.campaignId && newQuest.milestoneId) {
@@ -352,6 +373,11 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
   const updateQuest = useCallback((questId: string, patch: Partial<Quest>) => {
+    // cycle guard for dependency edits
+    if (patch.dependsOn) {
+      const prospective = quests.map(q=> q.id===questId ? { ...q, ...patch, id: q.id } as Quest : q);
+      if (hasDependencyCycle(prospective)) return;
+    }
     setQuests(prev => prev.map(q => {
       if (q.id !== questId) return q;
       const next: Quest = { ...q, ...patch, id: q.id };
@@ -359,7 +385,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return next;
     }));
     soundEngine.playClick();
-  }, []);
+  }, [quests]);
   const postponeQuest = (questId: string, newDueDate: string) => {
     setQuests(prev=> prev.map(q=> q.id===questId ? { ...q, dueDate: newDueDate, dueLabel: deriveDueLabel(newDueDate), postponedCount: (q.postponedCount ?? 0) + 1 } : q));
     soundEngine.playClick();
@@ -571,19 +597,32 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCampaigns(prev=> prev.map(c=> c.id===campaignId ? { ...c, milestones: c.milestones.filter(m=> m.id!==milestoneId) } : c));
   };
   const createQuestChain = (campaignId: string, milestoneId: string, drafts: Omit<Quest,'id'|'isCompleted'|'campaignId'|'milestoneId'>[]): Quest[] => {
-    const created: Quest[] = drafts.map((d, idx)=> ({
-      ...d,
-      id: `q-${Date.now()}-${idx}-${Math.random().toString(36).slice(2,5)}`,
-      isCompleted: false,
-      campaignId,
-      milestoneId,
-      createdAt: new Date().toISOString(),
-      postponedCount: 0,
-      source: 'campaign' as const,
-      dependsOn: d.dependsOn,
-      priority: d.priority ?? 'medium',
-      dueLabel: d.dueLabel ?? deriveDueLabel(d.dueDate),
-    }));
+    // generate ids first so linear chain can reference previous id
+    const ids = drafts.map((_, idx)=> `q-${Date.now()}-${idx}-${Math.random().toString(36).slice(2,5)}`);
+    const created: Quest[] = drafts.map((d, idx)=> {
+      let dependsOn = d.dependsOn;
+      // auto-wire linear chain: each item after first depends on previous in chain unless caller already specified
+      if (idx > 0 && !dependsOn) dependsOn = [ids[idx-1]];
+      return {
+        ...d,
+        id: ids[idx],
+        isCompleted: false,
+        campaignId,
+        milestoneId,
+        createdAt: new Date().toISOString(),
+        postponedCount: 0,
+        source: 'campaign' as const,
+        dependsOn,
+        priority: d.priority ?? 'medium',
+        dueLabel: d.dueLabel ?? deriveDueLabel(d.dueDate),
+      };
+    });
+    // cycle guard: reject chain that would create a circular dependency
+    const prospective = [...quests, ...created];
+    if (hasDependencyCycle(prospective)) {
+      soundEngine.playSuccess();
+      return [];
+    }
     setQuests(prev=> [...created, ...prev]);
     setCampaigns(prev=> prev.map(c=> c.id===campaignId ? { ...c, milestones: c.milestones.map(m=> m.id===milestoneId ? { ...m, questIds: [...m.questIds, ...created.map(q=> q.id)] } : m) } : c));
     soundEngine.playSuccess();

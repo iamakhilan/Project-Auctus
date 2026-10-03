@@ -4,15 +4,16 @@ function daysAgo(n: number): number { return Date.now() - n * 86400000; }
 
 export function buildSnapshot(quests: Quest[], logs: FocusEffortLog[], windowDays = 14): ProductivitySnapshot {
   const since = daysAgo(windowDays);
-  // Quests in window: those created within window OR completed within window
   const windowQuests = quests.filter(q => {
     const c = q.createdAt ? new Date(q.createdAt).getTime() : 0;
     const d = q.completedAt ? new Date(q.completedAt).getTime() : 0;
+    const hasCreatedAt = Boolean(q.createdAt);
+    if (!hasCreatedAt) return true; // legacy quests always in window for fallback
     return c >= since || d >= since || (!q.isCompleted && c === 0);
   });
-  // Fallback if createdAt absent for legacy data: use all quests
-  const totalQuests = windowQuests.length || quests.length;
-  const src = windowQuests.length ? windowQuests : quests;
+  const hasTimestamps = quests.some(q => Boolean(q.createdAt));
+  const totalQuests = hasTimestamps ? windowQuests.length : quests.length;
+  const src = hasTimestamps ? windowQuests : quests;
   const completedQuests = src.filter(q => q.isCompleted && q.completedAt && new Date(q.completedAt).getTime() >= since).length;
   const completionRate = totalQuests ? Math.round((src.filter(q=>q.isCompleted).length / totalQuests) * 100) : 0;
 

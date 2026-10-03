@@ -146,7 +146,6 @@ export function buildDailyObjectives(quests: Quest[], campaigns: Campaign[], opt
     return da.localeCompare(db);
   });
 
-  // If availableMinutes provided, pack objectives greedily by urgency until budget
   if (availableMinutes && availableMinutes > 0) {
     const packed: DailyObjective[] = [];
     let used = 0;
@@ -154,15 +153,18 @@ export function buildDailyObjectives(quests: Quest[], campaigns: Campaign[], opt
       if (o.isBlocked) continue;
       const q = questById.get(o.questId)!;
       const est = q.estimatedMinutes ?? 30;
-      if (packed.length < max && used + est <= availableMinutes + 15) { // small overflow allowed
+      const fits = used + est <= availableMinutes + 15;
+      if (packed.length < max && fits) {
         packed.push(o); used += est;
-      } else if (packed.length === 0) { // at least one even if over budget
-        packed.push(o); break;
       }
       if (packed.length >= max) break;
     }
-    // If packing yields too few, fall back to top unblocked
-    if (packed.length === 0) return scored.filter(s => !s.isBlocked).slice(0, max);
+    // always ensure at least one objective even if over budget
+    if (packed.length === 0) {
+      const first = scored.find(s => !s.isBlocked);
+      if (first) return [first];
+      return scored.filter(s => s.isBlocked).slice(0, max);
+    }
     return packed;
   }
 

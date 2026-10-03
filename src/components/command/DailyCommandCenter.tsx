@@ -68,10 +68,10 @@ export const DailyCommandCenter: React.FC = () => {
                     <button type="button" onClick={()=>completeQuest(q.id)} className="px-3 py-2 rounded-xl bg-[var(--green)] text-white font-black text-xs touch-target">Done</button>
                   </>
                 ) : (
-                  <button type="button" onClick={()=>{
-                    const nd = prompt('Postpone to new due date (YYYY-MM-DD)', new Date(Date.now()+86400000).toISOString().split('T')[0]);
-                    if (nd && /^\d{4}-\d{2}-\d{2}$/.test(nd)) postponeQuest(q.id, nd);
-                  }} className="px-3 py-2 rounded-xl bg-[#fff2f2] border border-[#ffcccc] text-[var(--red)] font-black text-xs touch-target">Postpone</button>
+                  <div className="flex items-center gap-1.5">
+                    <input type="date" defaultValue={new Date(Date.now()+86400000).toISOString().split('T')[0]} onChange={(e)=>{ const nd=e.target.value; if(/^\d{4}-\d{2}-\d{2}$/.test(nd)) postponeQuest(q.id, nd); }} className="px-2 py-1.5 rounded-xl border-2 border-[#e5e5e5] text-xs font-bold touch-target" aria-label="New due date" />
+                    <span className="text-[11px] font-bold text-[var(--gray-light)]">↩</span>
+                  </div>
                 )}
               </div>
             </div>

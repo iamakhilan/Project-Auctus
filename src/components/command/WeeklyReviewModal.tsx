@@ -75,10 +75,10 @@ export const WeeklyReviewModal: React.FC<{ isOpen: boolean; onClose: () => void 
                       <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[#eef8ff] border-2 border-[#b9e5fb]">
                         <span className="text-sm font-bold text-[var(--dark-blue)]">{a.label}</span>
                         {a.questIds && a.questIds.length>0 && (
-                          <button type="button" onClick={()=>{
-                            const nd = prompt('New due date YYYY-MM-DD for carried quests', new Date(Date.now()+7*86400000).toISOString().split('T')[0]);
-                            if (nd && /^\d{4}-\d{2}-\d{2}$/.test(nd)) carryOverOverdue(a.questIds!, nd);
-                          }} className="px-3 py-1.5 rounded-xl bg-[var(--blue)] text-white font-black text-xs shrink-0 touch-target">Carry over</button>
+                          <label className="flex items-center gap-1.5 shrink-0">
+                            <input type="date" defaultValue={new Date(Date.now()+7*86400000).toISOString().split('T')[0]} onChange={(e)=>{ const nd=(e.target as HTMLInputElement).value; if(/^\d{4}-\d{2}-\d{2}$/.test(nd)) carryOverOverdue(a.questIds!, nd); }} className="px-2 py-1 rounded-xl border-2 border-[#e5e5e5] text-xs font-bold" aria-label="Carry-over date" />
+                            <span className="px-2 py-1 rounded-xl bg-[var(--blue)] text-white font-black text-xs">Carry over on change</span>
+                          </label>
                         )}
                       </div>
                     ))}

@@ -28,8 +28,7 @@ export const QuestChainForgeModal: React.FC<{ campaignId: string; milestoneId: s
 
   const handleCreateChain = () => {
     if (chainItems.length===0) { setError('Add at least one quest to the chain.'); return; }
-    // Build dependsOn chains: each item depends on previous in chain + selected dependsOn for first
-    const drafts: Parameters<typeof createQuestChain>[2] = chainItems.map((item, idx)=> ({
+    const drafts: Parameters<typeof createQuestChain>[2] = chainItems.map(item=> ({
       title: item.title,
       category,
       tag,
@@ -38,19 +37,14 @@ export const QuestChainForgeModal: React.FC<{ campaignId: string; milestoneId: s
       estimatedMinutes: item.estimatedMinutes,
       dueDate: item.dueDate,
       priority: item.priority,
-      // chain dependency within milestone
-      dependsOn: idx===0 ? (dependsOn.length? [...dependsOn]: undefined) : [chainItems[idx-1].title] as unknown as string[], // will fix below via ids
+      dependsOn: undefined, // linear wiring handled by GameState.createQuestChain
     }));
-    // We need real ids: create first, then link depends sequentially. Our context handles dependsOn as string ids — we map titles to ids after creation
-    // Simpler: create with no depends first, then patch dependsOn sequentially if more than one
-    const created = createQuestChain(campaignId, milestoneId, drafts.map(d=> ({ ...d, dependsOn: undefined })));
-    if (created.length > 1) {
-      // patch dependsOn for chain order
-      void created;
-      // Use updateQuest via context by reloading page? We have no direct update for chain depends — we rely on GameState to have set them. For now chain is linear unlock without strict depends — user can reorder manually.
-      void dependsOn;
+    if (dependsOn.length) {
+      (drafts[0] as Record<string, unknown>).dependsOn = [...dependsOn];
     }
-    onClose();
+    const created = createQuestChain(campaignId, milestoneId, drafts);
+    if (created.length === 0) setError('Could not create chain — would create a cycle.');
+    else onClose();
   };
 
   return (
