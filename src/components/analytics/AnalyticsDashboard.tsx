@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
+import { WeeklyReviewModal } from '../command/WeeklyReviewModal';
 import { StreakCalendar } from './StreakCalendar';
 import { DailySummaryModal } from './DailySummaryModal';
 import {
@@ -268,8 +269,9 @@ const EconomyChart: React.FC<{
 
 // ---------- main dashboard ----------
 export const AnalyticsDashboard: React.FC = () => {
-  const { quests, habits, transactions, profile } = useGameState();
+  const { quests, habits, transactions, profile, productivitySnapshot, insights, campaigns, effortLogs } = useGameState();
   const [showDailySummary, setShowDailySummary] = useState(false);
+  const [showWeekly, setShowWeekly] = useState(false);
 
   const last7 = useMemo(() => getLastNDates(7), []);
   const last14 = useMemo(() => getLastNDates(14), []);
@@ -419,6 +421,47 @@ export const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 animate-fadeIn">
+      {/* Productivity Intelligence — deterministic */}
+      <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)]">Productivity Intelligence — Deterministic</h2>
+          <button type="button" onClick={()=>setShowWeekly(true)} className="px-3 py-1.5 rounded-xl bg-[var(--dark-blue)] text-white font-black text-xs touch-target">Weekly Review</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-center">
+          <div className="rounded-2xl bg-[#f7f7f7] border border-[#e5e5e5] p-3"><div className="text-[11px] font-black uppercase text-[var(--gray-light)]">Completion</div><div className="font-black text-sm text-[var(--dark-blue)]">{productivitySnapshot.completionRate}%</div><div className="text-[11px] font-bold text-[var(--gray-light)]">{productivitySnapshot.velocityPerDay}/day</div></div>
+          <div className="rounded-2xl bg-[#f7f7f7] border border-[#e5e5e5] p-3"><div className="text-[11px] font-black uppercase text-[var(--gray-light)]">Estimation</div><div className="font-black text-sm text-[var(--dark-blue)]">{productivitySnapshot.avgEstimatedMinutes}m vs {productivitySnapshot.avgActualMinutes}m</div><div className={`text-[11px] font-bold ${productivitySnapshot.estimationBias>10?'text-[var(--red)]':'text-[var(--green)]'}`}>{productivitySnapshot.estimationBias>0?`+${productivitySnapshot.estimationBias}% longer`:`${Math.abs(productivitySnapshot.estimationBias)}% bias`}</div></div>
+          <div className="rounded-2xl bg-[#f7f7f7] border border-[#e5e5e5] p-3"><div className="text-[11px] font-black uppercase text-[var(--gray-light)]">Focus</div><div className="font-black text-sm text-[var(--dark-blue)]">{productivitySnapshot.focusSessions} sessions</div><div className="text-[11px] font-bold text-[var(--gray-light)]">{productivitySnapshot.focusCompletionRate}% completion</div></div>
+          <div className="rounded-2xl bg-[#f7f7f7] border border-[#e5e5e5] p-3"><div className="text-[11px] font-black uppercase text-[var(--gray-light)]">Workload</div><div className={`font-black text-sm ${productivitySnapshot.postponedCount>3?'text-[var(--red)]':'text-[var(--dark-blue)]'}`}>{productivitySnapshot.postponedCount} postponed</div><div className="text-[11px] font-bold text-[var(--gray-light)]">{productivitySnapshot.overdueCount} overdue</div></div>
+        </div>
+        {insights.length>0 && <ul className="space-y-1.5">{insights.map((ins,i)=><li key={i} className="text-xs font-semibold text-[var(--gray-text)] px-3 py-2 rounded-xl bg-[#fafafa] border border-[#e5e5e5]">• {ins}</li>)}</ul>}
+        {campaigns.filter(c=>c.status==='active').length>0 && (
+          <div className="mt-4 pt-4 border-t-2 border-[#f0f0f0]">
+            <div className="text-xs font-black uppercase text-[var(--gray-light)] mb-2">Campaign workload</div>
+            <div className="space-y-2">
+              {campaigns.filter(c=>c.status==='active').map(c=>{
+                const ids=c.milestones.flatMap(m=>m.questIds);
+                const done=ids.filter(id=>quests.find(q=>q.id===id)?.isCompleted).length;
+                const pct=ids.length?Math.round(done/ids.length*100):0;
+                return <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#fafafa] border border-[#e5e5e5]"><span className="text-sm font-bold text-[var(--dark-blue)] truncate">{c.title}</span><span className="text-xs font-black">{pct}% • Due {c.targetDate}</span></div>;
+              })}
+            </div>
+          </div>
+        )}
+        {effortLogs.length>0 && (
+          <div className="mt-4 pt-4 border-t-2 border-[#f0f0f0]">
+            <div className="text-xs font-black uppercase text-[var(--gray-light)] mb-2">Recent focus effort — planned vs actual</div>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {effortLogs.slice(0,6).map(l=>(
+                <div key={l.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-[#e5e5e5] text-xs font-bold">
+                  <span className="truncate">{l.questId ? quests.find(q=>q.id===l.questId)?.title ?? l.questId : 'Pure focus'} — planned {l.plannedMinutes}m → actual {l.actualMinutes}m</span>
+                  <span className={l.completed? 'text-[var(--green)]':'text-[var(--red)]'}>{l.completed?'✓':'interrupted'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <WeeklyReviewModal isOpen={showWeekly} onClose={()=>setShowWeekly(false)} />
+      </div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

@@ -9,6 +9,7 @@ export const QuestsView: React.FC = () => {
   const {
     quests,
     habits,
+    campaigns,
     completeQuest,
     deleteQuest,
     updateQuest,
@@ -379,6 +380,16 @@ export const QuestsView: React.FC = () => {
                             >
                               {quest.title}
                             </h3>
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                              {quest.priority && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${quest.priority==='critical'?'bg-[var(--red)] text-white border-[var(--red)]':quest.priority==='high'?'bg-[#ffe9e9] text-[var(--red)] border-[#ffcccc]':quest.priority==='medium'?'bg-[#fff7e6] text-[#a66a00] border-[#ffd6a5]':'bg-[#f0f0f0] text-[var(--gray-light)] border-[#e5e5e5]'}`}>{quest.priority}</span>}
+                              {quest.dueDate && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black border ${quest.dueDate < todayStr && !quest.isCompleted ? 'bg-[#fff2f2] text-[var(--red)] border-[#ffcccc]' : 'bg-white text-[var(--gray-light)] border-[#e5e5e5]'}`}>Due {quest.dueDate}{quest.postponedCount ? ` • postponed ${quest.postponedCount}x` : ''}</span>}
+                              {quest.campaignId && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-[#eef8ff] text-[var(--blue)] border border-[#b9e5fb]">Campaign: {campaigns.find(c=>c.id===quest.campaignId)?.title ?? quest.campaignId.slice(0,8)}</span>}
+                              {quest.dependsOn && quest.dependsOn.length>0 && (
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black border ${quest.dependsOn.some(d=> !quests.find(x=>x.id===d)?.isCompleted) ? 'bg-[#fff7e6] text-[#a66a00] border-[#ffd6a5]' : 'bg-[#f0f8e8] text-[var(--green)] border-[#bde8a8]'}`}>
+                                  {quest.dependsOn.some(d=> !quests.find(x=>x.id===d)?.isCompleted) ? `Blocked • ${quest.dependsOn.filter(d=> !quests.find(x=>x.id===d)?.isCompleted).length} gating` : 'Unlocked chain'}
+                                </span>
+                              )}
+                            </div>
                             {quest.description && (
                               <p className="text-xs text-[var(--gray-text)] font-semibold mt-0.5 line-clamp-2">
                                 {quest.description}

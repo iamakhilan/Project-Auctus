@@ -46,6 +46,11 @@ export const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onSelectTab }) => {
       badge: readyChests > 0 ? 'LOOT!' : undefined,
     },
     {
+      id: 'campaigns',
+      label: 'Campaigns',
+      icon: '🗺️',
+    },
+    {
       id: 'analytics',
       label: 'Analytics',
       icon: '📊',
@@ -162,6 +167,11 @@ export const DesktopNavTabs: React.FC<NavTabsProps> = ({ activeTab, onSelectTab 
       label: 'Vault',
       icon: '📦',
       badge: readyChests > 0 ? 'LOOT!' : undefined,
+    },
+    {
+      id: 'campaigns',
+      label: 'Campaigns',
+      icon: '🗺️',
     },
     {
       id: 'analytics',
