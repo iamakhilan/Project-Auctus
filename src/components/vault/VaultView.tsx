@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { CustomRewardModal } from './CustomRewardModal';
 import { soundEngine } from '../../utils/audioSynthesizer';
-import { ChestTier, RewardRarity } from '../../types';
+import { ChestTier } from '../../types';
 
 export const VaultView: React.FC = () => {
   const {
@@ -56,20 +56,6 @@ export const VaultView: React.FC = () => {
         return { icon: '👑', name: 'Royal Gold Chest', border: 'border-[#ffd6a5]', bg: 'bg-[#fffbeb]', badgeBg: 'bg-[#d48806]' };
       case 'mythic':
         return { icon: '🔮', name: 'Mythic Celestial Chest', border: 'border-[#ddd6fe]', bg: 'bg-[#faf5ff]', badgeBg: 'bg-[#9333ea]' };
-    }
-  };
-
-  const getRarityBadge = (rarity: RewardRarity = 'common') => {
-    switch (rarity) {
-      case 'legendary':
-        return { label: 'Legendary', className: 'bg-[#fff7e6] text-[#d46b08] border-[#ffd591]' };
-      case 'epic':
-        return { label: 'Epic', className: 'bg-[#f9f0ff] text-[#722ed1] border-[#d3adf7]' };
-      case 'rare':
-        return { label: 'Rare', className: 'bg-[#e6f7ff] text-[#096dd9] border-[#91d5ff]' };
-      case 'common':
-      default:
-        return { label: 'Common', className: 'bg-[#f5f5f5] text-[#595959] border-[#d9d9d9]' };
     }
   };
 
@@ -154,8 +140,8 @@ export const VaultView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {chests.map((chest) => {
                 const details = getTierDetails(chest.tier);
-                const isReady = chest.status === 'ready' || (chest.status === 'unlocking' && Boolean(chest.unlockEndsAt && Date.now() >= chest.unlockEndsAt));
-                const isUnlocking = chest.status === 'unlocking' && !isReady;
+                const isUnlocking = chest.status === 'unlocking';
+                const isReady = chest.status === 'ready' || (isUnlocking && chest.unlockEndsAt && Date.now() >= chest.unlockEndsAt);
                 const isEmpty = chest.status === 'empty';
                 return (
                   <div
@@ -259,26 +245,15 @@ export const VaultView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rewards.map((r) => {
                 const canAfford = profile.coins >= r.cost;
-                const rarityBadge = getRarityBadge(r.rarity);
-                const isLegendary = r.rarity === 'legendary';
                 return (
                   <div
                     key={r.id}
-                    className={`bg-white rounded-3xl border-2 ${
-                      isLegendary ? 'border-[#ffd591] shadow-amber-50' : 'border-[#e5e5e5]'
-                    } hover:border-[#ffe58f] p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4 transition-all`}
+                    className="bg-white rounded-3xl border-2 border-[#e5e5e5] hover:border-[#ffe58f] p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-4 transition-all"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-3xl shrink-0">{r.icon}</span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full border ${rarityBadge.className}`}>
-                            {rarityBadge.label}
-                          </span>
-                          <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-[#f7f7f7] text-[var(--gray-light)] border border-[#e5e5e5]">
-                            {r.category}
-                          </span>
-                        </div>
+                        <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-[#f7f7f7] text-[var(--gray-light)] border border-[#e5e5e5] shrink-0">{r.category}</span>
                       </div>
                       <h3 className="font-['Feather_Bold'] text-base text-[var(--dark-blue)] mb-1 truncate">{r.title}</h3>
                       <p className="text-xs text-[var(--gray-text)] font-semibold leading-relaxed line-clamp-2">{r.description}</p>

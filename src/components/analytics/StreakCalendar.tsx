@@ -1,6 +1,9 @@
 import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
-import { getLocalDateString, calculateDayHeatIntensity } from '../../utils/dateUtils';
+
+function toISODate(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
 
 function getLastNDates(n: number): string[] {
   const out: string[] = [];
@@ -9,7 +12,7 @@ function getLastNDates(n: number): string[] {
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    out.push(getLocalDateString(d));
+    out.push(toISODate(d));
   }
   return out;
 }
@@ -21,7 +24,7 @@ export interface StreakCalendarProps {
 export const StreakCalendar: React.FC<StreakCalendarProps> = ({ days = 30 }) => {
   const { habits } = useGameState();
   const dates = getLastNDates(days);
-  const todayStr = getLocalDateString();
+  const todayStr = toISODate(new Date());
 
   return (
     <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-4 sm:p-5 md:p-6 shadow-xs">
@@ -52,18 +55,14 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ days = 30 }) => 
               );
               const completeCount = completedHabits.length;
               const totalCount = habits.length;
-              const intensity = calculateDayHeatIntensity(completeCount, totalCount);
               const completionRatio = totalCount > 0 ? completeCount / totalCount : 0;
 
               let bg = 'bg-white';
               let border = 'border-[#e5e5e5]';
-              if (intensity === 4) {
+              if (completeCount === totalCount && totalCount > 0) {
                 bg = 'bg-[#e8f8d8]';
                 border = 'border-[#b7e986]';
-              } else if (intensity === 3) {
-                bg = 'bg-[#f0fdf4]';
-                border = 'border-[#dcfce7]';
-              } else if (intensity >= 1) {
+              } else if (completeCount > 0) {
                 bg = 'bg-[#fffbe6]';
                 border = 'border-[#ffe58f]';
               } else if (isToday) {

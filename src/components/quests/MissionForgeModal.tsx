@@ -4,7 +4,6 @@ import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { sanitize } from '../../utils/validators';
-import { QUEST_TEMPLATES } from '../../utils/questGenerator';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -76,20 +75,6 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     const baseXP = category === 'daily' ? 60 : category === 'bounty' ? 120 : 250;
     setXpReward(Math.round(baseXP * multiplier));
     setCoinsReward(Math.round(baseXP * 0.5 * multiplier));
-  };
-
-  const handleAutoFillTemplate = () => {
-    soundEngine.playClick();
-    const tmpl = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
-    if (!tmpl) return;
-    setQuestTitle(tmpl.title);
-    setQuestDesc(tmpl.description);
-    setCategory(tmpl.category);
-    setTag(tmpl.tag);
-    setDuration(tmpl.estimatedMinutes);
-    setXpReward(tmpl.baseXp);
-    setCoinsReward(tmpl.baseCoins);
-    setQuestError(null);
   };
 
   const handleCreateQuest = (e: React.FormEvent) => {
@@ -208,18 +193,9 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
         {mode === 'quest' ? (
           <form onSubmit={handleCreateQuest} className="p-4 sm:p-5 space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="forge-quest-title" className="block text-xs font-black uppercase text-[var(--gray-light)]">
-                  Mission Title
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoFillTemplate}
-                  className="text-[11px] font-extrabold text-[var(--blue)] hover:underline cursor-pointer flex items-center gap-1"
-                >
-                  <span>🎲</span> Suggest Random Directive
-                </button>
-              </div>
+              <label htmlFor="forge-quest-title" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+                Mission Title
+              </label>
               <input
                 type="text"
                 id="forge-quest-title"

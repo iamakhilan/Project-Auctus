@@ -330,19 +330,6 @@ export const QuestsView: React.FC = () => {
                           <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-md bg-[#f0f0f0] text-[var(--gray-text)] shrink-0">
                             {quest.tag}
                           </span>
-                          {quest.difficulty && (
-                            <span
-                              className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md shrink-0 ${
-                                quest.difficulty === 'elite'
-                                  ? 'bg-[#fdf2f8] text-[#db2777] border border-[#fbcfe8]'
-                                  : quest.difficulty === 'hard'
-                                  ? 'bg-[#fff1f2] text-[#e11d48] border border-[#fecdd3]'
-                                  : 'bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0]'
-                              }`}
-                            >
-                              {quest.difficulty}
-                            </span>
-                          )}
                           {quest.estimatedMinutes && (
                             <span className="text-[11px] font-bold text-[var(--gray-light)] shrink-0">
                               ⏱️ {quest.estimatedMinutes}m

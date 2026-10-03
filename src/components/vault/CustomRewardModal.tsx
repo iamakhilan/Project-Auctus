@@ -3,7 +3,6 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { sanitize } from '../../utils/validators';
-import { RewardRarity } from '../../types';
 
 interface CustomRewardModalProps {
   isOpen: boolean;
@@ -16,7 +15,6 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
   const [title, setTitle] = useState('');
   const [cost, setCost] = useState(200);
   const [category, setCategory] = useState('Leisure');
-  const [rarity, setRarity] = useState<RewardRarity>('common');
   const [icon, setIcon] = useState('🎮');
   const [description, setDescription] = useState('');
 
@@ -40,8 +38,7 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
       cost,
       category,
       icon,
-      sanitize(description.trim() || 'Custom personal reward'),
-      rarity
+      sanitize(description.trim() || 'Custom personal reward')
     );
 
     setTitle('');
@@ -128,35 +125,6 @@ export const CustomRewardModal: React.FC<CustomRewardModalProps> = ({ isOpen, on
                   }`}
                 >
                   {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
-              Rarity Tier
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {(['common', 'rare', 'epic', 'legendary'] as RewardRarity[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  aria-pressed={rarity === r}
-                  onClick={() => setRarity(r)}
-                  className={`py-2 px-1 rounded-xl border-2 text-[10px] font-['Feather_Bold'] capitalize font-bold transition-all touch-target ${
-                    rarity === r
-                      ? r === 'legendary'
-                        ? 'border-[#f59e0b] bg-[#fffbeb] text-[#d97706]'
-                        : r === 'epic'
-                        ? 'border-[#a855f7] bg-[#faf5ff] text-[#9333ea]'
-                        : r === 'rare'
-                        ? 'border-[#3b82f6] bg-[#eff6ff] text-[#2563eb]'
-                        : 'border-[#10b981] bg-[#ecfdf5] text-[#059669]'
-                      : 'border-[#e5e5e5] bg-white text-[var(--gray-text)]'
-                  }`}
-                >
-                  {r}
                 </button>
               ))}
             </div>

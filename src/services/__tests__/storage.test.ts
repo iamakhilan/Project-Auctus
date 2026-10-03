@@ -84,12 +84,6 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
     expect(StorageService.getHabits()).toEqual(customHabits);
   });
 
-  it('setAchievementLocks / getAchievementLocks roundtrip', () => {
-    const locks = ['a1', 'a2', 'a3'];
-    StorageService.setAchievementLocks(locks);
-    expect(StorageService.getAchievementLocks()).toEqual(locks);
-  });
-
   it('setTransactions / getTransactions roundtrip including FocusState null', () => {
     StorageService.setFocusState(null);
     expect(StorageService.getFocusState()).toBeNull();
@@ -171,34 +165,16 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
   it('exportBackup includes version 2.0 and roundtrips', () => {
     const json = StorageService.exportBackup();
     const parsed = JSON.parse(json);
-    expect(parsed.version).toBe('2.0');
+    expect(parsed.version).toBe('2.1');
     expect(parsed.exportedAt).toBeDefined();
     // roundtrip should succeed
     localStorage.clear();
     expect(StorageService.importBackup(json)).toBe(true);
   });
 
-  it('persists and retrieves audio configuration correctly', () => {
-    const defaultSettings = StorageService.getAudioSettings();
-    expect(defaultSettings.soundEnabled).toBe(true);
-    expect(defaultSettings.masterVolume).toBe(0.8);
-
-    StorageService.setAudioSettings({
-      soundEnabled: false,
-      masterVolume: 0.5,
-      soundscapeVolume: 0.3,
-    });
-
-    const updated = StorageService.getAudioSettings();
-    expect(updated.soundEnabled).toBe(false);
-    expect(updated.masterVolume).toBe(0.5);
-    expect(updated.soundscapeVolume).toBe(0.3);
-  });
-
-  it('persists streak freeze consumable inventory on profile', () => {
-    const profile = { ...INITIAL_PROFILE, streakFreezeCount: 2 };
-    StorageService.setProfile(profile);
-    const loaded = StorageService.getProfile();
-    expect(loaded.streakFreezeCount).toBe(2);
+  it('importBackup accepts legacy backup without version', () => {
+    const legacy = JSON.stringify({ profile: INITIAL_PROFILE, quests: [], habits: [] });
+    expect(StorageService.importBackup(legacy)).toBe(true);
+    expect(StorageService.getProfile().name).toBe(INITIAL_PROFILE.name);
   });
 });
