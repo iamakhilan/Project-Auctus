@@ -11,6 +11,7 @@ import { RewardClaimModal } from './components/common/RewardClaimModal';
 import { OnboardingModal } from './components/common/OnboardingModal';
 import { CommandPalette } from './components/common/CommandPalette';
 import { HelpOverlay } from './components/common/HelpOverlay';
+import { PersistenceErrorBridge } from './components/common/PersistenceErrorBridge';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { WeeklyReviewModal } from './components/command/WeeklyReviewModal';
 
@@ -94,6 +95,7 @@ const AppContent: React.FC = () => {
       <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} />
       <HelpOverlay isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <PersistenceErrorBridge />
       <WeeklyReviewModal isOpen={showWeekly} onClose={() => setShowWeekly(false)} />
 
       {/* Duolingo-styled Gaming Footer */}

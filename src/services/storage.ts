@@ -13,6 +13,7 @@ import {
   WeeklyReview,
 } from '../types';
 import { validateBackupPayload } from '../utils/validators';
+import { getLocalDateString } from '../utils/dateUtils';
 
 export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
@@ -115,8 +116,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 14,
     bestStreak: 21,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 14 }, (_, i) => new Date(Date.now() - (13 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 14 }, (_, i) => getLocalDateString(new Date(Date.now() - (13 - i) * 86400000))),
     xpYield: 30,
     coinYield: 15,
   },
@@ -126,8 +127,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'vitality',
     streakCount: 8,
     bestStreak: 12,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 8 }, (_, i) => new Date(Date.now() - (7 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 8 }, (_, i) => getLocalDateString(new Date(Date.now() - (7 - i) * 86400000))),
     xpYield: 20,
     coinYield: 10,
   },
@@ -137,8 +138,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'mind',
     streakCount: 5,
     bestStreak: 9,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 5 }, (_, i) => new Date(Date.now() - (4 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 5 }, (_, i) => getLocalDateString(new Date(Date.now() - (4 - i) * 86400000))),
     xpYield: 25,
     coinYield: 12,
   },
@@ -148,8 +149,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 11,
     bestStreak: 14,
-    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    completedDates: Array.from({ length: 11 }, (_, i) => new Date(Date.now() - (10 - i) * 86400000).toISOString().split('T')[0]),
+    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
+    completedDates: Array.from({ length: 11 }, (_, i) => getLocalDateString(new Date(Date.now() - (10 - i) * 86400000))),
     xpYield: 40,
     coinYield: 20,
   },
@@ -345,24 +346,68 @@ export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
 export const INITIAL_CAMPAIGNS: Campaign[] = [];
 export const INITIAL_EFFORT_LOGS: FocusEffortLog[] = [];
 export const INITIAL_WEEKLY_REVIEWS: WeeklyReview[] = [];
+export interface PersistenceError {
+  key: string;
+  message: string;
+  timestamp: number;
+}
+
+let lastPersistenceError: PersistenceError | null = null;
+const persistenceListeners = new Set<(e: PersistenceError) => void>();
+
+export const getLastPersistenceError = (): PersistenceError | null => lastPersistenceError;
+export const clearPersistenceError = (): void => {
+  lastPersistenceError = null;
+};
+export const subscribePersistenceError = (cb: (e: PersistenceError) => void): (() => void) => {
+  persistenceListeners.add(cb);
+  return () => {
+    persistenceListeners.delete(cb);
+  };
+};
+
+function emitPersistenceError(key: string, error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  const evt: PersistenceError = { key, message, timestamp: Date.now() };
+  lastPersistenceError = evt;
+  persistenceListeners.forEach((l) => {
+    try {
+      l(evt);
+    } catch {}
+  });
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('auctus:persistence-error', { detail: evt }));
+    } catch {}
+  }
+}
+
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
-  } catch {
+    return item ? (JSON.parse(item) as T) : fallback;
+  } catch (err) {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    void err;
     return fallback;
   }
 };
 
-export const saveToStorage = <T>(key: string, data: T): void => {
-  if (typeof window === 'undefined') return;
+export const saveToStorage = <T>(key: string, data: T): boolean => {
+  if (typeof window === 'undefined') return true;
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch {
-    // quota safe
+    return true;
+  } catch (err) {
+    emitPersistenceError(key, err);
+    return false;
   }
 };
+
+
 
 export const StorageService = {
   getProfile: () => loadFromStorage<PlayerProfile>(STORAGE_KEYS.PROFILE, INITIAL_PROFILE),
