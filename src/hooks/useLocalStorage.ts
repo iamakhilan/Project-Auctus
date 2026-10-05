@@ -28,8 +28,14 @@ export function useLocalStorage<T>(
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(key, JSON.stringify(next));
           }
-        } catch {
-          // quota / serialization — keep in-memory value
+        } catch (err) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('auctus:persistence-error', {
+                detail: { key, message: err instanceof Error ? err.message : String(err), timestamp: Date.now() },
+              }),
+            );
+          } catch {}
         }
         return next;
       });

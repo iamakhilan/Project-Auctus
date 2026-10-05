@@ -1,4 +1,5 @@
 import { FocusSessionRecord, Quest } from '../types';
+import { getLocalDateString } from './dateUtils';
 
 export interface FocusVelocityMetrics {
   totalMinutes: number;
@@ -119,7 +120,7 @@ export function calculateConsistencyScore(
   for (let i = 0; i < lookbackDays; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const iso = d.toISOString().split('T')[0];
+    const iso = getLocalDateString(d);
     if (dateSet.has(iso)) {
       activeCount += 1;
     }

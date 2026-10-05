@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useGameState } from '../../context/GameStateContext';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 interface DailySummaryModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface DailySummaryModalProps {
 }
 
 function toISODateLocal(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return getLocalDateString(d);
 }
 
 export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, onClose }) => {

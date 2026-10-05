@@ -17,10 +17,11 @@ import {
 } from '../../utils/exportHelpers';
 import { FocusSessionRecord } from '../../types';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 // ---------- helpers ----------
 function toISODateLocal(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return getLocalDateString(d);
 }
 
 function getLastNDates(n: number): string[] {
