@@ -188,6 +188,9 @@ export const CitadelView: React.FC = () => {
               <span className="px-2.5 py-1 rounded-xl bg-white/10 text-xs font-black text-[#67e8f9] border border-white/10 flex items-center gap-1">
                 <span>⚡</span> Energy Cap: {tierConfig.energyCap} Hearts
               </span>
+              <span className="px-2.5 py-1 rounded-xl bg-white/10 text-xs font-black text-[#fde68a] border border-white/10 flex items-center gap-1" title="Theoretical power from quests+focus+streak">
+                <span>🧮</span> Est. Power: {estimatedPower}
+              </span>
               <span className="px-2.5 py-1 rounded-xl bg-white/10 text-xs font-black text-[#fde047] border border-white/10 flex items-center gap-1">
                 <span>🚀</span> XP Rate: {tierConfig.bonusMultiplier.toFixed(1)}x
               </span>

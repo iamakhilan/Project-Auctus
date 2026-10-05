@@ -1,5 +1,5 @@
-﻿import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { soundEngine, SOUNDSCAPE_PRESETS, SoundscapeTrack } from '../audioSynthesizer';
+﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { soundEngine, SOUNDSCAPE_PRESETS } from '../audioSynthesizer';
 
 describe('AudioSynthesizer & Soundscape Engine', () => {
   beforeEach(() => {
