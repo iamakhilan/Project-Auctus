@@ -1,7 +1,57 @@
+export type SoundscapeTrack = 'none' | 'cyber-rain' | 'binaural' | 'forest' | 'white-noise' | 'deep-brown';
+
+export interface SoundscapePreset {
+  id: SoundscapeTrack;
+  name: string;
+  filterType?: BiquadFilterType;
+  filterFreq?: number;
+  gain: number;
+}
+
+export const SOUNDSCAPE_PRESETS: Record<SoundscapeTrack, SoundscapePreset> = {
+  'none': { id: 'none', name: 'Silent', gain: 0 },
+  'cyber-rain': { id: 'cyber-rain', name: 'Cyber Rain', filterType: 'lowpass', filterFreq: 800, gain: 0.06 },
+  'binaural': { id: 'binaural', name: 'Binaural Focus', gain: 0.08 },
+  'forest': { id: 'forest', name: 'Whispering Forest', filterType: 'bandpass', filterFreq: 1200, gain: 0.05 },
+  'white-noise': { id: 'white-noise', name: 'White Static', filterType: 'lowpass', filterFreq: 350, gain: 0.05 },
+  'deep-brown': { id: 'deep-brown', name: 'Deep Brown Noise', filterType: 'lowpass', filterFreq: 220, gain: 0.09 },
+};
+
 class AudioSynthesizer {
   private ctx: AudioContext | null = null;
   private currentSoundscapeNodes: { source: AudioNode; gain: GainNode }[] = [];
   public isMuted: boolean = false;
+  private masterVolume: number = 0.8;
+
+  constructor() {
+    this.loadPreferences();
+  }
+
+  public loadPreferences(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('auctus_duo_audio_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed.soundEnabled === 'boolean') {
+          this.isMuted = !parsed.soundEnabled;
+        }
+        if (typeof parsed.masterVolume === 'number') {
+          this.setMasterVolume(parsed.masterVolume);
+        }
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  public setMasterVolume(vol: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, vol));
+  }
+
+  public getMasterVolume(): number {
+    return this.masterVolume;
+  }
 
   private getContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -29,7 +79,7 @@ class AudioSynthesizer {
     osc.frequency.setValueAtTime(440, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.05);
 
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.setValueAtTime(0.15 * this.masterVolume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
 
     osc.connect(gain);
@@ -53,7 +103,7 @@ class AudioSynthesizer {
       osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
 
       gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08);
-      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + idx * 0.08 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.2 * this.masterVolume, ctx.currentTime + idx * 0.08 + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.25);
 
       osc.connect(gain);
@@ -77,7 +127,7 @@ class AudioSynthesizer {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
 
-      gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+      gain.gain.setValueAtTime(0.25 * this.masterVolume, ctx.currentTime + i * 0.1);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
 
       osc.connect(gain);
@@ -85,6 +135,39 @@ class AudioSynthesizer {
 
       osc.start(ctx.currentTime + i * 0.1);
       osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+    });
+  }
+
+  public playAchievement(): void {
+    if (this.isMuted) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const chords = [
+      [523.25, 659.25, 783.99],
+      [587.33, 739.99, 880.00],
+      [659.25, 830.61, 987.77],
+      [1046.50, 1318.51, 1567.98],
+    ];
+
+    chords.forEach((chord, step) => {
+      chord.forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + step * 0.12);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime + step * 0.12);
+        gain.gain.linearRampToValueAtTime(0.15 * this.masterVolume, ctx.currentTime + step * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + step * 0.12 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + step * 0.12);
+        osc.stop(ctx.currentTime + step * 0.12 + 0.35);
+      });
     });
   }
 
@@ -100,7 +183,7 @@ class AudioSynthesizer {
     osc.frequency.setValueAtTime(987.77, ctx.currentTime); // B5
     osc.frequency.setValueAtTime(1318.51, ctx.currentTime + 0.08); // E6
 
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.setValueAtTime(0.2 * this.masterVolume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
     osc.connect(gain);
@@ -110,11 +193,14 @@ class AudioSynthesizer {
     osc.stop(ctx.currentTime + 0.3);
   }
 
-  public startSoundscape(track: 'none' | 'cyber-rain' | 'binaural' | 'forest' | 'white-noise'): void {
+  public startSoundscape(track: SoundscapeTrack): void {
     this.stopSoundscape();
     if (this.isMuted || track === 'none') return;
     const ctx = this.getContext();
     if (!ctx) return;
+
+    const preset = SOUNDSCAPE_PRESETS[track];
+    if (!preset) return;
 
     try {
       if (track === 'binaural') {
@@ -128,7 +214,7 @@ class AudioSynthesizer {
         oscR.type = 'sine';
         oscR.frequency.setValueAtTime(438, ctx.currentTime);
 
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.setValueAtTime(preset.gain * this.masterVolume, ctx.currentTime);
 
         oscL.connect(merger, 0, 0);
         oscR.connect(merger, 0, 1);
@@ -140,52 +226,68 @@ class AudioSynthesizer {
 
         this.currentSoundscapeNodes.push({ source: oscL, gain }, { source: oscR, gain });
       } else {
-        // Noise buffer for rain / forest / static
         const bufferSize = ctx.sampleRate * 2;
         const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          output[i] = Math.random() * 2 - 1;
+        
+        if (track === 'deep-brown') {
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            output[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = output[i];
+            output[i] *= 3.5;
+          }
+        } else {
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+          }
         }
 
         const whiteNoise = ctx.createBufferSource();
         whiteNoise.buffer = noiseBuffer;
         whiteNoise.loop = true;
 
-        const filter = ctx.createBiquadFilter();
-        if (track === 'cyber-rain') {
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(800, ctx.currentTime);
-        } else if (track === 'forest') {
-          filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1200, ctx.currentTime);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(preset.gain * this.masterVolume, ctx.currentTime);
+
+        if (preset.filterType && preset.filterFreq) {
+          const filter = ctx.createBiquadFilter();
+          filter.type = preset.filterType;
+          filter.frequency.setValueAtTime(preset.filterFreq, ctx.currentTime);
+          whiteNoise.connect(filter);
+          filter.connect(gain);
         } else {
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(350, ctx.currentTime);
+          whiteNoise.connect(gain);
         }
 
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.05, ctx.currentTime);
-
-        whiteNoise.connect(filter);
-        filter.connect(gain);
         gain.connect(ctx.destination);
-
         whiteNoise.start();
         this.currentSoundscapeNodes.push({ source: whiteNoise, gain });
       }
     } catch {
-      // AudioContext policy safe catch
+      // AudioContext policy fallback
     }
   }
 
   public stopSoundscape(): void {
+    const ctx = this.ctx;
     this.currentSoundscapeNodes.forEach(({ source, gain }) => {
       try {
-        if ('stop' in source && typeof (source as AudioScheduledSourceNode).stop === 'function') {
-          (source as AudioScheduledSourceNode).stop();
+        if (ctx && gain.gain) {
+          gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.05);
         }
-        gain.disconnect();
+        setTimeout(() => {
+          try {
+            if ('stop' in source && typeof (source as AudioScheduledSourceNode).stop === 'function') {
+              (source as AudioScheduledSourceNode).stop();
+            }
+            gain.disconnect();
+          } catch {
+            // ignore
+          }
+        }, 60);
       } catch {
         // ignore
       }

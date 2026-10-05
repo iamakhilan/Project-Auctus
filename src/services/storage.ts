@@ -7,17 +7,34 @@ import {
   Achievement,
   EconomyTransaction,
   FocusSessionState,
+  AudioSettings,
+  Campaign,
+  FocusEffortLog,
+  WeeklyReview,
 } from '../types';
+import { validateBackupPayload } from '../utils/validators';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
   QUESTS: 'auctus_duo_quests',
   HABITS: 'auctus_duo_habits',
   CHESTS: 'auctus_duo_chests',
   REWARDS: 'auctus_duo_rewards',
   ACHIEVEMENTS: 'auctus_duo_achievements',
+  ACHIEVEMENT_LOCKS: 'auctus_duo_achievement_locks',
   TRANSACTIONS: 'auctus_duo_transactions',
   FOCUS: 'auctus_duo_focus',
+  AUDIO_SETTINGS: 'auctus_duo_audio_settings',
+  CAMPAIGNS: 'auctus_campaigns',
+  EFFORT_LOGS: 'auctus_effort_logs',
+  WEEKLY_REVIEWS: 'auctus_weekly_reviews',
+  WEEKLY_STATE: 'auctus_weekly_state',
+};
+
+export const INITIAL_AUDIO_SETTINGS: AudioSettings = {
+  soundEnabled: true,
+  masterVolume: 0.8,
+  soundscapeVolume: 0.7,
 };
 
 export const INITIAL_PROFILE: PlayerProfile = {
@@ -98,6 +115,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 14,
     bestStreak: 21,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 14 }, (_, i) => new Date(Date.now() - (13 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 30,
     coinYield: 15,
   },
@@ -107,6 +126,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'vitality',
     streakCount: 8,
     bestStreak: 12,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 8 }, (_, i) => new Date(Date.now() - (7 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 20,
     coinYield: 10,
   },
@@ -116,6 +137,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'mind',
     streakCount: 5,
     bestStreak: 9,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 5 }, (_, i) => new Date(Date.now() - (4 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 25,
     coinYield: 12,
   },
@@ -125,6 +148,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 11,
     bestStreak: 14,
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 11 }, (_, i) => new Date(Date.now() - (10 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 40,
     coinYield: 20,
   },
@@ -185,7 +210,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: '1 Hour Gaming Session',
     cost: 150,
     category: 'Entertainment',
-    icon: '??',
+    icon: '🎮',
     description: 'Guilt-free gaming block on your favorite PC or console game.',
   },
   {
@@ -193,7 +218,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Artisan Espresso / Cafe Treat',
     cost: 100,
     category: 'Treats',
-    icon: '?',
+    icon: '☕',
     description: 'A specialty coffee or dessert at your favorite local cafe.',
   },
   {
@@ -201,7 +226,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Movie Night & Popcorn',
     cost: 220,
     category: 'Leisure',
-    icon: '??',
+    icon: '🎬',
     description: 'Watch a movie or new series episode with complete peace of mind.',
   },
   {
@@ -209,7 +234,7 @@ export const INITIAL_REWARDS: RewardItem[] = [
     title: 'Book / Tech Gear Purchase',
     cost: 500,
     category: 'Investment',
-    icon: '??',
+    icon: '📚',
     description: 'Buy that book, mechanical keycap, or productivity gadget.',
   },
 ];
@@ -220,7 +245,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'First Blood',
     description: 'Complete your first tactical bounty.',
     category: 'quests',
-    icon: '??',
+    icon: '🎯',
     targetValue: 1,
     currentValue: 1,
     isUnlocked: true,
@@ -232,7 +257,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Focus Champion',
     description: 'Log over 250 minutes in the Focus Arena.',
     category: 'focus',
-    icon: '??',
+    icon: '⚔️',
     targetValue: 250,
     currentValue: 285,
     isUnlocked: true,
@@ -244,7 +269,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Iron Discipline',
     description: 'Reach a consecutive 14-day streak flame.',
     category: 'streak',
-    icon: '??',
+    icon: '🔥',
     targetValue: 14,
     currentValue: 14,
     isUnlocked: true,
@@ -256,7 +281,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Citadel Ascendant',
     description: 'Ascend to Citadel Tier II (Bastion Outpost).',
     category: 'citadel',
-    icon: '??',
+    icon: '🏰',
     targetValue: 2,
     currentValue: 2,
     isUnlocked: true,
@@ -268,7 +293,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Centurion',
     description: 'Complete 50 total missions.',
     category: 'quests',
-    icon: '??',
+    icon: '🏆',
     targetValue: 50,
     currentValue: 19,
     isUnlocked: false,
@@ -279,13 +304,15 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Deep Work Master',
     description: 'Accumulate 1,000 focus minutes.',
     category: 'focus',
-    icon: '?',
+    icon: '🧠',
     targetValue: 1000,
     currentValue: 285,
     isUnlocked: false,
     rewards: { xp: 400, gems: 50 },
   },
 ];
+
+export const INITIAL_ACHIEVEMENT_LOCKS: string[] = ['a1', 'a2', 'a3', 'a4'];
 
 export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   {
@@ -314,6 +341,10 @@ export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   },
 ];
 
+
+export const INITIAL_CAMPAIGNS: Campaign[] = [];
+export const INITIAL_EFFORT_LOGS: FocusEffortLog[] = [];
+export const INITIAL_WEEKLY_REVIEWS: WeeklyReview[] = [];
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -352,11 +383,25 @@ export const StorageService = {
   getAchievements: () => loadFromStorage<Achievement[]>(STORAGE_KEYS.ACHIEVEMENTS, INITIAL_ACHIEVEMENTS),
   setAchievements: (a: Achievement[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
 
+  getAchievementLocks: () => loadFromStorage<string[]>(STORAGE_KEYS.ACHIEVEMENT_LOCKS, INITIAL_ACHIEVEMENT_LOCKS),
+  setAchievementLocks: (locks: string[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
+
   getTransactions: () => loadFromStorage<EconomyTransaction[]>(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS),
   setTransactions: (t: EconomyTransaction[]) => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
 
   getFocusState: () => loadFromStorage<FocusSessionState | null>(STORAGE_KEYS.FOCUS, null),
   setFocusState: (f: FocusSessionState | null) => saveToStorage(STORAGE_KEYS.FOCUS, f),
+  getCampaigns: () => loadFromStorage<Campaign[]>(STORAGE_KEYS.CAMPAIGNS, INITIAL_CAMPAIGNS),
+  setCampaigns: (c: Campaign[]) => saveToStorage(STORAGE_KEYS.CAMPAIGNS, c),
+  getEffortLogs: () => loadFromStorage<FocusEffortLog[]>(STORAGE_KEYS.EFFORT_LOGS, INITIAL_EFFORT_LOGS),
+  setEffortLogs: (l: FocusEffortLog[]) => saveToStorage(STORAGE_KEYS.EFFORT_LOGS, l),
+  getWeeklyReviews: () => loadFromStorage<WeeklyReview[]>(STORAGE_KEYS.WEEKLY_REVIEWS, INITIAL_WEEKLY_REVIEWS),
+  setWeeklyReviews: (r: WeeklyReview[]) => saveToStorage(STORAGE_KEYS.WEEKLY_REVIEWS, r),
+  getWeeklyState: () => loadFromStorage<{ lastReviewWeekStart?: string }>(STORAGE_KEYS.WEEKLY_STATE, {}),
+  setWeeklyState: (s: { lastReviewWeekStart?: string }) => saveToStorage(STORAGE_KEYS.WEEKLY_STATE, s),
+
+  getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
+  setAudioSettings: (a: AudioSettings) => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
 
   exportBackup: (): string => {
     const backup = {
@@ -366,7 +411,12 @@ export const StorageService = {
       chests: StorageService.getChests(),
       rewards: StorageService.getRewards(),
       achievements: StorageService.getAchievements(),
+      achievementLocks: StorageService.getAchievementLocks(),
       transactions: StorageService.getTransactions(),
+      campaigns: StorageService.getCampaigns(),
+      effortLogs: StorageService.getEffortLogs(),
+      weeklyReviews: StorageService.getWeeklyReviews(),
+      version: "2.1",
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(backup, null, 2);
@@ -374,14 +424,85 @@ export const StorageService = {
 
   importBackup: (json: string): boolean => {
     try {
-      const data = JSON.parse(json);
-      if (data.profile) StorageService.setProfile(data.profile);
-      if (data.quests) StorageService.setQuests(data.quests);
-      if (data.habits) StorageService.setHabits(data.habits);
-      if (data.chests) StorageService.setChests(data.chests);
-      if (data.rewards) StorageService.setRewards(data.rewards);
-      if (data.achievements) StorageService.setAchievements(data.achievements);
-      if (data.transactions) StorageService.setTransactions(data.transactions);
+      const validation = validateBackupPayload(json);
+      if (!validation.isValid || !validation.data) {
+        return false;
+      }
+      const data = validation.data;
+      
+      // Validate imported data structure
+      if (data.profile && typeof data.profile === 'object') {
+        const p = data.profile as Record<string, unknown>;
+        const validatedProfile: PlayerProfile = {
+          name: typeof p.name === 'string' ? p.name : INITIAL_PROFILE.name,
+          title: typeof p.title === 'string' ? p.title : INITIAL_PROFILE.title,
+          level: Number.isInteger(p.level) && (p.level as number) > 0 ? (p.level as number) : INITIAL_PROFILE.level,
+          xp: Number.isInteger(p.xp) && (p.xp as number) >= 0 ? (p.xp as number) : INITIAL_PROFILE.xp,
+          xpToNextLevel: Number.isInteger(p.xpToNextLevel) && (p.xpToNextLevel as number) > 0 ? (p.xpToNextLevel as number) : INITIAL_PROFILE.xpToNextLevel,
+          coins: Number.isInteger(p.coins) && (p.coins as number) >= 0 ? (p.coins as number) : INITIAL_PROFILE.coins,
+          gems: Number.isInteger(p.gems) && (p.gems as number) >= 0 ? (p.gems as number) : INITIAL_PROFILE.gems,
+          energy: Number.isInteger(p.energy) && (p.energy as number) >= 0 ? (p.energy as number) : INITIAL_PROFILE.energy,
+          maxEnergy: Number.isInteger(p.maxEnergy) && (p.maxEnergy as number) > 0 ? (p.maxEnergy as number) : INITIAL_PROFILE.maxEnergy,
+          streakDays: Number.isInteger(p.streakDays) && (p.streakDays as number) >= 0 ? (p.streakDays as number) : INITIAL_PROFILE.streakDays,
+          citadelTier: Number.isInteger(p.citadelTier) && (p.citadelTier as number) >= 0 ? (p.citadelTier as number) : INITIAL_PROFILE.citadelTier,
+          citadelPower: Number.isInteger(p.citadelPower) && (p.citadelPower as number) >= 0 ? (p.citadelPower as number) : INITIAL_PROFILE.citadelPower,
+          citadelMaxPower: Number.isInteger(p.citadelMaxPower) && (p.citadelMaxPower as number) > 0 ? (p.citadelMaxPower as number) : INITIAL_PROFILE.citadelMaxPower,
+          totalFocusMinutes: Number.isInteger(p.totalFocusMinutes) && (p.totalFocusMinutes as number) >= 0 ? (p.totalFocusMinutes as number) : INITIAL_PROFILE.totalFocusMinutes,
+          completedQuestsCount: Number.isInteger(p.completedQuestsCount) && (p.completedQuestsCount as number) >= 0 ? (p.completedQuestsCount as number) : INITIAL_PROFILE.completedQuestsCount,
+          soundEnabled: typeof p.soundEnabled === 'boolean' ? p.soundEnabled : INITIAL_PROFILE.soundEnabled,
+        };
+        StorageService.setProfile(validatedProfile);
+      }
+      
+      // Validate quests
+      if (Array.isArray(data.quests)) {
+        const validatedQuests = data.quests
+          .filter((q: unknown): q is Record<string, unknown> => q !== null && typeof q === 'object' && typeof (q as Record<string, unknown>).id === 'string' && typeof (q as Record<string, unknown>).title === 'string')
+          .map((q: Record<string, unknown>) => ({
+            id: q.id as string,
+            title: q.title as string,
+            description: typeof q.description === 'string' ? q.description : undefined,
+            category: ['daily', 'bounty', 'epic', 'habit'].includes(q.category as string) ? (q.category as 'daily' | 'bounty' | 'epic' | 'habit') : 'daily',
+            tag: ['Study', 'Coding', 'Fitness', 'Personal', 'Work', 'Creative', 'Deep Work'].includes(q.tag as string) ? (q.tag as 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work') : 'Personal',
+            xpReward: Number.isInteger(q.xpReward) && typeof q.xpReward === 'number' && q.xpReward >= 0 ? q.xpReward : 0,
+            coinsReward: Number.isInteger(q.coinsReward) && typeof q.coinsReward === 'number' && q.coinsReward >= 0 ? q.coinsReward : 0,
+            isCompleted: Boolean(q.isCompleted),
+            completedAt: typeof q.completedAt === 'string' ? q.completedAt : undefined,
+            dueLabel: typeof q.dueLabel === 'string' ? q.dueLabel : undefined,
+            estimatedMinutes: Number.isInteger(q.estimatedMinutes) && typeof q.estimatedMinutes === 'number' && q.estimatedMinutes > 0 ? q.estimatedMinutes : undefined,
+          }));
+        StorageService.setQuests(validatedQuests);
+      }
+      
+      // Validate habits
+      if (Array.isArray(data.habits)) {
+        const validatedHabits = data.habits
+          .filter((h: unknown): h is Record<string, unknown> => h !== null && typeof h === 'object' && typeof (h as Record<string, unknown>).id === 'string' && typeof (h as Record<string, unknown>).title === 'string')
+          .map((h: Record<string, unknown>) => ({
+            id: h.id as string,
+            title: h.title as string,
+            category: ['focus', 'vitality', 'mind', 'routine'].includes(h.category as string) ? (h.category as 'focus' | 'vitality' | 'mind' | 'routine') : 'routine',
+            streakCount: Number.isInteger(h.streakCount) && typeof h.streakCount === 'number' && h.streakCount >= 0 ? h.streakCount : 0,
+            bestStreak: Number.isInteger(h.bestStreak) && typeof h.bestStreak === 'number' && h.bestStreak >= 0 ? h.bestStreak : 0,
+            lastCompletedDate: typeof h.lastCompletedDate === 'string' ? h.lastCompletedDate : undefined,
+            completedDates: Array.isArray(h.completedDates) ? h.completedDates.filter((d: unknown): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [],
+            xpYield: Number.isInteger(h.xpYield) && typeof h.xpYield === 'number' && h.xpYield >= 0 ? h.xpYield : 0,
+            coinYield: Number.isInteger(h.coinYield) && typeof h.coinYield === 'number' && h.coinYield >= 0 ? h.coinYield : 0,
+            icon: typeof h.icon === 'string' ? h.icon : undefined,
+          }));
+        StorageService.setHabits(validatedHabits);
+      }
+      
+      if (Array.isArray(data.chests)) StorageService.setChests(data.chests as ChestSlot[]);
+      if (Array.isArray(data.rewards)) StorageService.setRewards(data.rewards as RewardItem[]);
+      if (Array.isArray(data.achievements)) StorageService.setAchievements(data.achievements as Achievement[]);
+      if (Array.isArray(data.achievementLocks)) {
+        StorageService.setAchievementLocks(data.achievementLocks.filter((id: unknown): id is string => typeof id === 'string'));
+      }
+      if (Array.isArray(data.transactions)) StorageService.setTransactions(data.transactions as EconomyTransaction[]);
+      if (Array.isArray(data.campaigns)) StorageService.setCampaigns(data.campaigns as Campaign[]);
+      if (Array.isArray(data.effortLogs)) StorageService.setEffortLogs(data.effortLogs as FocusEffortLog[]);
+      if (Array.isArray(data.weeklyReviews)) StorageService.setWeeklyReviews(data.weeklyReviews as WeeklyReview[]);
       return true;
     } catch {
       return false;

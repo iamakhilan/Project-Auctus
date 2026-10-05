@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { ClaimModalData } from '../../types';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { triggerConfetti } from '../../utils/confetti';
@@ -9,6 +10,7 @@ interface RewardClaimModalProps {
 }
 
 export const RewardClaimModal: React.FC<RewardClaimModalProps> = ({ data, onClose }) => {
+  const panelRef = useFocusTrap<HTMLDivElement>(data.isOpen, onClose);
   useEffect(() => {
     if (data.isOpen) {
       soundEngine.playLevelUp();
@@ -19,8 +21,8 @@ export const RewardClaimModal: React.FC<RewardClaimModalProps> = ({ data, onClos
   if (!data.isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-md bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 text-center transform transition-all animate-scaleUp">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Reward Claimed" className="relative w-full max-w-md bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 text-center transform transition-all animate-scaleUp" onClick={(e) => e.stopPropagation()}>
         
         {/* Glow effect & Icon */}
         <div className="relative mx-auto w-24 h-24 mb-4 flex items-center justify-center">
@@ -78,6 +80,7 @@ export const RewardClaimModal: React.FC<RewardClaimModalProps> = ({ data, onClos
 
         {/* Claim Button */}
         <button
+              type="button"
           onClick={() => {
             soundEngine.playCoinCollect();
             onClose();

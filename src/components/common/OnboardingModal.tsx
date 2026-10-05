@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { soundEngine } from '../../utils/audioSynthesizer';
 
 interface OnboardingModalProps {
@@ -7,6 +8,7 @@ interface OnboardingModalProps {
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) => {
+  const panelRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
   if (!isOpen) return null;
 
   const features = [
@@ -50,8 +52,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 text-center max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" role="presentation" onClick={onClose}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Welcome to Auctus" className="relative w-full max-w-2xl bg-white rounded-3xl border-4 border-[#e5e5e5] shadow-2xl p-6 sm:p-8 text-center max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         
         {/* Header */}
         <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-[var(--green)] border-b-4 border-[var(--green-shadow)] flex items-center justify-center text-3xl shadow-sm">
@@ -91,6 +93,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
 
         {/* Action Button */}
         <button
+              type="button"
           onClick={handleStart}
           className="w-full h-14 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-lg font-black tracking-wider uppercase rounded-2xl border-b-6 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-lg"
         >

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Auctus</title>
+  <desc id="desc">A green Auctus lightning mark on a dark blue background</desc>
+  <rect width="64" height="64" rx="16" fill="#100F3E"/>
+  <path d="M35 8 17 35h12l-3 21 21-29H35z" fill="#58CC02"/>
+</svg>
