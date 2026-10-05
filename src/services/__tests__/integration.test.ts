@@ -42,7 +42,7 @@ describe('Integration: Multi-module State & Persistence Safety', () => {
     const backupJson = StorageService.exportBackup();
     const validation = validateBackupPayload(backupJson);
     expect(validation.isValid).toBe(true);
-    expect(validation.version).toBe('2.0');
+    expect(validation.version).toBe('2.1');
 
     // 6. Restore to clean state
     localStorage.clear();
@@ -56,7 +56,7 @@ describe('Integration: Multi-module State & Persistence Safety', () => {
     const backupJson = StorageService.exportBackup();
     expect(backupJson).toBeTypeOf('string');
     const parsed = JSON.parse(backupJson);
-    expect(parsed.version).toBe('2.0');
+    expect(parsed.version).toBe('2.1');
     expect(Array.isArray(parsed.quests)).toBe(true);
     expect(Array.isArray(parsed.habits)).toBe(true);
     expect(Array.isArray(parsed.transactions)).toBe(true);

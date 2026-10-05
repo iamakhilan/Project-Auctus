@@ -6,12 +6,13 @@ import { RealmView } from './components/realm/RealmView';
 import { QuestsView } from './components/quests/QuestsView';
 import { FocusArenaView } from './components/focus/FocusArenaView';
 import { VaultView } from './components/vault/VaultView';
+import { CampaignsView } from './components/campaigns/CampaignsView';
 import { RewardClaimModal } from './components/common/RewardClaimModal';
 import { OnboardingModal } from './components/common/OnboardingModal';
 import { CommandPalette } from './components/common/CommandPalette';
 import { HelpOverlay } from './components/common/HelpOverlay';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { PersistenceErrorBridge } from './components/common/PersistenceErrorBridge';
+import { WeeklyReviewModal } from './components/command/WeeklyReviewModal';
 
 const CitadelView = lazy(() => import('./components/citadel/CitadelView').then((m) => ({ default: m.CitadelView })));
 const AnalyticsDashboard = lazy(() => import('./components/analytics/AnalyticsDashboard').then((m) => ({ default: m.AnalyticsDashboard })));
@@ -27,10 +28,11 @@ const LazyFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => {
-  const { activeTab, setActiveTab, claimModal, closeClaimModal } = useGameState();
+  const { activeTab, setActiveTab, claimModal, closeClaimModal, needsWeeklyReview } = useGameState();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showWeekly, setShowWeekly] = useState(false);
 
   useKeyboardShortcuts({
     onHelp: () => setShowHelp(true),
@@ -38,6 +40,7 @@ const AppContent: React.FC = () => {
     onEscape: () => {
       if (showPalette) setShowPalette(false);
       else if (showHelp) setShowHelp(false);
+      else if (showWeekly) setShowWeekly(false);
       else if (showOnboarding) setShowOnboarding(false);
     },
   });
@@ -52,7 +55,6 @@ const AppContent: React.FC = () => {
         onOpenHelp={() => setShowOnboarding(true)}
         onOpenProfile={() => setActiveTab('citadel')}
       />
-      <PersistenceErrorBridge />
 
       {/* Navigation Tabs - Desktop */}
       <DesktopNavTabs activeTab={activeTab} onSelectTab={setActiveTab} />
@@ -60,12 +62,21 @@ const AppContent: React.FC = () => {
       {/* Navigation Tabs - Mobile (bottom) */}
       <NavTabs activeTab={activeTab} onSelectTab={setActiveTab} />
 
+      {needsWeeklyReview && (
+        <div className="max-w-5xl mx-auto w-full px-4 mt-3">
+          <div className="rounded-2xl bg-gradient-to-r from-[#1cb0f6] to-[#2bd9fe] text-white p-3 flex items-center justify-between gap-3 border-b-4 border-[#0b80ba]">
+            <span className="text-sm font-black">📅 Weekly Review ready — your Plan→Execute→Review→Adapt cycle</span>
+            <button type="button" onClick={()=>setShowWeekly(true)} className="px-4 py-2 rounded-xl bg-white text-[var(--dark-blue)] font-black text-xs touch-target">Open Review</button>
+          </div>
+        </div>
+      )}
       {/* Main Realm Content Area */}
       <main id="main-content" className="flex-1 w-full pb-16 md:pb-0 px-4 md:px-0">
         {activeTab === 'realm' && <RealmView />}
         {activeTab === 'quests' && <QuestsView />}
         {activeTab === 'focus' && <FocusArenaView />}
         {activeTab === 'vault' && <VaultView />}
+        {activeTab === 'campaigns' && <CampaignsView />}
         {activeTab === 'citadel' && (
           <Suspense fallback={<LazyFallback />}>
             <CitadelView />
@@ -83,6 +94,7 @@ const AppContent: React.FC = () => {
       <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} />
       <HelpOverlay isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <WeeklyReviewModal isOpen={showWeekly} onClose={() => setShowWeekly(false)} />
 
       {/* Duolingo-styled Gaming Footer */}
       <footer className="w-full bg-white border-t-2 border-[#e5e5e5] py-8 text-center select-none hidden md:block">

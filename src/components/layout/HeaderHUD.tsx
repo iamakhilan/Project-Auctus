@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useGameState } from '../../context/GameStateContext';
 
 interface HeaderHUDProps {
@@ -9,9 +9,7 @@ interface HeaderHUDProps {
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp }) => {
   const { profile, toggleSound } = useGameState();
 
-  const xpPercentage = useMemo(() => {
-    return Math.min(100, Math.round((profile.xp / Math.max(1, profile.xpToNextLevel)) * 100));
-  }, [profile.xp, profile.xpToNextLevel]);
+  const xpPercentage = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b-2 border-[#e5e5e5] shadow-xs select-none pt-safe">
@@ -20,7 +18,7 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
         {/* Brand & Level Progress */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           <button
-            type="button"
+              type="button"
             className="flex items-center gap-2 cursor-pointer group"
             onClick={onOpenProfile}
             aria-label="View profile and commander statistics"
@@ -29,6 +27,19 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
               ⚡
             </div>
             <div className="hidden sm:block text-left min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-['Feather_Bold'] text-lg text-[var(--dark-blue)] tracking-wide truncate">
+                  AUCTUS
+                </span>
+                <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded-md bg-[var(--green)] text-white shrink-0">
+                  v2.0
+                </span>
+              </div>
+              <p className="text-xs text-[var(--gray-light)] font-bold truncate max-w-[120px]">
+                {profile.title}
+              </p>
+            </div>
+            <div className="hidden md:block text-left min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="font-['Feather_Bold'] text-lg text-[var(--dark-blue)] tracking-wide truncate">
                   AUCTUS

@@ -25,6 +25,7 @@ const TAB_ITEMS: PaletteItem[] = [
   { id: 'tab-quests', label: 'Go to Quests', hint: 'Missions & habits', icon: '⚔️', kind: 'tab', tab: 'quests' },
   { id: 'tab-focus', label: 'Go to Focus Arena', hint: 'Pomodoro battles', icon: '⏱️', kind: 'tab', tab: 'focus' },
   { id: 'tab-vault', label: 'Go to Vault', hint: 'Chests & loot', icon: '📦', kind: 'tab', tab: 'vault' },
+  { id: 'tab-campaigns', label: 'Go to Campaigns', hint: 'Campaigns & quest chains', icon: '🗺️', kind: 'tab', tab: 'campaigns' },
   { id: 'tab-citadel', label: 'Go to Citadel', hint: 'Ascension & trophies', icon: '🏰', kind: 'tab', tab: 'citadel' },
   { id: 'tab-analytics', label: 'Go to Analytics', hint: 'Stats & progress', icon: '📊', kind: 'tab', tab: 'analytics' },
 ];

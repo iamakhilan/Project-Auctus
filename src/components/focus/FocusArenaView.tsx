@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
-import { updateDocumentTitleForFocus, resetDocumentTitle } from '../../utils/titleUpdater';
 
 export const FocusArenaView: React.FC = () => {
   const {
@@ -18,15 +17,6 @@ export const FocusArenaView: React.FC = () => {
 
   const [selectedDuration, setSelectedDuration] = useState(25);
   const [selectedQuestId, setSelectedQuestId] = useState<string>('');
-
-  useEffect(() => {
-    updateDocumentTitleForFocus(
-      focusSession.remainingSeconds,
-      focusSession.isActive,
-      focusSession.isPaused
-    );
-    return () => resetDocumentTitle();
-  }, [focusSession.remainingSeconds, focusSession.isActive, focusSession.isPaused]);
 
   // Format seconds to MM:SS
   const formatTime = (secs: number) => {

@@ -40,7 +40,7 @@ export const sanitize = (input: string): string => {
 
 export interface BackupValidationResult {
   isValid: boolean;
-  version: '1.0' | '2.0' | 'unknown';
+  version: '1.0' | '2.0' | '2.1' | 'unknown';
   errors: string[];
   data?: Record<string, unknown>;
 }
@@ -69,7 +69,7 @@ export const validateBackupPayload = (raw: string | unknown): BackupValidationRe
 
   const obj = parsed as Record<string, unknown>;
   const rawVersion = typeof obj.version === 'string' ? obj.version : undefined;
-  const version: '1.0' | '2.0' | 'unknown' = rawVersion === '2.0' ? '2.0' : rawVersion === '1.0' || !rawVersion ? '1.0' : 'unknown';
+  const version: '1.0' | '2.0' | '2.1' | 'unknown' = rawVersion === '2.1' ? '2.1' : rawVersion === '2.0' ? '2.0' : rawVersion === '1.0' || !rawVersion ? '1.0' : 'unknown';
 
   const errors: string[] = [];
 

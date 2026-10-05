@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { QuestCategory, QuestTag } from '../../types';
+import type { QuestPriority } from '../../types';
 import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { sanitize } from '../../utils/validators';
-import { QUEST_TEMPLATES } from '../../utils/questGenerator';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
   onClose,
   defaultTab = 'quest',
 }) => {
-  const { createQuest, createHabit } = useGameState();
+  const { createQuest, createHabit, campaigns, quests } = useGameState();
 
   const [mode, setMode] = useState<'quest' | 'habit'>(defaultTab);
 
@@ -29,6 +29,11 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
   const [duration, setDuration] = useState(25);
   const [xpReward, setXpReward] = useState(80);
   const [coinsReward, setCoinsReward] = useState(40);
+  const [extraDueDate, setExtraDueDate] = useState('');
+  const [extraPriority, setExtraPriority] = useState<import('../../types').QuestPriority>('medium');
+  const [extraCampaignId, setExtraCampaignId] = useState('');
+  const [extraMilestoneId, setExtraMilestoneId] = useState('');
+  const [extraDependsOn, setExtraDependsOn] = useState<string[]>([]);
 
   // Habit state
   const [habitTitle, setHabitTitle] = useState('');
@@ -78,20 +83,6 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     setCoinsReward(Math.round(baseXP * 0.5 * multiplier));
   };
 
-  const handleAutoFillTemplate = () => {
-    soundEngine.playClick();
-    const tmpl = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
-    if (!tmpl) return;
-    setQuestTitle(tmpl.title);
-    setQuestDesc(tmpl.description);
-    setCategory(tmpl.category);
-    setTag(tmpl.tag);
-    setDuration(tmpl.estimatedMinutes);
-    setXpReward(tmpl.baseXp);
-    setCoinsReward(tmpl.baseCoins);
-    setQuestError(null);
-  };
-
   const handleCreateQuest = (e: React.FormEvent) => {
     e.preventDefault();
     if (!questTitle.trim()) {
@@ -100,6 +91,9 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     }
     setQuestError(null);
     soundEngine.playSuccess();
+    // Derive dueDate and new fields for connected engine
+    const todayStr = new Date().toISOString().split('T')[0];
+    const derivedDueDate: string | undefined = (extraDueDate || undefined) ?? (category === 'daily' ? todayStr : category === 'bounty' ? new Date(Date.now()+3*86400000).toISOString().split('T')[0] : undefined);
     createQuest({
       title: sanitize(questTitle.trim()),
       description: questDesc.trim() ? sanitize(questDesc.trim()) : undefined,
@@ -109,12 +103,55 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
       coinsReward,
       estimatedMinutes: duration,
       dueLabel: category === 'daily' ? 'Today' : category === 'bounty' ? 'Soon' : 'Epic Goal',
+      dueDate: derivedDueDate,
+      priority: extraPriority,
+      campaignId: extraCampaignId || undefined,
+      milestoneId: extraMilestoneId || undefined,
+      dependsOn: extraDependsOn.length ? extraDependsOn : undefined,
     });
 
     setQuestTitle('');
     setQuestDesc('');
     onClose();
   };
+
+
+          {/* Connected engine — priority, due date, campaign chain */}
+          <div className="grid grid-cols-2 gap-3 px-4 sm:px-5">
+            <div>
+              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Priority</label>
+              <select value={extraPriority} onChange={e=>setExtraPriority(e.target.value as QuestPriority)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Due date</label>
+              <input type="date" value={extraDueDate} onChange={e=>setExtraDueDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold touch-target" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Campaign (optional)</label>
+              <select value={extraCampaignId} onChange={e=>{ setExtraCampaignId(e.target.value); setExtraMilestoneId(''); }} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                <option value="">No campaign (standalone)</option>
+                {campaigns.filter(c=>c.status==='active').map(c=> <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
+            </div>
+            {extraCampaignId && (
+              <div className="col-span-2">
+                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Milestone</label>
+                <select value={extraMilestoneId} onChange={e=>setExtraMilestoneId(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                  <option value="">Select milestone</option>
+                  {(campaigns.find(c=>c.id===extraCampaignId)?.milestones ?? []).map(m=> <option key={m.id} value={m.id}>{m.title} ({m.status})</option>)}
+                </select>
+              </div>
+            )}
+            <div className="col-span-2">
+              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Depends on (gating quests)</label>
+              <select multiple value={extraDependsOn} onChange={e=>setExtraDependsOn(Array.from(e.target.selectedOptions, o=>o.value))} className="mt-1 w-full px-3 py-2 rounded-xl border-2 border-[#e5e5e5] text-xs font-bold h-20 bg-white">
+                {quests.filter(q=>!q.isCompleted).map(q=> <option key={q.id} value={q.id}>{q.title}</option>)}
+              </select>
+              <div className="text-[11px] font-bold text-[var(--gray-light)] mt-1">Hold Cmd/Ctrl to select blockers — quest stays locked until they complete.</div>
+            </div>
+          </div>
 
   const handleCreateHabit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,18 +245,9 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
         {mode === 'quest' ? (
           <form onSubmit={handleCreateQuest} className="p-4 sm:p-5 space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="forge-quest-title" className="block text-xs font-black uppercase text-[var(--gray-light)]">
-                  Mission Title
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoFillTemplate}
-                  className="text-[11px] font-extrabold text-[var(--blue)] hover:underline cursor-pointer flex items-center gap-1"
-                >
-                  <span>🎲</span> Suggest Random Directive
-                </button>
-              </div>
+              <label htmlFor="forge-quest-title" className="block text-xs font-black uppercase text-[var(--gray-light)] mb-1">
+                Mission Title
+              </label>
               <input
                 type="text"
                 id="forge-quest-title"

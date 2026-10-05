@@ -8,9 +8,11 @@ import {
   EconomyTransaction,
   FocusSessionState,
   AudioSettings,
+  Campaign,
+  FocusEffortLog,
+  WeeklyReview,
 } from '../types';
 import { validateBackupPayload } from '../utils/validators';
-import { getLocalDateString } from '../utils/dateUtils';
 
 export const STORAGE_KEYS = {
   PROFILE: 'auctus_duo_profile',
@@ -23,6 +25,10 @@ export const STORAGE_KEYS = {
   TRANSACTIONS: 'auctus_duo_transactions',
   FOCUS: 'auctus_duo_focus',
   AUDIO_SETTINGS: 'auctus_duo_audio_settings',
+  CAMPAIGNS: 'auctus_campaigns',
+  EFFORT_LOGS: 'auctus_effort_logs',
+  WEEKLY_REVIEWS: 'auctus_weekly_reviews',
+  WEEKLY_STATE: 'auctus_weekly_state',
 };
 
 export const INITIAL_AUDIO_SETTINGS: AudioSettings = {
@@ -109,8 +115,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 14,
     bestStreak: 21,
-    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
-    completedDates: Array.from({ length: 14 }, (_, i) => getLocalDateString(new Date(Date.now() - (13 - i) * 86400000))),
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 14 }, (_, i) => new Date(Date.now() - (13 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 30,
     coinYield: 15,
   },
@@ -120,8 +126,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'vitality',
     streakCount: 8,
     bestStreak: 12,
-    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
-    completedDates: Array.from({ length: 8 }, (_, i) => getLocalDateString(new Date(Date.now() - (7 - i) * 86400000))),
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 8 }, (_, i) => new Date(Date.now() - (7 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 20,
     coinYield: 10,
   },
@@ -131,8 +137,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'mind',
     streakCount: 5,
     bestStreak: 9,
-    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
-    completedDates: Array.from({ length: 5 }, (_, i) => getLocalDateString(new Date(Date.now() - (4 - i) * 86400000))),
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 5 }, (_, i) => new Date(Date.now() - (4 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 25,
     coinYield: 12,
   },
@@ -142,8 +148,8 @@ export const INITIAL_HABITS: Habit[] = [
     category: 'focus',
     streakCount: 11,
     bestStreak: 14,
-    lastCompletedDate: getLocalDateString(new Date(Date.now() - 86400000)),
-    completedDates: Array.from({ length: 11 }, (_, i) => getLocalDateString(new Date(Date.now() - (10 - i) * 86400000))),
+    lastCompletedDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    completedDates: Array.from({ length: 11 }, (_, i) => new Date(Date.now() - (10 - i) * 86400000).toISOString().split('T')[0]),
     xpYield: 40,
     coinYield: 20,
   },
@@ -335,97 +341,67 @@ export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   },
 ];
 
-export interface PersistenceError {
-  key: string;
-  message: string;
-  timestamp: number;
-}
 
-let lastPersistenceError: PersistenceError | null = null;
-const persistenceListeners = new Set<(e: PersistenceError) => void>();
-
-export const getLastPersistenceError = (): PersistenceError | null => lastPersistenceError;
-export const clearPersistenceError = (): void => {
-  lastPersistenceError = null;
-};
-export const subscribePersistenceError = (cb: (e: PersistenceError) => void): (() => void) => {
-  persistenceListeners.add(cb);
-  return () => {
-    persistenceListeners.delete(cb);
-  };
-};
-
-function emitPersistenceError(key: string, error: unknown): void {
-  const message = error instanceof Error ? error.message : String(error);
-  const evt: PersistenceError = { key, message, timestamp: Date.now() };
-  lastPersistenceError = evt;
-  persistenceListeners.forEach((l) => {
-    try {
-      l(evt);
-    } catch {}
-  });
-  if (typeof window !== 'undefined') {
-    try {
-      window.dispatchEvent(new CustomEvent('auctus:persistence-error', { detail: evt }));
-    } catch {}
-  }
-}
-
+export const INITIAL_CAMPAIGNS: Campaign[] = [];
+export const INITIAL_EFFORT_LOGS: FocusEffortLog[] = [];
+export const INITIAL_WEEKLY_REVIEWS: WeeklyReview[] = [];
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
   try {
     const item = localStorage.getItem(key);
-    return item ? (JSON.parse(item) as T) : fallback;
-  } catch (err) {
-    try {
-      localStorage.removeItem(key);
-    } catch {}
-    void err;
+    return item ? JSON.parse(item) : fallback;
+  } catch {
     return fallback;
   }
 };
 
-export const saveToStorage = <T>(key: string, data: T): boolean => {
-  if (typeof window === 'undefined') return true;
+export const saveToStorage = <T>(key: string, data: T): void => {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(data));
-    return true;
-  } catch (err) {
-    emitPersistenceError(key, err);
-    return false;
+  } catch {
+    // quota safe
   }
 };
 
 export const StorageService = {
   getProfile: () => loadFromStorage<PlayerProfile>(STORAGE_KEYS.PROFILE, INITIAL_PROFILE),
-  setProfile: (p: PlayerProfile): boolean => saveToStorage(STORAGE_KEYS.PROFILE, p),
+  setProfile: (p: PlayerProfile) => saveToStorage(STORAGE_KEYS.PROFILE, p),
 
   getQuests: () => loadFromStorage<Quest[]>(STORAGE_KEYS.QUESTS, INITIAL_QUESTS),
-  setQuests: (q: Quest[]): boolean => saveToStorage(STORAGE_KEYS.QUESTS, q),
+  setQuests: (q: Quest[]) => saveToStorage(STORAGE_KEYS.QUESTS, q),
 
   getHabits: () => loadFromStorage<Habit[]>(STORAGE_KEYS.HABITS, INITIAL_HABITS),
-  setHabits: (h: Habit[]): boolean => saveToStorage(STORAGE_KEYS.HABITS, h),
+  setHabits: (h: Habit[]) => saveToStorage(STORAGE_KEYS.HABITS, h),
 
   getChests: () => loadFromStorage<ChestSlot[]>(STORAGE_KEYS.CHESTS, INITIAL_CHESTS),
-  setChests: (c: ChestSlot[]): boolean => saveToStorage(STORAGE_KEYS.CHESTS, c),
+  setChests: (c: ChestSlot[]) => saveToStorage(STORAGE_KEYS.CHESTS, c),
 
   getRewards: () => loadFromStorage<RewardItem[]>(STORAGE_KEYS.REWARDS, INITIAL_REWARDS),
-  setRewards: (r: RewardItem[]): boolean => saveToStorage(STORAGE_KEYS.REWARDS, r),
+  setRewards: (r: RewardItem[]) => saveToStorage(STORAGE_KEYS.REWARDS, r),
 
   getAchievements: () => loadFromStorage<Achievement[]>(STORAGE_KEYS.ACHIEVEMENTS, INITIAL_ACHIEVEMENTS),
-  setAchievements: (a: Achievement[]): boolean => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
+  setAchievements: (a: Achievement[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENTS, a),
 
   getAchievementLocks: () => loadFromStorage<string[]>(STORAGE_KEYS.ACHIEVEMENT_LOCKS, INITIAL_ACHIEVEMENT_LOCKS),
-  setAchievementLocks: (locks: string[]): boolean => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
+  setAchievementLocks: (locks: string[]) => saveToStorage(STORAGE_KEYS.ACHIEVEMENT_LOCKS, locks),
 
   getTransactions: () => loadFromStorage<EconomyTransaction[]>(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS),
-  setTransactions: (t: EconomyTransaction[]): boolean => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
+  setTransactions: (t: EconomyTransaction[]) => saveToStorage(STORAGE_KEYS.TRANSACTIONS, t),
 
   getFocusState: () => loadFromStorage<FocusSessionState | null>(STORAGE_KEYS.FOCUS, null),
-  setFocusState: (f: FocusSessionState | null): boolean => saveToStorage(STORAGE_KEYS.FOCUS, f),
+  setFocusState: (f: FocusSessionState | null) => saveToStorage(STORAGE_KEYS.FOCUS, f),
+  getCampaigns: () => loadFromStorage<Campaign[]>(STORAGE_KEYS.CAMPAIGNS, INITIAL_CAMPAIGNS),
+  setCampaigns: (c: Campaign[]) => saveToStorage(STORAGE_KEYS.CAMPAIGNS, c),
+  getEffortLogs: () => loadFromStorage<FocusEffortLog[]>(STORAGE_KEYS.EFFORT_LOGS, INITIAL_EFFORT_LOGS),
+  setEffortLogs: (l: FocusEffortLog[]) => saveToStorage(STORAGE_KEYS.EFFORT_LOGS, l),
+  getWeeklyReviews: () => loadFromStorage<WeeklyReview[]>(STORAGE_KEYS.WEEKLY_REVIEWS, INITIAL_WEEKLY_REVIEWS),
+  setWeeklyReviews: (r: WeeklyReview[]) => saveToStorage(STORAGE_KEYS.WEEKLY_REVIEWS, r),
+  getWeeklyState: () => loadFromStorage<{ lastReviewWeekStart?: string }>(STORAGE_KEYS.WEEKLY_STATE, {}),
+  setWeeklyState: (s: { lastReviewWeekStart?: string }) => saveToStorage(STORAGE_KEYS.WEEKLY_STATE, s),
 
   getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
-  setAudioSettings: (a: AudioSettings): boolean => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
+  setAudioSettings: (a: AudioSettings) => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
 
   exportBackup: (): string => {
     const backup = {
@@ -437,7 +413,10 @@ export const StorageService = {
       achievements: StorageService.getAchievements(),
       achievementLocks: StorageService.getAchievementLocks(),
       transactions: StorageService.getTransactions(),
-      version: "2.0",
+      campaigns: StorageService.getCampaigns(),
+      effortLogs: StorageService.getEffortLogs(),
+      weeklyReviews: StorageService.getWeeklyReviews(),
+      version: "2.1",
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(backup, null, 2);
@@ -521,6 +500,9 @@ export const StorageService = {
         StorageService.setAchievementLocks(data.achievementLocks.filter((id: unknown): id is string => typeof id === 'string'));
       }
       if (Array.isArray(data.transactions)) StorageService.setTransactions(data.transactions as EconomyTransaction[]);
+      if (Array.isArray(data.campaigns)) StorageService.setCampaigns(data.campaigns as Campaign[]);
+      if (Array.isArray(data.effortLogs)) StorageService.setEffortLogs(data.effortLogs as FocusEffortLog[]);
+      if (Array.isArray(data.weeklyReviews)) StorageService.setWeeklyReviews(data.weeklyReviews as WeeklyReview[]);
       return true;
     } catch {
       return false;
