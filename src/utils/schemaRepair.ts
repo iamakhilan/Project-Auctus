@@ -1,12 +1,12 @@
 ﻿import { INITIAL_PROFILE, INITIAL_QUESTS, INITIAL_HABITS, INITIAL_CHESTS, INITIAL_REWARDS } from '../services/storage';
 
 export interface RepairResult {
-  repairedPayload: any;
+  repairedPayload: Record<string, unknown>;
   issuesFixed: string[];
 }
 
 export function repairCorruptedBackup(rawJson: string): RepairResult | null {
-  let parsed: any;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(rawJson);
   } catch {
@@ -18,7 +18,7 @@ export function repairCorruptedBackup(rawJson: string): RepairResult | null {
   }
 
   const issuesFixed: string[] = [];
-  const repaired: any = { ...parsed };
+  const repaired = { ...(parsed as Record<string, unknown>) } as Record<string, unknown> & { profile?: unknown; timestamp?: unknown; version?: unknown; quests?: unknown; habits?: unknown; chests?: unknown; rewards?: unknown; transactions?: unknown };
 
   if (!repaired.version) {
     repaired.version = '2.0';
@@ -35,9 +35,10 @@ export function repairCorruptedBackup(rawJson: string): RepairResult | null {
     issuesFixed.push('Reconstructed default player profile');
   } else {
     // Fill any missing profile fields
-    for (const [k, v] of Object.entries(INITIAL_PROFILE)) {
-      if (repaired.profile[k] === undefined || repaired.profile[k] === null) {
-        repaired.profile[k] = v;
+    for (const [k, v] of Object.entries(INITIAL_PROFILE) as Array<[string, unknown]>) {
+      const prof = repaired.profile as Record<string, unknown>;
+      if (prof[k] === undefined || prof[k] === null) {
+        prof[k] = v;
         issuesFixed.push(`Restored default profile field: ${k}`);
       }
     }

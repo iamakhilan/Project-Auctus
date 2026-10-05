@@ -4,7 +4,6 @@ import {
   calculateCitadelLevelThreshold,
   getCitadelMultiplier,
   getCitadelTierConfig,
-  CITADEL_TIER_CONFIGS,
 } from '../citadelEngine';
 
 describe('Citadel Engine', () => {
