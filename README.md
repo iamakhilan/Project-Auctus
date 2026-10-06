@@ -7,7 +7,7 @@ Auctus is a browser-based **gamified productivity RPG** that turns real-world wo
 - **Realm** — player overview, progression, habits, streak calendar heat intensity, and daily momentum.
 - **Quests** — daily/bounty/epic missions, difficulty tiers (normal/hard/elite), search/filtering, procedural quest generation, and focus-session launch.
 - **Focus Arena** — timed focus sessions with pause/resume, rewards, overcharge, and web audio soundscapes (binaural, cyber-rain, forest, white-noise).
-- **Vault** — chest unlocks, dynamic loot tables, rarity tiers (common, rare, epic, legendary), reward redemption, and treasury ledger.
+- **Vault** — chest unlocks, dynamic loot tables, tiers (bronze/silver/gold/mythic), reward redemption, and treasury ledger.
 - **Citadel** — progression/ascension, citadel engine mechanics, profile management, and schema-validated backup/restore.
 - **Analytics** — focus velocity score, 7-day productivity trends, hourly distribution histogram, quest category breakdown, and CSV data export.
 - **Achievements** — criteria evaluation engine, unlock fanfares, and persistent achievement locks.
