@@ -388,10 +388,10 @@ export const loadFromStorage = <T>(key: string, fallback: T): T => {
     const item = localStorage.getItem(key);
     return item ? (JSON.parse(item) as T) : fallback;
   } catch (err) {
+    emitPersistenceError(key, err);
     try {
       localStorage.removeItem(key);
     } catch {}
-    void err;
     return fallback;
   }
 };

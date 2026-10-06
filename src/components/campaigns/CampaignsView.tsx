@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { Campaign, CampaignGoalType } from '../../types';
 import { sanitize } from '../../utils/validators';
+import { getLocalDateString } from '../../utils/dateUtils';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { CampaignDetailView } from './CampaignDetailView';
 import { QuestChainForgeModal } from './QuestChainForgeModal';
@@ -33,7 +34,7 @@ export const CampaignsView: React.FC = () => {
     if (!title.trim()) { setError('Campaign title required.'); return; }
     if (!targetDate) { setError('Target date required.'); return; }
     const clean = sanitize(title.trim());
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString(new Date());
     if (targetDate < today) { setError('Target date cannot be in the past.'); return; }
     setError(null);
     createCampaign({
