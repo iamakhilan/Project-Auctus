@@ -66,16 +66,42 @@ export const CitadelView: React.FC = () => {
     else soundEngine.playClick();
   };
 
+  const CLAIMED_KEY = 'auctus_claimed_achievements';
+  const [claimedIds, setClaimedIds] = React.useState<Set<string>>(() => {
+    try { const raw = localStorage.getItem(CLAIMED_KEY); return new Set<string>(raw ? JSON.parse(raw) as string[] : []); } catch { return new Set<string>(); }
+  });
+  React.useEffect(() => { try { localStorage.setItem(CLAIMED_KEY, JSON.stringify([...claimedIds])); } catch { /* quota */ } }, [claimedIds]);
+
   const handleClaimAchievement = (ach: typeof achievements[0]) => {
+    const alreadyClaimed = claimedIds.has(ach.id);
+    if (alreadyClaimed) {
+      soundEngine.playClick();
+      openClaimModal({
+        title: ach.title,
+        subtitle: 'Already claimed',
+        description: ach.description,
+        xp: 0,
+        gems: 0,
+        icon: ach.icon || '🏆',
+      });
+      return;
+    }
+    // First manual claim — award once, then lock. Auto-unlock effect also awards once; this guard prevents second dip.
     soundEngine.playSuccess();
-    if (ach.rewards.xp) addXp(ach.rewards.xp);
-    if (ach.rewards.gems) addGems(ach.rewards.gems, `Achievement: ${ach.title}`);
+    // If achievement was auto-unlocked before (isUnlocked true), it was already rewarded via GameStateContext effect — don't re-award.
+    // Only award if not yet unlocked (edge) or if we choose manual as source. To avoid double with auto, skip add if isUnlocked.
+    const shouldReward = !ach.isUnlocked;
+    if (shouldReward) {
+      if (ach.rewards.xp) addXp(ach.rewards.xp);
+      if (ach.rewards.gems) addGems(ach.rewards.gems, `Achievement: ${ach.title}`);
+    }
+    setClaimedIds(prev => new Set(prev).add(ach.id));
     openClaimModal({
-      title: 'Trophy Claimed!',
-      subtitle: ach.title,
+      title: shouldReward ? 'Trophy Claimed!' : ach.title,
+      subtitle: shouldReward ? ach.title : 'Trophy — already rewarded on unlock',
       description: ach.description,
-      xp: ach.rewards.xp,
-      gems: ach.rewards.gems,
+      xp: shouldReward ? ach.rewards.xp : 0,
+      gems: shouldReward ? ach.rewards.gems : 0,
       icon: ach.icon || '🏆',
     });
   };
@@ -385,10 +411,14 @@ export const CitadelView: React.FC = () => {
                     {ach.rewards.gems && <span className="text-[#db2777]">+{ach.rewards.gems} 💎</span>}
                   </div>
                   {isCompleted ? (
-                    <button
+                    claimedIds.has(ach.id) ? (
+                      <span className="px-3 py-1 rounded-xl bg-[#f0f0f0] text-[var(--gray-light)] font-black text-xs uppercase border border-[#e5e5e5]">Claimed ✓</span>
+                    ) : (
+                      <button
               type="button" onClick={() => handleClaimAchievement(ach)} className="px-3 py-1 rounded-xl bg-[var(--golden)] text-[var(--dark-blue)] font-black text-xs uppercase shadow-xs hover:scale-105 transition-transform cursor-pointer">
-                      CLAIMED 🌟
-                    </button>
+                        Claim 🌟
+                      </button>
+                    )
                   ) : (
                     <span className="text-xs font-bold text-[var(--gray-light)]">{progress}%</span>
                   )}

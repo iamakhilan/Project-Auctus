@@ -5,6 +5,7 @@ import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { sanitize } from '../../utils/validators';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -92,8 +93,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     setQuestError(null);
     soundEngine.playSuccess();
     // Derive dueDate and new fields for connected engine
-    const todayStr = new Date().toISOString().split('T')[0];
-    const derivedDueDate: string | undefined = (extraDueDate || undefined) ?? (category === 'daily' ? todayStr : category === 'bounty' ? new Date(Date.now()+3*86400000).toISOString().split('T')[0] : undefined);
+    const todayStr = getLocalDateString(new Date());
+    const derivedDueDate: string | undefined = (extraDueDate || undefined) ?? (category === 'daily' ? todayStr : category === 'bounty' ? getLocalDateString(new Date(Date.now()+3*86400000)) : undefined);
     createQuest({
       title: sanitize(questTitle.trim()),
       description: questDesc.trim() ? sanitize(questDesc.trim()) : undefined,
@@ -112,46 +113,13 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
 
     setQuestTitle('');
     setQuestDesc('');
+    setExtraDueDate('');
+    setExtraPriority('medium');
+    setExtraCampaignId('');
+    setExtraMilestoneId('');
+    setExtraDependsOn([]);
     onClose();
   };
-
-
-          {/* Connected engine — priority, due date, campaign chain */}
-          <div className="grid grid-cols-2 gap-3 px-4 sm:px-5">
-            <div>
-              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Priority</label>
-              <select value={extraPriority} onChange={e=>setExtraPriority(e.target.value as QuestPriority)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
-                <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Due date</label>
-              <input type="date" value={extraDueDate} onChange={e=>setExtraDueDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold touch-target" />
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Campaign (optional)</label>
-              <select value={extraCampaignId} onChange={e=>{ setExtraCampaignId(e.target.value); setExtraMilestoneId(''); }} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
-                <option value="">No campaign (standalone)</option>
-                {campaigns.filter(c=>c.status==='active').map(c=> <option key={c.id} value={c.id}>{c.title}</option>)}
-              </select>
-            </div>
-            {extraCampaignId && (
-              <div className="col-span-2">
-                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Milestone</label>
-                <select value={extraMilestoneId} onChange={e=>setExtraMilestoneId(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
-                  <option value="">Select milestone</option>
-                  {(campaigns.find(c=>c.id===extraCampaignId)?.milestones ?? []).map(m=> <option key={m.id} value={m.id}>{m.title} ({m.status})</option>)}
-                </select>
-              </div>
-            )}
-            <div className="col-span-2">
-              <label className="text-xs font-black uppercase text-[var(--gray-light)]">Depends on (gating quests)</label>
-              <select multiple value={extraDependsOn} onChange={e=>setExtraDependsOn(Array.from(e.target.selectedOptions, o=>o.value))} className="mt-1 w-full px-3 py-2 rounded-xl border-2 border-[#e5e5e5] text-xs font-bold h-20 bg-white">
-                {quests.filter(q=>!q.isCompleted).map(q=> <option key={q.id} value={q.id}>{q.title}</option>)}
-              </select>
-              <div className="text-[11px] font-bold text-[var(--gray-light)] mt-1">Hold Cmd/Ctrl to select blockers — quest stays locked until they complete.</div>
-            </div>
-          </div>
 
   const handleCreateHabit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,6 +326,43 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
               <div className="flex items-center gap-3">
                 <span className="text-xs font-black text-[var(--blue)] shrink-0">+{xpReward} XP</span>
                 <span className="text-xs font-black text-[#d48806] shrink-0">+{coinsReward} 🟡</span>
+              </div>
+            </div>
+
+            {/* Connected engine — priority, due date, campaign chain */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Priority</label>
+                <select value={extraPriority} onChange={e=>setExtraPriority(e.target.value as QuestPriority)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                  <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Due date</label>
+                <input type="date" value={extraDueDate} onChange={e=>setExtraDueDate(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold touch-target" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Campaign (optional)</label>
+                <select value={extraCampaignId} onChange={e=>{ setExtraCampaignId(e.target.value); setExtraMilestoneId(''); }} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                  <option value="">No campaign (standalone)</option>
+                  {campaigns.filter(c=>c.status==='active').map(c=> <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select>
+              </div>
+              {extraCampaignId && (
+                <div className="col-span-2">
+                  <label className="text-xs font-black uppercase text-[var(--gray-light)]">Milestone</label>
+                  <select value={extraMilestoneId} onChange={e=>setExtraMilestoneId(e.target.value)} className="mt-1 w-full px-3 py-2.5 rounded-xl border-2 border-[#e5e5e5] text-sm font-bold bg-white touch-target">
+                    <option value="">Select milestone</option>
+                    {(campaigns.find(c=>c.id===extraCampaignId)?.milestones ?? []).map(m=> <option key={m.id} value={m.id}>{m.title} ({m.status})</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="col-span-2">
+                <label className="text-xs font-black uppercase text-[var(--gray-light)]">Depends on (gating quests)</label>
+                <select multiple value={extraDependsOn} onChange={e=>setExtraDependsOn(Array.from(e.target.selectedOptions, o=>o.value))} className="mt-1 w-full px-3 py-2 rounded-xl border-2 border-[#e5e5e5] text-xs font-bold h-20 bg-white">
+                  {quests.filter(q=>!q.isCompleted).map(q=> <option key={q.id} value={q.id}>{q.title}</option>)}
+                </select>
+                <div className="text-[11px] font-bold text-[var(--gray-light)] mt-1">Hold Cmd/Ctrl to select blockers — quest stays locked until they complete.</div>
               </div>
             </div>
 

@@ -5,7 +5,15 @@ function readValue<T>(key: string, initialValue: T): T {
   try {
     const raw = window.localStorage.getItem(key);
     return raw !== null ? (JSON.parse(raw) as T) : initialValue;
-  } catch {
+  } catch (err) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('auctus:persistence-error', {
+          detail: { key, message: err instanceof Error ? err.message : String(err), timestamp: Date.now() },
+        }),
+      );
+    } catch {}
+    try { window.localStorage.removeItem(key); } catch {}
     return initialValue;
   }
 }
