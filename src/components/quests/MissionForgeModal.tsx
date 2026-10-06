@@ -5,6 +5,7 @@ import { useGameState } from '../../context/GameStateContext';
 import { soundEngine } from '../../utils/audioSynthesizer';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { sanitize } from '../../utils/validators';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 interface MissionForgeModalProps {
   isOpen: boolean;
@@ -92,8 +93,8 @@ export const MissionForgeModal: React.FC<MissionForgeModalProps> = ({
     setQuestError(null);
     soundEngine.playSuccess();
     // Derive dueDate and new fields for connected engine
-    const todayStr = new Date().toISOString().split('T')[0];
-    const derivedDueDate: string | undefined = (extraDueDate || undefined) ?? (category === 'daily' ? todayStr : category === 'bounty' ? new Date(Date.now()+3*86400000).toISOString().split('T')[0] : undefined);
+    const todayStr = getLocalDateString(new Date());
+    const derivedDueDate: string | undefined = (extraDueDate || undefined) ?? (category === 'daily' ? todayStr : category === 'bounty' ? getLocalDateString(new Date(Date.now()+3*86400000)) : undefined);
     createQuest({
       title: sanitize(questTitle.trim()),
       description: questDesc.trim() ? sanitize(questDesc.trim()) : undefined,

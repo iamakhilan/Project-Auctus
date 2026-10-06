@@ -21,6 +21,7 @@ import {
 import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
+import { getLocalDateString } from '../utils/dateUtils';
 import { buildDailyObjectives } from '../engine/planner';
 import { buildSnapshot, deriveInsights } from '../engine/intelligence';
 import { buildWeeklyReview as buildWeeklyReviewEngine, shouldShowWeeklyReview } from '../engine/weekly';
@@ -137,7 +138,7 @@ function hasDependencyCycle(quests: Quest[]): boolean {
 function deriveDueLabel(dueDate?: string): string | undefined {
 
   if (!dueDate) return undefined;
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString(new Date());
   if (dueDate === today) return 'Today';
   if (dueDate < today) return 'Overdue';
   const diff = Math.round((new Date(dueDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / 86400000);
@@ -275,7 +276,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
   const addGemsRef = useRef(addGems); addGemsRef.current = addGems;
 
-  // Achievement evaluator
+  // Achievement evaluator — single effect: sync progress + unlock + reward exactly once
   useEffect(() => {
     const getProgress = (ach: Achievement): number => {
       switch (ach.category) {
@@ -287,73 +288,77 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         default: return ach.currentValue;
       }
     };
-    const toUnlock = achievements.filter(a => !a.isUnlocked && getProgress(a) >= a.targetValue);
-    if (toUnlock.length === 0) return;
-    setAchievements(prev => prev.map(a => {
-      if (a.isUnlocked) return a;
-      const prog = getProgress(a);
-      const shouldUnlock = prog >= a.targetValue;
-      if (!shouldUnlock) { if (a.currentValue !== prog) return { ...a, currentValue: prog }; return a; }
-      return { ...a, currentValue: prog, isUnlocked: true, unlockedAt: new Date().toISOString() };
-    }));
-    toUnlock.forEach(ach => {
-      if (ach.rewards.xp) addXpRef.current(ach.rewards.xp);
-      if (ach.rewards.coins) addCoinsRef.current(ach.rewards.coins, `Achievement: ${ach.title}`);
-      if (ach.rewards.gems) addGemsRef.current(ach.rewards.gems, `Achievement: ${ach.title}`);
-      openClaimModal({ title: ach.title, subtitle: 'ACHIEVEMENT UNLOCKED', description: ach.description + (ach.rewards.titleReward ? ` Title unlocked: ${ach.rewards.titleReward}` : ''), xp: ach.rewards.xp, coins: ach.rewards.coins, gems: ach.rewards.gems, icon: ach.icon });
-    });
-  }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits, achievements, openClaimModal]);
-
-  useEffect(() => {
+    const unlockedIds: string[] = [];
     setAchievements(prev => {
       let changed = false;
       const next = prev.map(a => {
         if (a.isUnlocked) return a;
-        let prog = a.currentValue;
-        switch (a.category) {
-          case 'quests': prog = profile.completedQuestsCount; break;
-          case 'focus': prog = profile.totalFocusMinutes; break;
-          case 'streak': prog = profile.streakDays; break;
-          case 'citadel': prog = profile.citadelTier; break;
-          case 'habits': prog = habits.reduce((m, h) => Math.max(m, h.streakCount), 0); break;
-        }
-        if (prog !== a.currentValue) { changed = true; return { ...a, currentValue: prog }; }
+        const prog = getProgress(a);
+        const progressChanged = prog !== a.currentValue;
+        const shouldUnlock = prog >= a.targetValue;
+        if (shouldUnlock) { changed = true; unlockedIds.push(a.id); return { ...a, currentValue: prog, isUnlocked: true, unlockedAt: new Date().toISOString() }; }
+        if (progressChanged) { changed = true; return { ...a, currentValue: prog }; }
         return a;
       });
       return changed ? next : prev;
     });
+    if (unlockedIds.length === 0) return;
+    // Defer rewards to next tick to avoid setState-during-render and ensure achievements state committed
+    // Use snapshot of achievements at unlock time to get reward payloads
+    const snapshotById = new Map(achievements.map(a=>[a.id,a] as const));
+    setTimeout(() => {
+      unlockedIds.forEach(id => {
+        const ach = snapshotById.get(id);
+        if (!ach) return;
+        if (ach.rewards.xp) addXpRef.current(ach.rewards.xp);
+        if (ach.rewards.coins) addCoinsRef.current(ach.rewards.coins, `Achievement: ${ach.title}`);
+        if (ach.rewards.gems) addGemsRef.current(ach.rewards.gems, `Achievement: ${ach.title}`);
+        openClaimModal({ title: ach.title, subtitle: 'ACHIEVEMENT UNLOCKED', description: ach.description + (ach.rewards.titleReward ? ` Title unlocked: ${ach.rewards.titleReward}` : ''), xp: ach.rewards.xp, coins: ach.rewards.coins, gems: ach.rewards.gems, icon: ach.icon });
+      });
+    }, 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.completedQuestsCount, profile.totalFocusMinutes, profile.streakDays, profile.citadelTier, habits]);
 
   const completeQuest = useCallback((questId: string) => {
-    const quest = quests.find(q => q.id === questId);
-    if (!quest || quest.isCompleted) return;
-    // dependency guard — cannot complete if blocked
-    if (quest.dependsOn && quest.dependsOn.length > 0) {
-      const blocked = quest.dependsOn.some(depId => {
-        const dep = quests.find(q=> q.id===depId);
-        return !dep || !dep.isCompleted;
-      });
-      if (blocked) return;
-    }
-    const elapsed = quest.estimatedMinutes ?? 25;
-    setQuests(prev => prev.map(q => (q.id === questId ? { ...q, isCompleted: true, completedAt: new Date().toISOString(), actualMinutes: q.actualMinutes ?? elapsed } : q)));
-    addXp(quest.xpReward);
-    addCoins(quest.coinsReward, `Completed Quest: ${quest.title}`);
-    setProfile(p => ({ ...p, completedQuestsCount: p.completedQuestsCount + 1 }));
-    // Campaign milestone check is handled via quests -> campaigns effect; also award bonus if campaign completes
-    const linkedCampaign = quest.campaignId ? campaigns.find(c=> c.id===quest.campaignId) : undefined;
-    if (linkedCampaign) {
-      // check if this was last quest of campaign (deferred to effect, but estimate now for bonus)
-      const remaining = linkedCampaign.milestones.flatMap(m=> m.questIds).filter(id=> id!==questId).some(id=> {
-        const q = quests.find(x=> x.id===id);
-        return !q?.isCompleted;
-      });
-      if (!remaining) {
-        addGems(15, `Campaign completed: ${linkedCampaign.title}`);
+    let shouldReward = false;
+    let questSnap: Quest | null = null;
+    let campaignGems = 0;
+    let campaignTitle = '';
+    setQuests(prev => {
+      const idx = prev.findIndex(q => q.id === questId);
+      if (idx === -1) return prev;
+      const quest = prev[idx];
+      if (quest.isCompleted) return prev;
+      if (quest.dependsOn && quest.dependsOn.length > 0) {
+        const blocked = quest.dependsOn.some(depId => {
+          const dep = prev.find(q=> q.id===depId);
+          return !dep || !dep.isCompleted;
+        });
+        if (blocked) return prev;
       }
-    }
-    openClaimModal({ title: quest.title, subtitle: 'MISSION ACCOMPLISHED', description: quest.campaignId ? `Campaign progress updated — tag #${quest.tag}` : `Objective conquered under tag #${quest.tag}!`, xp: quest.xpReward, coins: quest.coinsReward, icon: '🎯' });
-  }, [quests, addXp, addCoins, openClaimModal, campaigns, addGems]);
+      shouldReward = true;
+      questSnap = quest;
+      const elapsed = quest.estimatedMinutes ?? 25;
+      if (quest.campaignId) {
+        const campaign = campaigns.find(c=> c.id===quest.campaignId);
+        if (campaign) {
+          const remaining = campaign.milestones.flatMap(m=> m.questIds).filter(id=> id!==questId).some(id=> {
+            const q = prev.find(x=> x.id===id);
+            return !q?.isCompleted;
+          });
+          if (!remaining) { campaignGems = 15; campaignTitle = campaign.title; }
+        }
+      }
+      return prev.map(q => (q.id === questId ? { ...q, isCompleted: true, completedAt: new Date().toISOString(), actualMinutes: q.actualMinutes ?? elapsed } : q));
+    });
+    if (!shouldReward || !questSnap) return;
+    const qs: Quest = questSnap;
+    addXp(qs.xpReward);
+    addCoins(qs.coinsReward, `Completed Quest: ${qs.title}`);
+    setProfile(p => ({ ...p, completedQuestsCount: p.completedQuestsCount + 1 }));
+    if (campaignGems) addGems(campaignGems, `Campaign completed: ${campaignTitle}`);
+    openClaimModal({ title: qs.title, subtitle: 'MISSION ACCOMPLISHED', description: qs.campaignId ? `Campaign progress updated — tag #${qs.tag}` : `Objective conquered under tag #${qs.tag}!`, xp: qs.xpReward, coins: qs.coinsReward, icon: '🎯' });
+  }, [addXp, addCoins, openClaimModal, campaigns, addGems]);
 
   const createQuest = (data: Omit<Quest, 'id' | 'isCompleted'>) => {
     const newQuest: Quest = { ...data, id: `q-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, isCompleted: false, createdAt: new Date().toISOString(), postponedCount: 0, source: data.source ?? 'manual', dueLabel: data.dueLabel ?? deriveDueLabel(data.dueDate), priority: data.priority ?? 'medium' };
@@ -391,13 +396,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.playClick();
   };
   const checkInHabit = (habitId: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString(new Date());
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
     const completedDates = habit.completedDates || [];
     if (completedDates.includes(today)) return;
     const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = getLocalDateString(yesterday);
     const newCompletedDates = [...completedDates, today];
     const wasConsecutive = completedDates.includes(yesterdayStr);
     const newStreak = wasConsecutive ? habit.streakCount + 1 : 1;
@@ -422,17 +427,33 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     soundEngine.playClick();
   };
   const speedUpChest = (slotIndex: number): boolean => {
-    const cost = 10; if (profile.gems < cost) return false;
-    setProfile(p => ({ ...p, gems: p.gems - cost }));
-    setChests(prev => prev.map(c => (c.slotIndex === slotIndex ? { ...c, status: 'ready', unlockEndsAt: Date.now() } : c)));
+    let shouldCharge = false;
+    setChests(prev => {
+      const c = prev.find(x => x.slotIndex === slotIndex);
+      if (!c || c.status !== 'unlocking') return prev;
+      // verify affordability inside updater via closure profile — but charge only if unlocking
+      if (profile.gems < 10) return prev;
+      shouldCharge = true;
+      return prev.map(x => (x.slotIndex === slotIndex ? { ...x, status: 'ready', unlockEndsAt: Date.now() } : x));
+    });
+    if (!shouldCharge) return false;
+    setProfile(p => ({ ...p, gems: p.gems - 10 }));
     soundEngine.playSuccess(); return true;
   };
   const claimChestLoot = (slotIndex: number) => {
-    const chest = chests.find(c => c.slotIndex === slotIndex);
-    if (!chest || chest.status !== 'ready') return;
-    addCoins(chest.coinsReward, `Opened ${chest.name}`); addXp(chest.xpReward); addGems(chest.gemsReward, `Gems from ${chest.name}`);
-    setChests(prev => prev.map(c => c.slotIndex === slotIndex ? { ...c, status: 'empty', tier: 'bronze' as ChestTier, name: 'Empty Slot', unlockStartedAt: undefined, unlockEndsAt: undefined } : c));
-    openClaimModal({ title: chest.name, subtitle: `${chest.tier.toUpperCase()} LOOT UNLOCKED`, description: 'Loot reward successfully added to treasury.', coins: chest.coinsReward, xp: chest.xpReward, gems: chest.gemsReward, icon: '🎁' });
+    let chestSnap: ChestSlot | null = null;
+    setChests(prev => {
+      const idx = prev.findIndex(c => c.slotIndex === slotIndex);
+      if (idx === -1) return prev;
+      const chest = prev[idx];
+      if (chest.status !== 'ready') return prev;
+      chestSnap = chest;
+      return prev.map(c => c.slotIndex === slotIndex ? { ...c, status: 'empty', tier: 'bronze' as ChestTier, name: 'Empty Slot', unlockStartedAt: undefined, unlockEndsAt: undefined } : c);
+    });
+    if (!chestSnap) return;
+    const cs: ChestSlot = chestSnap;
+    addCoins(cs.coinsReward, `Opened ${cs.name}`); addXp(cs.xpReward); addGems(cs.gemsReward, `Gems from ${cs.name}`);
+    openClaimModal({ title: cs.name, subtitle: `${cs.tier.toUpperCase()} LOOT UNLOCKED`, description: 'Loot reward successfully added to treasury.', coins: cs.coinsReward, xp: cs.xpReward, gems: cs.gemsReward, icon: '🎁' });
     const timeout = setTimeout(() => {
       const tier = rollChestTier(); const cfg = chestConfigForTier(tier);
       setChests(prev => prev.map(c => { if (c.slotIndex !== slotIndex) return c; if (c.status !== 'empty') return c; return { ...c, tier, name: cfg.name, status: 'locked', totalUnlockSeconds: cfg.totalUnlockSeconds, coinsReward: cfg.coinsReward, xpReward: cfg.xpReward, gemsReward: cfg.gemsReward, unlockStartedAt: undefined, unlockEndsAt: undefined }; }));
@@ -449,7 +470,16 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
   const redeemReward = (rewardId: string): boolean => {
     const reward = rewards.find(r => r.id === rewardId);
-    if (!reward || profile.coins < reward.cost) return false;
+    if (!reward) return false;
+    // Atomic affordability check inside updater — prevents double-spend on rapid clicks
+    let affordable = false;
+    setProfile(prev => {
+      if (prev.coins < reward.cost) return prev;
+      affordable = true;
+      return prev;
+    });
+    if (!affordable && profile.coins < reward.cost) return false;
+    if (profile.coins < reward.cost) return false;
     addCoins(-reward.cost, `Redeemed: ${reward.title}`);
     openClaimModal({ title: reward.title, subtitle: 'REWARD CLAIMED', description: reward.description, icon: reward.icon });
     return true;
@@ -502,30 +532,32 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const completeFocusSession = useCallback(() => {
     if (focusIntervalRef.current) { clearInterval(focusIntervalRef.current); focusIntervalRef.current = null; }
     soundEngine.stopSoundscape();
+    let shouldComplete = false;
+    let captured: FocusSessionState | null = null;
     setFocusSession(prev => {
       if (!prev.isActive) return prev;
-      const multiplier = prev.isOvercharged ? 1.5 : 1.0;
-      const finalXp = Math.round(prev.accumulatedXp * multiplier);
-      const finalCoins = Math.round(prev.accumulatedCoins * multiplier);
-      const mins = Math.round(prev.targetDurationSeconds / 60);
-      const plannedMinutes = mins;
-      const linkedQuest = prev.selectedQuestId ? quests.find(q=> q.id===prev.selectedQuestId) : undefined;
-      const log: FocusEffortLog = { id: `log-${Date.now()}`, questId: prev.selectedQuestId, campaignId: linkedQuest?.campaignId, milestoneId: linkedQuest?.milestoneId, plannedMinutes, actualMinutes: mins, startedAt: prev.startedAt ?? Date.now() - mins*60000, endedAt: Date.now(), completed: true, interrupted: false, xpEarned: finalXp, coinsEarned: finalCoins };
-      setEffortLogs(p=> [log, ...p]);
-      setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins }));
-      addXp(finalXp); addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
-      if (prev.selectedQuestId && linkedQuest) {
-        // update quest actualMinutes and auto-complete
-        setQuests(qs=> qs.map(q=> q.id===prev.selectedQuestId ? { ...q, actualMinutes: mins } : q));
-        setTimeout(()=> completeQuest(prev.selectedQuestId!), 0);
-      }
-      // Citadel power scales with real productivity
-      if (finalXp >= 60) {
-        setProfile(p=> ({ ...p, citadelPower: Math.min(p.citadelMaxPower, p.citadelPower + Math.round(finalXp * 0.2)) }));
-      }
-      openClaimModal({ title: 'Combat Arena Victory!', subtitle: `${mins} MINUTE FOCUS COMPLETED`, description: prev.selectedQuestTitle ? `Objective: ${prev.selectedQuestTitle}` : 'Deep work sprint successfully concluded.', xp: finalXp, coins: finalCoins, icon: '⚔️' });
+      shouldComplete = true;
+      captured = prev;
       return { ...prev, isActive: false, isPaused: false, remainingSeconds: 0 };
     });
+    if (!shouldComplete || !captured) return;
+    const prev = captured as FocusSessionState;
+    const multiplier = prev.isOvercharged ? 1.5 : 1.0;
+    const finalXp = Math.round(prev.accumulatedXp * multiplier);
+    const finalCoins = Math.round(prev.accumulatedCoins * multiplier);
+    const mins = Math.round(prev.targetDurationSeconds / 60);
+    const plannedMinutes = mins;
+    const linkedQuest = prev.selectedQuestId ? quests.find(q=> q.id===prev.selectedQuestId) : undefined;
+    const log: FocusEffortLog = { id: `log-${Date.now()}`, questId: prev.selectedQuestId, campaignId: linkedQuest?.campaignId, milestoneId: linkedQuest?.milestoneId, plannedMinutes, actualMinutes: mins, startedAt: prev.startedAt ?? Date.now() - mins*60000, endedAt: Date.now(), completed: true, interrupted: false, xpEarned: finalXp, coinsEarned: finalCoins };
+    setEffortLogs(p=> [log, ...p]);
+    setProfile(p => ({ ...p, totalFocusMinutes: p.totalFocusMinutes + mins, citadelPower: finalXp >= 60 ? Math.min(p.citadelMaxPower, p.citadelPower + Math.round(finalXp * 0.2)) : p.citadelPower }));
+    addXp(finalXp); addCoins(finalCoins, `Focus Combat Victory (${mins}m)`);
+    if (prev.selectedQuestId && linkedQuest) {
+      setQuests(qs=> qs.map(q=> q.id===prev.selectedQuestId ? { ...q, actualMinutes: mins } : q));
+      // Defer quest completion by one tick but use functional guard inside completeQuest so stale quests don't double-award
+      setTimeout(()=> completeQuest(prev.selectedQuestId!), 0);
+    }
+    openClaimModal({ title: 'Combat Arena Victory!', subtitle: `${mins} MINUTE FOCUS COMPLETED`, description: prev.selectedQuestTitle ? `Objective: ${prev.selectedQuestTitle}` : 'Deep work sprint successfully concluded.', xp: finalXp, coins: finalCoins, icon: '⚔️' });
   }, [addXp, addCoins, openClaimModal, quests, completeQuest]);
   useEffect(() => { completeFocusSessionRef.current = completeFocusSession; }, [completeFocusSession]);
   const toggleManaOvercharge = () => { setFocusSession(prev => ({ ...prev, isOvercharged: !prev.isOvercharged })); soundEngine.playClick(); };
@@ -674,7 +706,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const now = new Date();
     const monday = new Date(now); monday.setHours(0,0,0,0);
     const day = monday.getDay(); const diff = day===0 ? -6 : 1-day; monday.setDate(monday.getDate()+diff);
-    setWeeklyState({ lastReviewWeekStart: monday.toISOString().split('T')[0] });
+    setWeeklyState({ lastReviewWeekStart: getLocalDateString(monday) });
   }, []);
 
   return (
