@@ -501,16 +501,26 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const startFocusSession = (durationMinutes: number, questId?: string, questTitle?: string) => {
     const totalSecs = durationMinutes * 60;
     const q = questId ? quests.find(x=> x.id===questId) : undefined;
-    setFocusSession({ isActive: true, isPaused: false, targetDurationSeconds: totalSecs, remainingSeconds: totalSecs, accumulatedXp: Math.round(durationMinutes * 4), accumulatedCoins: Math.round(durationMinutes * 2), selectedQuestId: questId, selectedQuestTitle: questTitle ?? q?.title, isOvercharged: false, soundscapeTrack: 'cyber-rain', startedAt: Date.now() });
+    const now = Date.now();
+    setFocusSession({ isActive: true, isPaused: false, targetDurationSeconds: totalSecs, remainingSeconds: totalSecs, accumulatedXp: Math.round(durationMinutes * 4), accumulatedCoins: Math.round(durationMinutes * 2), selectedQuestId: questId, selectedQuestTitle: questTitle ?? q?.title, isOvercharged: false, soundscapeTrack: 'cyber-rain', startedAt: now, targetEndsAt: now + totalSecs * 1000 });
     soundEngine.playSuccess(); soundEngine.startSoundscape('cyber-rain');
   };
   const pauseFocusSession = useCallback(() => {
-    setFocusSession(prev => ({ ...prev, isPaused: true })); soundEngine.stopSoundscape();
+    setFocusSession(prev => ({ ...prev, isPaused: true, pausedAt: Date.now() })); soundEngine.stopSoundscape();
     if (focusIntervalRef.current) { clearInterval(focusIntervalRef.current); focusIntervalRef.current = null; }
   }, []);
   const resumeFocusSession = useCallback(() => {
-    setFocusSession(prev => ({ ...prev, isPaused: false }));
-    setFocusSession(prev => { soundEngine.startSoundscape(prev.soundscapeTrack); return prev; });
+    setFocusSession(prev => {
+      if (!prev.isPaused) return prev;
+      soundEngine.startSoundscape(prev.soundscapeTrack);
+      // If we have wall-clock bookkeeping, reconcile remainingSeconds on resume
+      if (prev.pausedAt && prev.targetEndsAt) {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.round((prev.targetEndsAt - now) / 1000));
+        return { ...prev, isPaused: false, remainingSeconds: remaining, pausedAt: undefined };
+      }
+      return { ...prev, isPaused: false, pausedAt: undefined };
+    });
   }, []);
   const cancelFocusSession = useCallback(() => {
     if (focusIntervalRef.current) { clearInterval(focusIntervalRef.current); focusIntervalRef.current = null; }
