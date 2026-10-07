@@ -47,7 +47,7 @@ describe('state sync improvements', () => {
   });
 
   it('fallback localStorage payload is valid JSON with type', () => {
-    const spy = vi.spyOn(Storage.prototype, 'setItem');
+    const spy = vi.spyOn(window.localStorage, 'setItem');
     syncChannel.broadcast('DELETE_REWARD', 'r-1');
     const call = spy.mock.calls.find((c) => c[0] === 'auctus_sync_event_fallback');
     expect(call).toBeDefined();
@@ -60,7 +60,7 @@ describe('state sync improvements', () => {
   it('saveToStorage returns false and emits persistence error on quota', () => {
     const errors: any[] = [];
     const unsub = subscribePersistenceError((e) => errors.push(e));
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new DOMException('QuotaExceededError', 'QuotaExceededError');
     });
     const ok = saveToStorage('quota_test_key', { x: 1 });

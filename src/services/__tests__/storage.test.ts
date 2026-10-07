@@ -151,8 +151,8 @@ describe('StorageService get/set roundtrip with mocked localStorage', () => {
   });
 
   it('uses mocked localStorage via spy for get/set', () => {
-    const setSpy = vi.spyOn(Storage.prototype, 'setItem');
-    const getSpy = vi.spyOn(Storage.prototype, 'getItem');
+    const setSpy = vi.spyOn(window.localStorage, 'setItem');
+    const getSpy = vi.spyOn(window.localStorage, 'getItem');
 
     const custom = { ...INITIAL_PROFILE, name: 'Spy Test' };
     StorageService.setProfile(custom);
