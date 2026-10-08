@@ -1,4 +1,4 @@
-export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'analytics' | 'campaigns';
+export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'analytics' | 'campaigns' | 'ai';
 
 export type QuestCategory = 'daily' | 'bounty' | 'epic' | 'habit';
 export type QuestTag = 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work';
@@ -132,7 +132,7 @@ export interface FocusSessionState {
   selectedQuestId?: string;
   selectedQuestTitle?: string;
   isOvercharged: boolean;
-  soundscapeTrack: 'none' | 'cyber-rain' | 'binaural' | 'forest' | 'white-noise';
+  soundscapeTrack: 'none' | 'cyber-rain' | 'binaural' | 'forest' | 'white-noise' | 'deep-brown';
   startedAt?: number;
   targetEndsAt?: number;
   pausedAt?: number;

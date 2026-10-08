@@ -60,6 +60,11 @@ export const NavTabs: React.FC<NavTabsProps> = ({ activeTab, onSelectTab }) => {
       label: 'Citadel',
       icon: '🏰',
     },
+    {
+      id: 'ai',
+      label: 'Oracle',
+      icon: '🧠',
+    },
   ];
 
   const handleTabClick = (tabId: TabType) => {

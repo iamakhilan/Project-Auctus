@@ -44,8 +44,8 @@ export const RealmView: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 animate-fadeIn select-none container-responsive">
       {/* Top Banner: Daily Momentum */}
-      <div className="bg-gradient-to-r from-[#1cb0f6] via-[#2bd9fe] to-[#0095de] rounded-3xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden border-b-6 border-[#0b80ba]">
-        <div className="absolute -right-6 -bottom-6 text-9xl opacity-15 pointer-events-none select-none">⚡</div>
+      <div className="bg-gradient-to-br from-[#7c3aed] via-[#4c1d95] to-[#1e1b4b] rounded-3xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden border border-white/10 backdrop-blur">
+        <div className="absolute -right-6 -bottom-6 text-9xl opacity-10 pointer-events-none select-none blur-[1px]">⚡</div>
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-xs font-black uppercase tracking-wider mb-3 shadow-xs flex-wrap">
@@ -76,6 +76,38 @@ export const RealmView: React.FC = () => {
 
       {/* DAILY COMMAND CENTER — core engine */}
       <DailyCommandCenter />
+
+      {/* Today's Quests — glass accordion (Realm-only B) */}
+      <details open className="bg-white/90 backdrop-blur rounded-3xl border-2 border-[#e5e5e5] shadow-xs overflow-hidden group">
+        <summary className="list-none px-5 sm:px-6 py-4 flex items-center justify-between cursor-pointer select-none">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] text-white flex items-center justify-center font-black text-sm">✓</span>
+            <div>
+              <div className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)]">Today's Quests</div>
+              <div className="text-[11px] font-bold text-[var(--gray-light)]">{completedDailyCount} / {Math.max(1, dailyQuests.length)} completed • tap to toggle</div>
+            </div>
+          </div>
+          <span className="text-[var(--gray-light)] group-open:rotate-180 transition-transform">▾</span>
+        </summary>
+        <div className="px-4 sm:px-6 pb-4 space-y-2 border-t border-[#f0f0f0] pt-3">
+          {dailyQuests.length === 0 ? (
+            <p className="text-xs font-bold text-[var(--gray-light)] py-3 text-center">No daily quests — forge one from Campaigns or Quests.</p>
+          ) : (
+            dailyQuests.slice(0, 6).map((q) => (
+              <div key={q.id} className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl border ${q.isCompleted ? 'bg-[#f0fdf4] border-[#bbf7d0] opacity-70' : 'bg-white border-[#e5e5e5] hover:border-[#ddd6fe]'}`}>
+                <div className="min-w-0 flex-1">
+                  <div className={`text-sm font-black truncate ${q.isCompleted ? 'line-through text-[var(--gray-light)]' : 'text-[var(--dark-blue)]'}`}>{q.title}</div>
+                  <div className="text-[11px] font-bold text-[var(--gray-light)] truncate">{q.tag} • {q.estimatedMinutes ?? 25}m {q.dueLabel ? `• ${q.dueLabel}` : ''}{q.isCompleted ? ' • done' : ''}</div>
+                </div>
+                <span className={`shrink-0 w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black ${q.isCompleted ? 'bg-[var(--green)] text-white' : 'bg-[#f5f3ff] text-[#7c3aed] border border-[#ddd6fe]'}`}>{q.isCompleted ? '✓' : '○'}</span>
+              </div>
+            ))
+          )}
+          {dailyQuests.length > 6 && (
+            <button type="button" onClick={() => setActiveTab('quests')} className="w-full py-2 rounded-xl bg-[#f5f3ff] border border-[#ddd6fe] text-xs font-black text-[#7c3aed]">View all {dailyQuests.length} →</button>
+          )}
+        </div>
+      </details>
 
       {/* Productivity Intelligence strip */}
       {insights.length > 0 && (

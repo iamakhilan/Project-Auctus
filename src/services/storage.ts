@@ -342,6 +342,7 @@ export const INITIAL_TRANSACTIONS: EconomyTransaction[] = [
   },
 ];
 
+
 export interface PersistenceError {
   key: string;
   message: string;
@@ -387,10 +388,10 @@ export const loadFromStorage = <T>(key: string, fallback: T): T => {
     const item = localStorage.getItem(key);
     return item ? (JSON.parse(item) as T) : fallback;
   } catch (err) {
+    emitPersistenceError(key, err);
     try {
       localStorage.removeItem(key);
     } catch {}
-    void err;
     return fallback;
   }
 };
@@ -405,6 +406,8 @@ export const saveToStorage = <T>(key: string, data: T): boolean => {
     return false;
   }
 };
+
+
 
 export const StorageService = {
   getProfile: () => loadFromStorage<PlayerProfile>(STORAGE_KEYS.PROFILE, INITIAL_PROFILE),
@@ -443,7 +446,7 @@ export const StorageService = {
   setWeeklyState: (s: { lastReviewWeekStart?: string }): boolean => saveToStorage(STORAGE_KEYS.WEEKLY_STATE, s),
 
   getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
-  setAudioSettings: (a: AudioSettings): boolean => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
+  setAudioSettings: (a: AudioSettings) => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
 
   exportBackup: (): string => {
     const backup = {
@@ -458,6 +461,9 @@ export const StorageService = {
       campaigns: StorageService.getCampaigns(),
       effortLogs: StorageService.getEffortLogs(),
       weeklyReviews: StorageService.getWeeklyReviews(),
+      weeklyState: StorageService.getWeeklyState(),
+      focus: StorageService.getFocusState(),
+      audioSettings: StorageService.getAudioSettings(),
       version: "2.1",
       exportedAt: new Date().toISOString(),
     };
@@ -545,6 +551,21 @@ export const StorageService = {
       if (Array.isArray(data.campaigns)) StorageService.setCampaigns(data.campaigns as Campaign[]);
       if (Array.isArray(data.effortLogs)) StorageService.setEffortLogs(data.effortLogs as FocusEffortLog[]);
       if (Array.isArray(data.weeklyReviews)) StorageService.setWeeklyReviews(data.weeklyReviews as WeeklyReview[]);
+      if (data.weeklyState && typeof data.weeklyState === 'object' && !Array.isArray(data.weeklyState)) {
+        const ws = data.weeklyState as Record<string, unknown>;
+        if (typeof ws.lastReviewWeekStart === 'string' || ws.lastReviewWeekStart === undefined) {
+          StorageService.setWeeklyState(ws as { lastReviewWeekStart?: string });
+        }
+      }
+      if (data.focus === null || (data.focus && typeof data.focus === 'object' && !Array.isArray(data.focus))) {
+        StorageService.setFocusState(data.focus as FocusSessionState | null);
+      }
+      if (data.audioSettings && typeof data.audioSettings === 'object' && !Array.isArray(data.audioSettings)) {
+        const a = data.audioSettings as Record<string, unknown>;
+        if (typeof a.soundEnabled === 'boolean' || typeof a.masterVolume === 'number' || typeof a.soundscapeVolume === 'number') {
+          StorageService.setAudioSettings(data.audioSettings as AudioSettings);
+        }
+      }
       return true;
     } catch {
       return false;

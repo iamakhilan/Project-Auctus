@@ -39,19 +39,6 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({ onOpenProfile, onOpenHelp 
                 {profile.title}
               </p>
             </div>
-            <div className="hidden md:block text-left min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-['Feather_Bold'] text-lg text-[var(--dark-blue)] tracking-wide truncate">
-                  AUCTUS
-                </span>
-                <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded-md bg-[var(--green)] text-white shrink-0">
-                  v2.0
-                </span>
-              </div>
-              <p className="text-xs text-[var(--gray-light)] font-bold truncate max-w-[120px]">
-                {profile.title}
-              </p>
-            </div>
           </button>
 
           {/* Level & XP Gauge */}
