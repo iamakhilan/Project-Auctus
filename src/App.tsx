@@ -17,6 +17,7 @@ import { WeeklyReviewModal } from './components/command/WeeklyReviewModal';
 
 const CitadelView = lazy(() => import('./components/citadel/CitadelView').then((m) => ({ default: m.CitadelView })));
 const AnalyticsDashboard = lazy(() => import('./components/analytics/AnalyticsDashboard').then((m) => ({ default: m.AnalyticsDashboard })));
+const AIIntelligenceView = lazy(() => import('./components/ai/AIIntelligenceView').then((m) => ({ default: m.AIIntelligenceView })));
 
 const LazyFallback: React.FC = () => (
   <div className="max-w-5xl mx-auto px-4 py-10">
@@ -86,6 +87,11 @@ const AppContent: React.FC = () => {
         {activeTab === 'analytics' && (
           <Suspense fallback={<LazyFallback />}>
             <AnalyticsDashboard />
+          </Suspense>
+        )}
+        {activeTab === 'ai' && (
+          <Suspense fallback={<LazyFallback />}>
+            <AIIntelligenceView />
           </Suspense>
         )}
       </main>

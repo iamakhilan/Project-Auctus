@@ -1,4 +1,4 @@
-export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'analytics' | 'campaigns';
+export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'analytics' | 'campaigns' | 'ai';
 
 export type QuestCategory = 'daily' | 'bounty' | 'epic' | 'habit';
 export type QuestTag = 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work';
