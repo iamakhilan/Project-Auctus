@@ -8,6 +8,9 @@ import {
   EconomyTransaction,
   FocusSessionState,
   AudioSettings,
+  Campaign,
+  FocusEffortLog,
+  WeeklyReview,
 } from '../types';
 import { validateBackupPayload } from '../utils/validators';
 import { getLocalDateString } from '../utils/dateUtils';
@@ -23,6 +26,10 @@ export const STORAGE_KEYS = {
   TRANSACTIONS: 'auctus_duo_transactions',
   FOCUS: 'auctus_duo_focus',
   AUDIO_SETTINGS: 'auctus_duo_audio_settings',
+  CAMPAIGNS: 'auctus_campaigns',
+  EFFORT_LOGS: 'auctus_effort_logs',
+  WEEKLY_REVIEWS: 'auctus_weekly_reviews',
+  WEEKLY_STATE: 'auctus_weekly_state',
 };
 
 export const INITIAL_AUDIO_SETTINGS: AudioSettings = {
@@ -371,6 +378,9 @@ function emitPersistenceError(key: string, error: unknown): void {
   }
 }
 
+export const INITIAL_CAMPAIGNS: Campaign[] = [];
+export const INITIAL_EFFORT_LOGS: FocusEffortLog[] = [];
+export const INITIAL_WEEKLY_REVIEWS: WeeklyReview[] = [];
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -423,6 +433,14 @@ export const StorageService = {
 
   getFocusState: () => loadFromStorage<FocusSessionState | null>(STORAGE_KEYS.FOCUS, null),
   setFocusState: (f: FocusSessionState | null): boolean => saveToStorage(STORAGE_KEYS.FOCUS, f),
+  getCampaigns: () => loadFromStorage<Campaign[]>(STORAGE_KEYS.CAMPAIGNS, INITIAL_CAMPAIGNS),
+  setCampaigns: (c: Campaign[]): boolean => saveToStorage(STORAGE_KEYS.CAMPAIGNS, c),
+  getEffortLogs: () => loadFromStorage<FocusEffortLog[]>(STORAGE_KEYS.EFFORT_LOGS, INITIAL_EFFORT_LOGS),
+  setEffortLogs: (l: FocusEffortLog[]): boolean => saveToStorage(STORAGE_KEYS.EFFORT_LOGS, l),
+  getWeeklyReviews: () => loadFromStorage<WeeklyReview[]>(STORAGE_KEYS.WEEKLY_REVIEWS, INITIAL_WEEKLY_REVIEWS),
+  setWeeklyReviews: (r: WeeklyReview[]): boolean => saveToStorage(STORAGE_KEYS.WEEKLY_REVIEWS, r),
+  getWeeklyState: () => loadFromStorage<{ lastReviewWeekStart?: string }>(STORAGE_KEYS.WEEKLY_STATE, {}),
+  setWeeklyState: (s: { lastReviewWeekStart?: string }): boolean => saveToStorage(STORAGE_KEYS.WEEKLY_STATE, s),
 
   getAudioSettings: () => loadFromStorage<AudioSettings>(STORAGE_KEYS.AUDIO_SETTINGS, INITIAL_AUDIO_SETTINGS),
   setAudioSettings: (a: AudioSettings): boolean => saveToStorage(STORAGE_KEYS.AUDIO_SETTINGS, a),
@@ -437,7 +455,10 @@ export const StorageService = {
       achievements: StorageService.getAchievements(),
       achievementLocks: StorageService.getAchievementLocks(),
       transactions: StorageService.getTransactions(),
-      version: "2.0",
+      campaigns: StorageService.getCampaigns(),
+      effortLogs: StorageService.getEffortLogs(),
+      weeklyReviews: StorageService.getWeeklyReviews(),
+      version: "2.1",
       exportedAt: new Date().toISOString(),
     };
     return JSON.stringify(backup, null, 2);
@@ -521,6 +542,9 @@ export const StorageService = {
         StorageService.setAchievementLocks(data.achievementLocks.filter((id: unknown): id is string => typeof id === 'string'));
       }
       if (Array.isArray(data.transactions)) StorageService.setTransactions(data.transactions as EconomyTransaction[]);
+      if (Array.isArray(data.campaigns)) StorageService.setCampaigns(data.campaigns as Campaign[]);
+      if (Array.isArray(data.effortLogs)) StorageService.setEffortLogs(data.effortLogs as FocusEffortLog[]);
+      if (Array.isArray(data.weeklyReviews)) StorageService.setWeeklyReviews(data.weeklyReviews as WeeklyReview[]);
       return true;
     } catch {
       return false;
