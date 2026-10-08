@@ -41,13 +41,17 @@ export interface AIResponse {
   };
 }
 
+const STORAGE_KEY_AI_API_KEY = 'auctus_ai_api_key';
+const DEFAULT_BASE_URL = 'https://freellmapi-juob.onrender.com/v1';
+const DEFAULT_MODEL = 'auto:default';
+
 export class AIProvider {
   private config: AIProviderConfig;
-  
+
   constructor(config: AIProviderConfig) {
     this.config = config;
   }
-  
+
   async chatCompletion(request: AIRequest): Promise<AIResponse> {
     try {
       const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
@@ -64,39 +68,88 @@ export class AIProvider {
           stream: request.stream ?? false
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`AI provider error: ${response.status} ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('AI provider request failed:', error);
       throw error;
     }
   }
-  
+
   isAvailable(): boolean {
     return !!this.config.baseUrl && !!this.config.apiKey && !!this.config.model;
   }
+
+  updateApiKey(apiKey: string): void {
+    this.config.apiKey = apiKey;
+  }
+
+  getConfig(): AIProviderConfig {
+    return { ...this.config };
+  }
 }
 
-// Factory function to create provider from environment variables
-export function createAIProviderFromEnv(): AIProvider | null {
-  // In production, these would come from environment variables
-  // For security, we never expose these in the frontend bundle
-  const baseUrl = import.meta.env.VITE_AI_BASE_URL || '';
-  const apiKey = import.meta.env.VITE_AI_API_KEY || '';
-  const model = import.meta.env.VITE_AI_MODEL || '';
-  
+function getStoredApiKey(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEY_AI_API_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function setStoredApiKey(apiKey: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_AI_API_KEY, apiKey);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function clearStoredApiKey(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_AI_API_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+// Factory function to create provider from stored user API key
+export function createAIProviderFromStorage(): AIProvider | null {
+  const baseUrl = DEFAULT_BASE_URL;
+  const apiKey = getStoredApiKey();
+  const model = DEFAULT_MODEL;
+
   if (!baseUrl || !apiKey || !model) {
-    console.warn('AI provider not configured - missing environment variables');
     return null;
   }
-  
+
   return new AIProvider({
     baseUrl,
     apiKey,
     model
   });
+}
+
+// Check if user has configured their API key
+export function hasUserConfiguredApiKey(): boolean {
+  return !!getStoredApiKey();
+}
+
+// Set user's API key and return new provider instance
+export function setUserApiKey(apiKey: string): AIProvider {
+  setStoredApiKey(apiKey);
+  return new AIProvider({
+    baseUrl: DEFAULT_BASE_URL,
+    apiKey,
+    model: DEFAULT_MODEL
+  });
+}
+
+// Clear user's API key
+export function clearUserApiKey(): void {
+  clearStoredApiKey();
 }

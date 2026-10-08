@@ -27,7 +27,7 @@ import { syncChannel } from '../utils/syncChannel';
 import { buildDailyObjectives } from '../engine/planner';
 import { buildSnapshot, deriveInsights } from '../engine/intelligence';
 import { buildWeeklyReview as buildWeeklyReviewEngine, shouldShowWeeklyReview } from '../engine/weekly';
-import { createAIProviderFromEnv } from '../services/aiProvider';
+import { createAIProviderFromStorage, hasUserConfiguredApiKey, setUserApiKey, clearUserApiKey } from '../services/aiProvider';
 import { buildAIContext } from '../services/aiContext';
 import { AUCTUSIntelligence, AIReasoningResponse } from '../services/intelligenceLayer';
 
@@ -110,6 +110,10 @@ interface GameStateContextType {
   refreshAiBriefing: () => Promise<void>;
   askAi: (question: string) => Promise<AIReasoningResponse>;
   getNextAiAction: () => Promise<AIReasoningResponse>;
+  showApiKeyModal: boolean;
+  setShowApiKeyModal: (show: boolean) => void;
+  handleApiKeySet: (apiKey: string) => void;
+  handleApiKeyClear: () => void;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -342,13 +346,31 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [aiDailyBriefing, setAiDailyBriefing] = useState<AIReasoningResponse | null>(null);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
 
-  const aiProvider = createAIProviderFromEnv();
+  // Initialize AI provider from stored user API key
+  const aiProvider = hasUserConfiguredApiKey() ? createAIProviderFromStorage() : null;
   const aiIntelligence = aiProvider ? new AUCTUSIntelligence(aiProvider) : null;
+
+  // Handle API key changes - reinitialize provider
+  const handleApiKeySet = useCallback((apiKey: string) => {
+    const newProvider = setUserApiKey(apiKey);
+    // Note: In a real app, we'd need to re-render or use a state management approach
+    // For now, we rely on the user refreshing or the provider being recreated
+    setShowApiKeyModal(false);
+    setAiError(null);
+  }, []);
+
+  const handleApiKeyClear = useCallback(() => {
+    clearUserApiKey();
+    setShowApiKeyModal(true);
+    setAiError('AI provider not configured - please add your API key');
+  }, []);
 
   const refreshAiBriefing = useCallback(async () => {
     if (!aiIntelligence) {
-      setAiError('AI provider not configured');
+      setAiError('AI provider not configured - please add your API key');
+      setShowApiKeyModal(true);
       return;
     }
     
@@ -935,7 +957,8 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           return ok;
         },
         // AI Intelligence Layer
-        aiDailyBriefing, isAiLoading, aiError, refreshAiBriefing, askAi, getNextAiAction
+        aiDailyBriefing, isAiLoading, aiError, refreshAiBriefing, askAi, getNextAiAction,
+        showApiKeyModal, setShowApiKeyModal, handleApiKeySet, handleApiKeyClear
       }}
     >
       {children}

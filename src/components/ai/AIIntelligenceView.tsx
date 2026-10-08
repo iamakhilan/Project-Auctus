@@ -14,7 +14,11 @@ export const AIIntelligenceView: React.FC = () => {
     startFocusSession,
     completeQuest,
     updateQuest,
-    setActiveTab
+    setActiveTab,
+    showApiKeyModal,
+    setShowApiKeyModal,
+    handleApiKeySet,
+    handleApiKeyClear
   } = useGameState();
 
   const [question, setQuestion] = useState('');
@@ -328,6 +332,66 @@ export const AIIntelligenceView: React.FC = () => {
           🔒 Intelligence Layer • Local-First Reasoning • FreeLLM Integration
         </p>
       </div>
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-slideUp">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#10b981] to-[#059669] rounded-2xl flex items-center justify-center text-3xl">
+                🔑
+              </div>
+              <h3 className="font-['Feather_Bold'] text-xl text-[var(--dark-blue)]">Configure AI Provider</h3>
+              <p className="text-sm text-[var(--gray-text)] mt-2">
+                Enter your FreeLLM API key to unlock the Oracle's intelligence.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-[var(--gray-light)] uppercase tracking-wider mb-2">
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  placeholder="freellmapi-xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-[#f9fafb] border-2 border-[#e5e5e5] rounded-2xl px-4 py-3 text-sm font-bold focus:border-[var(--green)] outline-none"
+                  onKeyDown={(e) => e.key === 'Enter' && handleApiKeySet((e.target as HTMLInputElement).value)}
+                />
+              </div>
+              
+              <p className="text-[10px] font-bold text-[var(--gray-light)] text-center">
+                Your key is stored locally in your browser only. Never sent to our servers.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleApiKeyClear}
+                  className="flex-1 py-3 rounded-2xl bg-[#fee2e2] hover:bg-[#fecaca] text-red-700 font-black text-sm transition-all border border-red-200"
+                >
+                  Clear Key
+                </button>
+                <button
+                  onClick={() => setShowApiKeyModal(false)}
+                  className="flex-1 py-3 rounded-2xl bg-[var(--gray-light)] hover:bg-[var(--gray-text)] text-white font-black text-sm transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+              
+              <button
+                onClick={(e) => {
+                  const input = e.currentTarget.parentElement?.querySelector('input') as HTMLInputElement;
+                  if (input?.value) handleApiKeySet(input.value);
+                }}
+                className="w-full py-3 rounded-2xl bg-[var(--green)] hover:bg-[#46a302] text-white font-black text-sm transition-all border-b-4 border-[#3a8a02] active:translate-y-1 active:border-b-0"
+              >
+                Save & Enable Oracle
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
