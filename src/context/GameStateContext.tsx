@@ -206,9 +206,6 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const chestTimeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   const focusSessionRef = useRef(focusSession);
   focusSessionRef.current = focusSession;
-  const processedFocusSessionsRef = useRef<Set<string>>(new Set());
-  const isCompletingFocusRef = useRef(false);
-  const transactionQueueRef = useRef(new AtomicTransactionQueue());
   const fallbackDedupRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => { StorageService.setProfile(profile); }, [profile]);
