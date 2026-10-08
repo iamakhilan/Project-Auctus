@@ -18,13 +18,22 @@ export const AIIntelligenceView: React.FC = () => {
     showApiKeyModal,
     setShowApiKeyModal,
     handleApiKeySet,
-    handleApiKeyClear
+    handleApiKeyClear,
+    hasApiKey
   } = useGameState();
 
   const [question, setQuestion] = useState('');
   const [askResponse, setAskAiResponse] = useState<AIReasoningResponse | null>(null);
   const [isAsking, setIsAsking] = useState(false);
   const [activeView, setActiveTabLocal] = useState<'briefing' | 'ask' | 'recommendations'>('briefing');
+  const [apiKeyInput, setApiKeyInput] = useState('');
+
+  // Show API key modal automatically if no key configured
+  React.useEffect(() => {
+    if (!hasApiKey) {
+      setShowApiKeyModal(true);
+    }
+  }, [hasApiKey, setShowApiKeyModal]);
 
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,9 +363,11 @@ export const AIIntelligenceView: React.FC = () => {
                 </label>
                 <input
                   type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
                   placeholder="freellmapi-xxxxxxxxxxxxxxxxxxxx"
                   className="w-full bg-[#f9fafb] border-2 border-[#e5e5e5] rounded-2xl px-4 py-3 text-sm font-bold focus:border-[var(--green)] outline-none"
-                  onKeyDown={(e) => e.key === 'Enter' && handleApiKeySet((e.target as HTMLInputElement).value)}
+                  onKeyDown={(e) => e.key === 'Enter' && apiKeyInput && handleApiKeySet(apiKeyInput)}
                 />
               </div>
               
@@ -372,7 +383,7 @@ export const AIIntelligenceView: React.FC = () => {
                   Clear Key
                 </button>
                 <button
-                  onClick={() => setShowApiKeyModal(false)}
+                  onClick={() => { setShowApiKeyModal(false); setApiKeyInput(''); }}
                   className="flex-1 py-3 rounded-2xl bg-[var(--gray-light)] hover:bg-[var(--gray-text)] text-white font-black text-sm transition-all"
                 >
                   Cancel
@@ -380,11 +391,9 @@ export const AIIntelligenceView: React.FC = () => {
               </div>
               
               <button
-                onClick={(e) => {
-                  const input = e.currentTarget.parentElement?.querySelector('input') as HTMLInputElement;
-                  if (input?.value) handleApiKeySet(input.value);
-                }}
-                className="w-full py-3 rounded-2xl bg-[var(--green)] hover:bg-[#46a302] text-white font-black text-sm transition-all border-b-4 border-[#3a8a02] active:translate-y-1 active:border-b-0"
+                onClick={() => { if (apiKeyInput) handleApiKeySet(apiKeyInput); }}
+                disabled={!apiKeyInput}
+                className="w-full py-3 rounded-2xl bg-[var(--green)] hover:bg-[#46a302] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm transition-all border-b-4 border-[#3a8a02] active:translate-y-1 active:border-b-0"
               >
                 Save & Enable Oracle
               </button>

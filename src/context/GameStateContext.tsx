@@ -114,6 +114,7 @@ interface GameStateContextType {
   setShowApiKeyModal: (show: boolean) => void;
   handleApiKeySet: (apiKey: string) => void;
   handleApiKeyClear: () => void;
+  hasApiKey: boolean;
 }
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
@@ -347,6 +348,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(() => hasUserConfiguredApiKey());
 
   // Initialize AI provider from stored user API key
   const aiProvider = hasUserConfiguredApiKey() ? createAIProviderFromStorage() : null;
@@ -355,14 +357,14 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Handle API key changes - reinitialize provider
   const handleApiKeySet = useCallback((apiKey: string) => {
     const newProvider = setUserApiKey(apiKey);
-    // Note: In a real app, we'd need to re-render or use a state management approach
-    // For now, we rely on the user refreshing or the provider being recreated
+    setHasApiKey(true);
     setShowApiKeyModal(false);
     setAiError(null);
   }, []);
 
   const handleApiKeyClear = useCallback(() => {
     clearUserApiKey();
+    setHasApiKey(false);
     setShowApiKeyModal(true);
     setAiError('AI provider not configured - please add your API key');
   }, []);
@@ -958,7 +960,7 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
         // AI Intelligence Layer
         aiDailyBriefing, isAiLoading, aiError, refreshAiBriefing, askAi, getNextAiAction,
-        showApiKeyModal, setShowApiKeyModal, handleApiKeySet, handleApiKeyClear
+        showApiKeyModal, setShowApiKeyModal, handleApiKeySet, handleApiKeyClear, hasApiKey
       }}
     >
       {children}
