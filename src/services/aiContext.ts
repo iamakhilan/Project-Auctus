@@ -1,20 +1,18 @@
 import type { 
-  Quest, 
-  Habit, 
-  Campaign, 
-  FocusEffortLog, 
-  Achievement, 
-  PlayerProfile, 
-  ChestSlot, 
+  Quest,
+  Habit,
+  Campaign,
+  FocusEffortLog,
+  Achievement,
+  PlayerProfile,
   EconomyTransaction,
   WeeklyReview,
   ProductivitySnapshot,
   DailyObjective
 } from '../types';
-import { buildSnapshot, deriveInsights } from '../engine/intelligence';
-import { buildWeeklyReview as buildWeeklyReviewEngine, computeWeeklyWindow, shouldShowWeeklyReview } from '../engine/weekly';
+import { buildSnapshot } from '../engine/intelligence';
+import { computeWeeklyWindow } from '../engine/weekly';
 import { computeUrgency } from '../engine/planner';
-import { getLocalDateString } from '../utils/dateUtils';
 
 export interface AIContextSnapshot {
   // Core player state
@@ -62,7 +60,7 @@ export function buildAIContext(
   weeklyReviews: WeeklyReview[],
   activeTab: string,
   focusSessionActive: boolean,
-  chests: ChestSlot[] = []
+  
 ): AIContextSnapshot {
   const now = new Date();
   const currentDate = now.toISOString().split('T')[0];
@@ -178,16 +176,16 @@ export function createAISummary(context: AIContextSnapshot): string {
     completed: log.completed
   }));
   
-  const campaignProgress = campaigns.map(c => ({
+  const _campaignProgress = campaigns.map(c => ({
     title: c.title,
-    progress: c.milestones.reduce((done, m) => {
+    progress: c.milestones.reduce((done, _m) => {
       // This would need quest completion data to calculate properly
       return done;
     }, 0),
     total: c.milestones.length
   }));
   
-  const unlockedAchievements = achievements.filter(a => 
+  const unlockedAchievements = achievements.filter(_a => 
     // This would need achievement lock data to check properly
     false // Placeholder - would need to check against achievement locks
   ).length;

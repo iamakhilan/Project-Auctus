@@ -1,3 +1,6 @@
+
+/* global self, caches, fetch, Response, clients */
+
 const CACHE_NAME = 'auctus-pwa-cache-v1';
 const ASSETS_TO_CACHE = [
   './',

@@ -21,8 +21,8 @@ import {
 import { StorageService, STORAGE_KEYS } from '../services/storage';
 import { soundEngine } from '../utils/audioSynthesizer';
 import { triggerConfetti } from '../utils/confetti';
-import { AtomicTransactionQueue, applyAtomicTransaction, TransactionPayload } from '../utils/transactionRunner';
-import { getLocalDateString, calculateUpdatedStreak } from '../utils/dateUtils';
+
+import { getLocalDateString } from '../utils/dateUtils';
 import { syncChannel } from '../utils/syncChannel';
 import { buildDailyObjectives } from '../engine/planner';
 import { buildSnapshot, deriveInsights } from '../engine/intelligence';
@@ -349,11 +349,13 @@ export const GameStateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Initialize AI provider from stored user API key
   const aiProvider = hasUserConfiguredApiKey() ? createAIProviderFromStorage() : null;
-  const aiIntelligence = aiProvider ? new AUCTUSIntelligence(aiProvider) : null;
+  const aiIntelligence = useMemo(() => {
+    return aiProvider ? new AUCTUSIntelligence(aiProvider) : null;
+  }, [aiProvider]);
 
   // Handle API key changes - reinitialize provider
   const handleApiKeySet = useCallback((apiKey: string) => {
-    const newProvider = setUserApiKey(apiKey);
+setUserApiKey(apiKey);
     setHasApiKey(true);
     setShowApiKeyModal(false);
     setAiError(null);

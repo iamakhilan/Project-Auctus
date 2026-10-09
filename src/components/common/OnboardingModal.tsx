@@ -97,7 +97,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
           onClick={handleStart}
           className="w-full h-14 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-lg font-black tracking-wider uppercase rounded-2xl border-b-6 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-lg"
         >
-          LET'S CRUSH TODAY! 🚀
+          LET&apos;S CRUSH TODAY! 🚀
         </button>
 
       </div>

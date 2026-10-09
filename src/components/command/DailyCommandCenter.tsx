@@ -23,7 +23,7 @@ export const DailyCommandCenter: React.FC = () => {
     <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="font-['Feather_Bold'] text-base sm:text-lg text-[var(--dark-blue)] flex items-center gap-2">
-          <span>🎯</span> TODAY'S COMMAND CENTER
+          <span>🎯</span> TODAY&apos;S COMMAND CENTER
           <span className="hidden sm:inline text-xs font-black px-2 py-1 rounded-full bg-[#eef8ff] border border-[#b9e5fb] text-[var(--blue)]">What should I work on right now?</span>
         </h2>
         <button type="button" onClick={()=>setShowBudget(v=>!v)} className="px-3 py-1.5 rounded-xl bg-[#f0f0f0] border-2 border-[#e5e5e5] font-black text-xs touch-target">{showBudget?'Hide budget':'Time budget'}</button>

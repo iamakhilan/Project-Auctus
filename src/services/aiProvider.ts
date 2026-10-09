@@ -1,15 +1,4 @@
-import type { 
-  Quest, 
-  Habit, 
-  Campaign, 
-  FocusEffortLog, 
-  Achievement, 
-  PlayerProfile, 
-  ChestSlot, 
-  EconomyTransaction,
-  WeeklyReview,
-  ProductivitySnapshot
-} from '../types';
+import type { } from '../types';
 
 export interface AIProviderConfig {
   baseUrl: string;

@@ -1,4 +1,4 @@
-import { AIProvider, AIRequest, AIResponse } from './aiProvider';
+import { AIProvider, AIRequest } from './aiProvider';
 import { AIContextSnapshot, createAISummary } from './aiContext';
 
 export interface AIReasoningResponse {
@@ -11,7 +11,7 @@ export interface AIReasoningResponse {
     reason: string;
     action?: {
       type: 'rescheduleQuest' | 'createQuest' | 'splitQuest' | 'startFocus';
-      payload: any;
+      payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string };
     };
     relatedQuestIds?: string[];
   }>;
@@ -153,7 +153,7 @@ You MUST respond in valid JSON format matching the AUCTUS Intelligence structure
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       const jsonStr = jsonMatch ? jsonMatch[0] : content;
       return JSON.parse(jsonStr) as AIReasoningResponse;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to parse AI reasoning response:', content);
       throw new Error('AI reasoning returned malformed data');
     }

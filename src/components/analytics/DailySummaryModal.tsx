@@ -68,7 +68,7 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
               {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
             <h2 className="font-['Feather_Bold'] text-xl sm:text-2xl tracking-wide">DAILY SUMMARY</h2>
-            <p className="text-sm font-bold text-white/80 mt-1">Today's progress at a glance</p>
+            <p className="text-sm font-bold text-white/80 mt-1">Today&apos;s progress at a glance</p>
           </div>
           <button
             onClick={onClose}
@@ -166,7 +166,7 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
 
           {/* Recent transactions */}
           <div>
-            <div className="section-label-light">Today's ledger (latest)</div>
+            <div className="section-label-light">Today&apos;s ledger (latest)</div>
             {stats.txToday.length === 0 ? (
               <p className="text-xs font-semibold text-[var(--gray-light)] rounded-2xl bg-[#fafafa] border-2 border-[#e5e5e5] p-4 text-center">
                 No transactions today. Earn or spend to populate your ledger.
@@ -181,7 +181,7 @@ export const DailySummaryModal: React.FC<DailySummaryModalProps> = ({ isOpen, on
                         {new Date(t.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {t.currency} • {t.type}
                       </div>
                     </div>
-                    <span className={`text-sm font-black ${t.type === 'earn' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`} shrink-0>
+                    <span className={`${t.type === 'earn' ? 'text-[var(--green)]' : 'text-[var(--red)]'} text-sm font-black shrink-0`}>
                       {t.type === 'earn' ? '+' : '-'}{t.amount}
                     </span>
                   </div>

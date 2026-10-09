@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { AIReasoningResponse } from '../../services/intelligenceLayer';
 import { soundEngine } from '../../utils/audioSynthesizer';
+
+interface AIAction {
+  type: 'rescheduleQuest' | 'createQuest' | 'splitQuest' | 'startFocus';
+  payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string };
+}
 
 export const AIIntelligenceView: React.FC = () => {
   const { 
@@ -12,7 +17,6 @@ export const AIIntelligenceView: React.FC = () => {
     askAi, 
     getNextAiAction,
     startFocusSession,
-    completeQuest,
     updateQuest,
     setActiveTab,
     showApiKeyModal,
@@ -51,7 +55,7 @@ export const AIIntelligenceView: React.FC = () => {
     }
   };
 
-  const executeAction = (action: any) => {
+  const executeAction = (action: AIAction | null) => {
     if (!action) return;
     soundEngine.playSuccess();
     
@@ -61,7 +65,9 @@ export const AIIntelligenceView: React.FC = () => {
         setActiveTab('focus');
         break;
       case 'rescheduleQuest':
-        updateQuest(action.payload.questId, { dueDate: action.payload.newDate });
+        if (action.payload.questId && action.payload.newDate) {
+          updateQuest(action.payload.questId, { dueDate: action.payload.newDate });
+        }
         break;
       // Add other actions as needed
     }
@@ -103,7 +109,7 @@ export const AIIntelligenceView: React.FC = () => {
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => { soundEngine.playClick(); setActiveTabLocal(tab.id as any); }}
+            onClick={() => { soundEngine.playClick(); setActiveTabLocal(tab.id as 'briefing' | 'ask' | 'recommendations'); }}
             className={`px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black transition-all flex items-center gap-2 ${
               activeView === tab.id 
                 ? 'bg-white text-[var(--dark-blue)] shadow-sm' 
@@ -140,9 +146,7 @@ export const AIIntelligenceView: React.FC = () => {
                 {/* Summary Card */}
                 <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs">
                   <h3 className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)] mb-3 flex items-center gap-2">📜 Strategy Overview</h3>
-                  <p className="text-sm font-bold text-[var(--gray-text)] leading-relaxed italic border-l-4 border-[var(--green)] pl-4 py-1">
-                    "{aiDailyBriefing.summary}"
-                  </p>
+                  <p className="text-sm font-bold text-[var(--gray-text)] leading-relaxed italic border-l-4 border-[var(--green)] pl-4 py-1"> &quot;{aiDailyBriefing.summary}&quot; </p>
                 </div>
 
                 {/* Insights & Evidence */}
@@ -182,10 +186,10 @@ export const AIIntelligenceView: React.FC = () => {
                           <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#f0fdf4] text-[var(--green)] border border-[#dcfce7]">ACTION</span>
                         </div>
                         <p className="text-xs font-bold text-[var(--gray-text)] mb-2 flex-grow">{rec.description}</p>
-                        <p className="text-[10px] font-extrabold text-[var(--gray-light)] mb-4 bg-[#f8fafc] p-2 rounded-xl italic">"Reason: {rec.reason}"</p>
+                        <p className="text-[10px] font-extrabold text-[var(--gray-light)] mb-4 bg-[#f8fafc] p-2 rounded-xl italic"> &quot;Reason: {rec.reason}&quot; </p>
                         {rec.action && (
                           <button 
-                            onClick={() => executeAction(rec.action)}
+                            onClick={() => executeAction(rec.action as AIAction)}
                             className="w-full py-2.5 rounded-xl bg-[var(--green)] hover:bg-[#46a302] text-white font-black text-xs transition-all border-b-4 border-[#3a8a02] active:translate-y-1 active:border-b-0"
                           >
                             {rec.action.type === 'startFocus' ? '⚡ START FOCUS' : 'EXECUTE ACTION'}
@@ -289,7 +293,7 @@ export const AIIntelligenceView: React.FC = () => {
                             </div>
                             {rec.action && (
                               <button 
-                                onClick={() => executeAction(rec.action)}
+                                onClick={() => executeAction(rec.action as AIAction)}
                                 className="bg-[var(--green)] text-white px-4 py-2 rounded-xl text-[10px] font-black border-b-2 border-[#3a8a02]"
                               >
                                 EXECUTE
@@ -352,7 +356,7 @@ export const AIIntelligenceView: React.FC = () => {
               </div>
               <h3 className="font-['Feather_Bold'] text-xl text-[var(--dark-blue)]">Configure AI Provider</h3>
               <p className="text-sm text-[var(--gray-text)] mt-2">
-                Enter your FreeLLM API key to unlock the Oracle's intelligence.
+                Enter your FreeLLM API key to unlock the Oracle&apos;s intelligence.
               </p>
             </div>
 

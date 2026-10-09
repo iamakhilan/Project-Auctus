@@ -149,7 +149,7 @@ export const HelpOverlay: React.FC<HelpOverlayProps> = ({ isOpen, onClose }) => 
             onClick={onClose}
             className="flex-1 h-12 bg-[var(--green)] hover:bg-[var(--green-hover)] text-white font-['Feather_Bold'] text-sm font-black tracking-wider uppercase rounded-2xl border-b-4 border-[var(--green-shadow)] active:translate-y-1 active:border-b-0 transition-all cursor-pointer shadow-md"
           >
-            GOT IT — LET'S GO ⚡
+            GOT IT — LET&apos;S GO ⚡
           </button>
           <span className="hidden sm:flex items-center justify-center text-xs font-bold text-[var(--gray-light)] px-2">
             Tip: Ctrl+K anywhere

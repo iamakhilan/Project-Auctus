@@ -58,11 +58,11 @@ export const RealmView: React.FC = () => {
             </div>
             <h1 className="font-['Feather_Bold'] text-2xl sm:text-3xl md:text-4xl tracking-wide text-white drop-shadow-sm">REALM EXPEDITION</h1>
             <p className="text-white/95 font-bold text-xs sm:text-sm mt-2 max-w-xl leading-relaxed">
-              Campaigns {activeCampaigns.length} active • Today's objectives {dailyObjectives.length} ranked • Completion {productivitySnapshot.completionRate}% • Velocity {productivitySnapshot.velocityPerDay}/day
+              Campaigns {activeCampaigns.length} active • Today&apos;s objectives {dailyObjectives.length} ranked • Completion {productivitySnapshot.completionRate}% • Velocity {productivitySnapshot.velocityPerDay}/day
             </p>
           </div>
           <div className="bg-white text-[var(--dark-blue)] p-4 sm:p-5 rounded-2xl border-b-4 border-[#e5e5e5] shadow-lg min-w-[200px] sm:min-w-[240px] text-center flex-shrink-0">
-            <div className="text-xs font-black uppercase text-[var(--gray-light)] mb-1 tracking-wider">Today's Schedule Progress</div>
+            <div className="text-xs font-black uppercase text-[var(--gray-light)] mb-1 tracking-wider">Today&apos;s Schedule Progress</div>
             <div className="font-['Feather_Bold'] text-2xl sm:text-3xl font-black">{completedDailyCount} / {Math.max(1, dailyQuests.length)}</div>
             <div className="w-full h-3 bg-[#f0f0f0] rounded-full overflow-hidden mt-2 p-0.5 border border-[#e5e5e5]">
               <div className="h-full bg-[var(--green)] rounded-full transition-all duration-700" style={{ width: `${Math.min(100, (completedDailyCount / Math.max(1, dailyQuests.length)) * 100)}%` }} />
@@ -83,7 +83,7 @@ export const RealmView: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] text-white flex items-center justify-center font-black text-sm">✓</span>
             <div>
-              <div className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)]">Today's Quests</div>
+              <div className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)]">Today&apos;s Quests</div>
               <div className="text-[11px] font-bold text-[var(--gray-light)]">{completedDailyCount} / {Math.max(1, dailyQuests.length)} completed • tap to toggle</div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export const RealmView: React.FC = () => {
               <div className="w-20 h-2 bg-[#f0f0f0] rounded-full overflow-hidden border border-[#e5e5e5]"><div className="h-full bg-[var(--green)]" style={{ width: `${Math.round(citadelPowerPct * 100)}%` }} /></div>
             </div>
             <div className="p-3.5 rounded-2xl border-2 border-[#eef2f7] bg-[#fafbfc]">
-              <div className="font-bold text-sm text-[var(--dark-blue)] flex items-center justify-between">Today's Momentum <span className="text-[11px] font-black text-[var(--green)]">{habitsCheckedToday} habits • {chestReadyCount} chests ready</span></div>
+              <div className="font-bold text-sm text-[var(--dark-blue)] flex items-center justify-between">Today&apos;s Momentum <span className="text-[11px] font-black text-[var(--green)]">{habitsCheckedToday} habits • {chestReadyCount} chests ready</span></div>
               <div className="text-[11px] font-bold text-[var(--gray-light)] mt-1">Focus completion {productivitySnapshot.focusCompletionRate}% • Overdue {overdueCount}</div>
             </div>
           </div>
