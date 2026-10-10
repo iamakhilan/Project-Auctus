@@ -11,7 +11,7 @@ export interface AIReasoningResponse {
     reason: string;
     action?: {
       type: 'rescheduleQuest' | 'createQuest' | 'splitQuest' | 'startFocus';
-      payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string };
+      payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string; title?: string; description?: string; difficulty?: string; priority?: string };
     };
     relatedQuestIds?: string[];
   }>;
@@ -101,9 +101,32 @@ You MUST respond in valid JSON format matching the AUCTUS Intelligence structure
     return await this.getStructuredReasoning(prompt);
   }
   
-  /**
-   * Recommends the next best action based on complex reasoning
-   */
+  async decomposeQuest(questId: string, context: AIContextSnapshot): Promise<AIReasoningResponse> {
+    const summary = createAISummary(context);
+    const quest = context.quests.find(q => q.id === questId);
+    
+    const prompt = `
+You are the AUCTUS Intelligence Layer.
+The user wants to break down a large or overwhelming quest into smaller, actionable sub-quests.
+
+QUEST TO DECOMPOSE: "${quest?.title || 'Unknown'}"
+QUEST DESCRIPTION: "${quest?.description || 'No description provided'}"
+
+USER ACTIVITY SUMMARY:
+${summary}
+
+TASK:
+Break this quest down into 3-5 smaller, specific, and manageable sub-quests.
+Each sub-quest should have a clear title, brief description, difficulty (normal/hard/elite), and priority (low/medium/high).
+
+RESPONSE FORMAT:
+You MUST respond in valid JSON format matching the AUCTUS Intelligence structure, where the "recommendations" contain the sub-quests.
+Ensure each recommendation uses the action type "createQuest" and provides the title, description, difficulty, and priority in the payload.
+    `.trim();
+    
+    return await this.getStructuredReasoning(prompt);
+  }
+
   async getNextBestAction(context: AIContextSnapshot): Promise<AIReasoningResponse> {
     const summary = createAISummary(context);
     
@@ -131,6 +154,7 @@ You MUST respond in valid JSON format matching the AUCTUS Intelligence structure
     
     return await this.getStructuredReasoning(prompt);
   }
+
   
   private async getStructuredReasoning(prompt: string): Promise<AIReasoningResponse> {
     if (!this.provider.isAvailable()) {

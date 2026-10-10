@@ -110,6 +110,7 @@ interface GameStateContextType {
   refreshAiBriefing: () => Promise<void>;
   askAi: (question: string) => Promise<AIReasoningResponse>;
   getNextAiAction: () => Promise<AIReasoningResponse>;
+  decomposeQuest: (questId: string) => Promise<AIReasoningResponse>;
   showApiKeyModal: boolean;
   setShowApiKeyModal: (show: boolean) => void;
   handleApiKeySet: (apiKey: string) => void;
@@ -448,6 +449,24 @@ setUserApiKey(apiKey);
       return await aiIntelligence.getNextBestAction(context);
     } catch (error) {
       console.error('Get next AI action failed:', error);
+      throw error;
+    }
+  }, [aiIntelligence, quests, habits, effortLogs, campaigns, achievements, profile, transactions, weeklyReviews, activeTab, focusSession.isActive]);
+
+  const decomposeQuest = useCallback(async (questId: string): Promise<AIReasoningResponse> => {
+    if (!aiIntelligence) {
+      throw new Error('AI provider not configured');
+    }
+    
+    try {
+      const context = buildAIContext(
+        quests, habits, effortLogs, campaigns, achievements, profile, 
+        transactions, weeklyReviews, activeTab, focusSession.isActive
+      );
+      
+      return await aiIntelligence.decomposeQuest(questId, context);
+    } catch (error) {
+      console.error('Decompose quest failed:', error);
       throw error;
     }
   }, [aiIntelligence, quests, habits, effortLogs, campaigns, achievements, profile, transactions, weeklyReviews, activeTab, focusSession.isActive]);
@@ -958,7 +977,7 @@ setUserApiKey(apiKey);
           return ok;
         },
         // AI Intelligence Layer
-        aiDailyBriefing, isAiLoading, aiError, refreshAiBriefing, askAi, getNextAiAction,
+        aiDailyBriefing, isAiLoading, aiError, refreshAiBriefing, askAi, getNextAiAction, decomposeQuest,
         showApiKeyModal, setShowApiKeyModal, handleApiKeySet, handleApiKeyClear, hasApiKey
       }}
     >

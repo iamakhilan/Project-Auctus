@@ -1,7 +1,7 @@
 export type TabType = 'realm' | 'quests' | 'focus' | 'vault' | 'citadel' | 'analytics' | 'campaigns' | 'ai';
 
 export type QuestCategory = 'daily' | 'bounty' | 'epic' | 'habit';
-export type QuestTag = 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work';
+export type QuestTag = 'Study' | 'Coding' | 'Fitness' | 'Personal' | 'Work' | 'Creative' | 'Deep Work' | 'AI-Generated';
 export type QuestDifficulty = 'normal' | 'hard' | 'elite';
 export type QuestPriority = 'low' | 'medium' | 'high' | 'critical';
 

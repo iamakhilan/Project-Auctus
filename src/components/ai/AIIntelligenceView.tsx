@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useGameState } from '../../context/GameStateContext';
 import { AIReasoningResponse } from '../../services/intelligenceLayer';
 import { soundEngine } from '../../utils/audioSynthesizer';
 
 interface AIAction {
   type: 'rescheduleQuest' | 'createQuest' | 'splitQuest' | 'startFocus';
-  payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string };
+  payload: { duration?: number; questId?: string; questTitle?: string; newDate?: string; title?: string; description?: string; difficulty?: string; priority?: string };
 }
 
 export const AIIntelligenceView: React.FC = () => {
@@ -16,8 +16,11 @@ export const AIIntelligenceView: React.FC = () => {
     refreshAiBriefing, 
     askAi, 
     getNextAiAction,
+    decomposeQuest,
     startFocusSession,
     updateQuest,
+    createQuest,
+    quests,
     setActiveTab,
     showApiKeyModal,
     setShowApiKeyModal,
@@ -29,8 +32,11 @@ export const AIIntelligenceView: React.FC = () => {
   const [question, setQuestion] = useState('');
   const [askResponse, setAskAiResponse] = useState<AIReasoningResponse | null>(null);
   const [isAsking, setIsAsking] = useState(false);
-  const [activeView, setActiveTabLocal] = useState<'briefing' | 'ask' | 'recommendations'>('briefing');
+  const [activeView, setActiveTabLocal] = useState<'briefing' | 'ask' | 'recommendations' | 'decompose'>('briefing');
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [decomposeQuestId, setDecomposeQuestId] = useState<string | null>(null);
+  const [decomposeResponse, setDecomposeResponse] = useState<AIReasoningResponse | null>(null);
+  const [isDecomposing, setIsDecomposing] = useState(false);
 
   // Show API key modal automatically if no key configured
   React.useEffect(() => {
@@ -55,6 +61,27 @@ export const AIIntelligenceView: React.FC = () => {
     }
   };
 
+  const handleDecompose = useCallback(async () => {
+    if (!decomposeQuestId) return;
+    
+    setIsDecomposing(true);
+    soundEngine.playClick();
+    try {
+      const response = await decomposeQuest(decomposeQuestId);
+      setDecomposeResponse(response);
+    } catch (err) {
+      console.error('Decompose quest failed:', err);
+    } finally {
+      setIsDecomposing(false);
+    }
+  }, [decomposeQuestId, decomposeQuest]);
+
+  React.useEffect(() => {
+    if (decomposeQuestId && !decomposeResponse && !isDecomposing) {
+      handleDecompose();
+    }
+  }, [decomposeQuestId, decomposeResponse, isDecomposing, handleDecompose]);
+
   const executeAction = (action: AIAction | null) => {
     if (!action) return;
     soundEngine.playSuccess();
@@ -67,6 +94,20 @@ export const AIIntelligenceView: React.FC = () => {
       case 'rescheduleQuest':
         if (action.payload.questId && action.payload.newDate) {
           updateQuest(action.payload.questId, { dueDate: action.payload.newDate });
+        }
+        break;
+      case 'createQuest':
+        if (action.payload.title) {
+          createQuest({
+            title: action.payload.title,
+            description: action.payload.description || '',
+            category: 'bounty',
+            difficulty: (action.payload.difficulty as 'normal' | 'hard' | 'elite') || 'normal',
+            priority: (action.payload.priority as 'low' | 'medium' | 'high') || 'medium',
+            xpReward: action.payload.difficulty === 'elite' ? 100 : action.payload.difficulty === 'hard' ? 60 : 40,
+            coinsReward: action.payload.difficulty === 'elite' ? 50 : action.payload.difficulty === 'hard' ? 30 : 20,
+            tag: 'AI-Generated',
+          });
         }
         break;
       // Add other actions as needed
@@ -105,7 +146,8 @@ export const AIIntelligenceView: React.FC = () => {
         {[
           { id: 'briefing', label: 'DAILY BRIEFING', icon: '📜' },
           { id: 'ask', label: 'ASK ORACLE', icon: '💬' },
-          { id: 'recommendations', label: 'NEXT ACTION', icon: '🎯' }
+          { id: 'recommendations', label: 'NEXT ACTION', icon: '🎯' },
+          { id: 'decompose', label: 'QUEST AUTOCOMPLETE', icon: '🧩' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -336,6 +378,132 @@ export const AIIntelligenceView: React.FC = () => {
                 {isAsking ? 'CALCULATING...' : '⚡ FIND NEXT ACTION'}
               </button>
             </div>
+          </div>
+        )}
+
+        {activeView === 'decompose' && (
+          <div className="space-y-6">
+            {!decomposeQuestId ? (
+              <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-5 sm:p-6 shadow-xs">
+                <h3 className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)] mb-4">Select Quest to Decompose</h3>
+                <p className="text-sm font-bold text-[var(--gray-text)] mb-6">
+                  Choose a large or overwhelming quest and the Oracle will break it into manageable sub-quests.
+                </p>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {quests
+                    .filter(q => !q.isCompleted)
+                    .sort((a, b) => {
+                      const diffOrder = { high: 0, medium: 1, low: 2 };
+                      return (diffOrder[a.priority as keyof typeof diffOrder] ?? 1) - (diffOrder[b.priority as keyof typeof diffOrder] ?? 1);
+                    })
+                    .map(quest => (
+                      <button
+                        key={quest.id}
+                        onClick={() => { soundEngine.playClick(); setDecomposeQuestId(quest.id); setDecomposeResponse(null); }}
+                        disabled={isDecomposing}
+                        className="w-full text-left p-4 bg-[#f9fafb] border-2 border-[#e5e5e5] rounded-2xl hover:border-[var(--green)] hover:bg-white transition-all flex items-center justify-between gap-4"
+                      >
+                        <div className="flex-1">
+                          <div className="font-['Feather_Bold'] text-sm text-[var(--dark-blue)] flex items-center gap-2">
+                            {quest.title}
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#f0fdf4] text-[var(--green)] border border-[#dcfce7]">
+                              {quest.priority?.toUpperCase() || 'MEDIUM'}
+                            </span>
+                          </div>
+                          {quest.description && (
+                            <p className="text-xs font-bold text-[var(--gray-text)] mt-1 line-clamp-2">{quest.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 mt-2 text-[10px] font-black text-[var(--gray-light)]">
+                            <span>🎯 XP: {quest.xpReward || 40}</span>
+                            <span>💰 Coins: {quest.coinsReward || 20}</span>
+                            <span>📊 Difficulty: {(quest.difficulty || 'normal').toUpperCase()}</span>
+                          </div>
+                        </div>
+                        <span className="text-xl opacity-50 hover:opacity-100 transition-opacity">🧩 DECOMPOSE</span>
+                      </button>
+                    ))}
+                  {quests.filter(q => !q.isCompleted).length === 0 && (
+                    <div className="text-center py-8 text-[var(--gray-light)]">
+                      <span className="text-4xl">📭</span>
+                      <p className="font-['Feather_Bold'] mt-2">No active quests to decompose</p>
+                      <p className="text-sm mt-1">Create a quest first, then return here to break it down.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="animate-fadeIn space-y-6">
+                {isDecomposing && !decomposeResponse && (
+                  <div className="bg-white rounded-3xl border-2 border-[#e5e5e5] p-12 flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-[var(--green)] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="font-['Feather_Bold'] text-[var(--gray-light)] animate-pulse">DECOMPOSING QUEST...</div>
+                    <div className="text-xs font-black text-[var(--gray-light)] bg-[#f8fafc] p-3 rounded-xl">
+                      The Oracle is analyzing the quest structure and creating sub-quests...
+                    </div>
+                  </div>
+                )}
+                
+                {decomposeResponse && (
+                  <div className="bg-white rounded-3xl border-2 border-[var(--green)] p-5 sm:p-6 shadow-md relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 text-2xl opacity-10">🧩</div>
+                    <h3 className="font-['Feather_Bold'] text-xs text-[var(--green)] uppercase mb-3 tracking-widest">Quest Autocomplete Results</h3>
+                    <p className="text-sm font-bold text-[var(--dark-blue)] leading-relaxed mb-6">
+                      {decomposeResponse.summary}
+                    </p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-black text-[var(--gray-light)] uppercase">Generated Sub-Quests</h4>
+                        <ul className="space-y-2">
+                          {decomposeResponse.recommendations.map((rec, i) => (
+                            <li key={i} className="text-xs font-bold text-[var(--gray-text)] pl-3 border-l-2 border-[var(--green)] bg-[#f0fdf4] p-2 rounded-r-xl">
+                              <div className="font-['Feather_Bold'] text-[var(--dark-blue)]">{rec.title}</div>
+                              <p className="text-[10px] font-bold text-[var(--gray-text)]">{rec.description}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-black text-[var(--gray-light)] uppercase">Evidence & Reasoning</h4>
+                        <ul className="space-y-2">
+                          {decomposeResponse.evidence.map((ev, i) => (
+                            <li key={i} className="text-[10px] font-black text-[var(--gray-light)] pl-3 border-l-2 border-[#e5e5e5]">
+                              {ev}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t-2 border-[#f0f0f0] space-y-3">
+                      <p className="text-xs font-black text-[var(--green)] text-center">
+                        Click EXECUTE on each sub-quest to add it to your quest log
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {decomposeResponse.recommendations.slice(0, 5).map((rec, i) => (
+                          rec.action && (
+                            <button 
+                              key={i}
+                              onClick={() => executeAction(rec.action as AIAction)}
+                              className="bg-[var(--green)] text-white px-4 py-2 rounded-xl text-[10px] font-black border-b-2 border-[#3a8a02] hover:bg-[#46a302] transition-all"
+                            >
+                              + CREATE: {rec.title}
+                            </button>
+                          )
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => { setDecomposeQuestId(null); setDecomposeResponse(null); }}
+                      className="w-full py-2.5 rounded-xl bg-[var(--gray-light)] hover:bg-[var(--gray-text)] text-white font-black text-xs transition-all"
+                    >
+                      ← BACK TO QUEST SELECTION
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
